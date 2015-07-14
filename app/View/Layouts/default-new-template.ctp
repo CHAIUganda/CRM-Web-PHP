@@ -7,25 +7,22 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-	<title>Brio Web App - Bootstrap Admin Template + AngularJS</title>
+	<title>Chai Web admin</title>
 
 	<meta name="description" content="">
 	<meta name="author" content="Akshay Kumar">
 
 	<!-- Bootstrap core CSS -->
-	<link rel="stylesheet" href="assets/css/bootstrap/bootstrap.css" /> 
+	<link rel="stylesheet" href="/assets/css/bootstrap/bootstrap.css" /> 
 
-	<link rel="stylesheet" type="text/css" media="screen" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.18/themes/smoothness/jquery-ui.css">
-	
-	<!-- elfinder  -->
-    <link rel="stylesheet" href="assets/css/plugins/elfinder/elfinder.min.css" />
-    <link rel="stylesheet" href="assets/css/plugins/elfinder/theme.css" />
+	<!-- Calendar Styling  -->
+    <link rel="stylesheet" href="/assets/css/plugins/calendar/calendar.css" />
     
     <!-- Fonts  -->
     <link href='http://fonts.googleapis.com/css?family=Raleway:400,500,600,700,300' rel='stylesheet' type='text/css'>
     
     <!-- Base Styling  -->
-    <link rel="stylesheet" href="assets/css/app/app.v1.css" />
+    <link rel="stylesheet" href="/assets/css/app/app.v1.css" />
 
 	<!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -35,12 +32,33 @@
     <![endif]-->
 
 </head>
-<body ng-app>	
+<body data-ng-app>
+
+	
+    <!-- Preloader -->
+    <div class="loading-container">
+      <div class="loading">
+        <div class="l1">
+          <div></div>
+        </div>
+        <div class="l2">
+          <div></div>
+        </div>
+        <div class="l3">
+          <div></div>
+        </div>
+        <div class="l4">
+          <div></div>
+        </div>
+      </div>
+    </div>
+    <!-- Preloader -->
+    	
     
 	<aside class="left-panel">
     		
             <div class="user text-center">
-                  <img src="assets/images/avtar/user.png" class="img-circle" alt="...">
+                  <img src="/assets/images/avtar/user.png" class="img-circle" alt="...">
                   <h4 class="user-name">Akshay Kumar</h4>
                   
                   <div class="dropdown user-login">
@@ -59,7 +77,7 @@
             
             <nav class="navigation">
             	<ul class="list-unstyled">
-                	<li><a href="index.html"><i class="fa fa-bookmark-o"></i><span class="nav-label">Dashboard</span></a></li>
+                	<li class="active"><a href="/"><i class="fa fa-bookmark-o"></i><span class="nav-label">Dashboard</span></a></li>
                     <li class="has-submenu"><a href="#"><i class="fa fa-comment-o"></i> <span class="nav-label">Widgets &amp; Apps</span></a>
                     	<ul class="list-unstyled">
                         	<li><a href="email.html">Email</a></li>
@@ -102,11 +120,11 @@
                             <li><a href="range-selector.html">Range Selector</a></li>
                         </ul>
                     </li>
-                    <li class="has-submenu active"><a href="#"><i class="fa fa-star-o"></i> <span class="nav-label">Plugins &amp; More</span></a>
+                    <li class="has-submenu"><a href="#"><i class="fa fa-star-o"></i> <span class="nav-label">Plugins &amp; More</span></a>
                     	<ul class="list-unstyled">
                         	<li><a href="404.html">404 Page</a></li>
                         	<li><a href="invoice.html">Invoice</a></li>
-                            <li class="active"><a href="elfinder.html">File Manager</a></li>
+                            <li><a href="elfinder.html">File Manager</a></li>
                             <li><a href="google-maps.html">Google Maps</a></li>
                             <li><a href="signin.html">Signin</a></li>
                             <li><a href="signup.html">Signup</a></li>
@@ -120,6 +138,7 @@
             </nav>
             
     </aside>
+    <!-- Aside Ends-->
     
     <section class="content">
     	
@@ -165,7 +184,7 @@
                             <a href="#" class="list-group-item">
                             <div class="media">
                               <div class="user-status busy pull-left">
-                              <img class="media-object img-circle pull-left" src="assets/images/avtar/user2.png" alt="user#1" width="40">
+                              <img class="media-object img-circle pull-left" src="/assets/images/avtar/user2.png" alt="user#1" width="40">
                               </div>
                               <div class="media-body">
                                 <h5 class="media-heading">Lorem ipsum dolor sit consect....</h5>
@@ -176,7 +195,7 @@
                             <a href="#" class="list-group-item">
                             <div class="media">
                               <div class="user-status offline pull-left">
-                              <img class="media-object img-circle pull-left" src="assets/images/avtar/user3.png" alt="user#1" width="40">
+                              <img class="media-object img-circle pull-left" src="/assets/images/avtar/user3.png" alt="user#1" width="40">
                               </div>
                               <div class="media-body">
                                 <h5 class="media-heading">Nunc elementum, enim vitae</h5>
@@ -187,7 +206,7 @@
                             <a href="#" class="list-group-item">
                             <div class="media">
                               <div class="user-status invisibled pull-left">
-                              <img class="media-object img-circle pull-left" src="assets/images/avtar/user4.png" alt="user#1" width="40">
+                              <img class="media-object img-circle pull-left" src="/assets/images/avtar/user4.png" alt="user#1" width="40">
                               </div>
                               <div class="media-body">
                                 <h5 class="media-heading">Praesent lacinia, arcu eget</h5>
@@ -198,7 +217,7 @@
                             <a href="#" class="list-group-item">
                             <div class="media">
                               <div class="user-status online pull-left">
-                              <img class="media-object img-circle pull-left" src="assets/images/avtar/user5.png" alt="user#1" width="40">
+                              <img class="media-object img-circle pull-left" src="/assets/images/avtar/user5.png" alt="user#1" width="40">
                               </div>
                               <div class="media-body">
                                 <h5 class="media-heading">In mollis blandit tempor.</h5>
@@ -306,22 +325,14 @@
         <!-- Header Ends -->
         
         
-        <div class="warper container-fluid">
-        	
-            <div class="page-header"><h1>File Manager <small>elfinder</small></h1></div>
-            
-            
-            
-            <div id="elfinder"></div>
-            
-            
-            
+        <div class="warper container-fluid">            
+            <?php echo $content_for_layout; ?>
         </div>
         <!-- Warper Ends Here (working area) -->
         
         
         <footer class="container-fluid footer">
-        	Copyright &copy; 2014 <a href="http://freakpixels.com/" target="_blank">FreakPixels</a>
+        	Copyright &copy; 2015
             <a href="#" class="pull-right scrollToTop"><i class="fa fa-chevron-up"></i></a>
         </footer>
         
@@ -330,39 +341,45 @@
     <!-- Content Block Ends Here (right box)-->
     
     
-    
     <!-- JQuery v1.9.1 -->
-	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
-    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.18/jquery-ui.min.js"></script>
-
+	<script src="/assets/js/jquery/jquery-1.9.1.min.js" type="text/javascript"></script>
+    <script src="/assets/js/plugins/underscore/underscore-min.js"></script>
+    <!-- Bootstrap -->
+    <script src="/assets/js/bootstrap/bootstrap.min.js"></script>
+    
+    <!-- Globalize -->
+    <script src="/assets/js/globalize/globalize.min.js"></script>
+    
     <!-- NanoScroll -->
-    <script src="assets/js/plugins/nicescroll/jquery.nicescroll.min.js"></script>
+    <script src="/assets/js/plugins/nicescroll/jquery.nicescroll.min.js"></script>
     
-    <!-- elFinder JS (REQUIRED) -->
-	<script type="text/javascript" src="assets/js/plugins/elfinder/elfinder.min.js"></script>
+    <!-- Chart JS -->
+    <script src="/assets/js/plugins/DevExpressChartJS/dx.chartjs.js"></script>
+    <script src="/assets/js/plugins/DevExpressChartJS/world.js"></script>
+   	<!-- For Demo Charts -->
+    <script src="/assets/js/plugins/DevExpressChartJS/demo-charts.js"></script>
+    <script src="/assets/js/plugins/DevExpressChartJS/demo-vectorMap.js"></script>
     
-	<script type="text/javascript" charset="utf-8">
-			$().ready(function() {
-				var elf = $('#elfinder').elfinder({
-					url : 'php/elFinder/connector.php'  // connector URL (REQUIRED)
-					// lang: 'ru',             // language (OPTIONAL)
-				}).elfinder('instance');
-			});
-		</script>
+    <!-- Sparkline JS -->
+    <script src="/assets/js/plugins/sparkline/jquery.sparkline.min.js"></script>
+    <!-- For Demo Sparkline -->
+    <script src="/assets/js/plugins/sparkline/jquery.sparkline.demo.js"></script>
+    
+    <!-- Angular JS -->
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.0-beta.14/angular.min.js"></script>
+    <!-- ToDo List Plugin -->
+    <script src="/assets/js/angular/todo.js"></script>
+    
+    
+    
+    <!-- Calendar JS -->
+    <script src="/assets/js/plugins/calendar/calendar.js"></script>
+    <!-- Calendar Conf -->
+    <script src="/assets/js/plugins/calendar/calendar-conf.js"></script>
+	
     
     
     <!-- Custom JQuery -->
-	<script src="assets/js/app/custom.js" type="text/javascript"></script>
-    
-	<script>
-    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-    
-    ga('create', 'UA-56821827-1', 'auto');
-    ga('send', 'pageview');
-    
-    </script>
+	<script src="/assets/js/app/custom.js" type="text/javascript"></script>
 </body>
 </html>
