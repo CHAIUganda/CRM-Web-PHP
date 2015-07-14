@@ -15,18 +15,20 @@
     <link rel="apple-touch-icon" href="http://localhost:8080/chai-crm/home/assets/ico/apple-touch-icon-114x114.png" sizes="114x114">
     <link rel="stylesheet" href="/css/omnitech.css" type="text/css">
     <script src="/js/jquery-1.11.1.min.js" type="text/javascript"></script>
+    <script src="/js/globalize/globalize.min.js"></script>
+    <script src="/js/underscore/underscore-min.js"></script>
+    <script src="/js/moment/moment.js"></script>
+    <script src="/js/bootstrap/bootstrap.min.js"></script>
+    <script src="/js/bootstrap-datetimepicker/bootstrap-datetimepicker.js"></script>
+
+    <script src="/js/DevExpressChartJS/dx.chartjs.js"></script>
+
 <link href="/css/bundle-bundle_bootstrap_head.css" type="text/css" rel="stylesheet" media="screen, projection">
 <link href="/css/bundle-bundle_bootstrap_utils_head.css" type="text/css" rel="stylesheet" media="screen, projection">
 
 
 <link href="/css/bundle-bundle_dataTable_head.css" type="text/css" rel="stylesheet" media="screen, projection">
-
-    
-    
     <meta name="layout" content="kickstart">
-    
-
-
     <!-- Le HTML5 shim, for IE6-8 support of HTML elements -->
     <!--[if lt IE 9]>
 		<script src="https://html5shim.googlecode.com/svn/trunk/html5.js"></script>
@@ -204,209 +206,7 @@
         </div>
 
         <div id="Content" class="container">
-            <!-- print system messages (infos, warnings, etc) - not validation errors -->
-            <!-- Show page's content -->
-            <section id="intro" class="first">
-                <form action="./template_files/template.html" method="get" class="form-inline home-det-search">
-                    <div class="form-group"><label class="">Start Date</label></div>
-
-                    <div class="form-group">	<input id="startDate" name="startDate" class="datepicker form-control" size="16" type="text" value="2015-06-14" data-date-format="yyyy-mm-dd">
-                    </div>
-
-                    <div class="form-group"><label class="">End Date</label></div>
-
-                    <div class="form-group">	<input id="endDate" name="endDate" class="datepicker form-control" size="16" type="text" value="2015-07-14" data-date-format="yyyy-mm-dd">
-                    </div>
-
-                    <div class="form-group"><input type="submit" name="submit" value="Submit" class="btn btn-mini" id="submit"></div>
-                </form>
-                
-                <div class="panel-heading">Detailing Call Plans</div>
-                <div class="row">
-                    <div class="col-md-12">
-                        <div id="DataTables_Table_0_wrapper" class="dataTables_wrapper no-footer"><div class="dataTables_length" id="DataTables_Table_0_length"><label>Show <select name="DataTables_Table_0_length" aria-controls="DataTables_Table_0" class=""><option value="10">10</option><option value="25">25</option><option value="50">50</option><option value="100">100</option></select> entries</label></div><div id="DataTables_Table_0_filter" class="dataTables_filter"><label>Search:<input type="search" class="" placeholder="" aria-controls="DataTables_Table_0"></label></div><table class="pageableTable table table-bordered margin-top-medium dataTable no-footer" cellspacing="0" width="100%" id="DataTables_Table_0" role="grid" aria-describedby="DataTables_Table_0_info" style="width: 100%;">
-                            <thead>
-                            <tr role="row"><th class="sorting_asc" tabindex="0" aria-controls="DataTables_Table_0" rowspan="1" colspan="1" aria-sort="ascending" aria-label="Rep: activate to sort column descending" style="width: 110px;">Rep</th><th class="sorting" tabindex="0" aria-controls="DataTables_Table_0" rowspan="1" colspan="1" aria-label="Territory: activate to sort column ascending" style="width: 415px;">Territory</th><th class="sorting" tabindex="0" aria-controls="DataTables_Table_0" rowspan="1" colspan="1" aria-label="No. Tasks: activate to sort column ascending" style="width: 117px;">No. Tasks</th><th class="sorting" tabindex="0" aria-controls="DataTables_Table_0" rowspan="1" colspan="1" aria-label="% Complete: activate to sort column ascending" style="width: 144px;">% Complete</th><th class="sorting" tabindex="0" aria-controls="DataTables_Table_0" rowspan="1" colspan="1" aria-label="Orders: activate to sort column ascending" style="width: 88px;">Orders</th><th class="sorting" tabindex="0" aria-controls="DataTables_Table_0" rowspan="1" colspan="1" aria-label="New Customers: activate to sort column ascending" style="width: 187px;">New Customers</th></tr>
-                            </thead>
-                            <tbody>
-                            <tr class="odd" role="row">
-                                    <td class="sorting_1">det01</td>
-                                    <td>DET_Koboko,Maracha</td>
-                                    <td>118</td>
-                                    <td>
-                                        <div class="progress">
-                                            <div class="progress-bar progress-bar-info" role="progressbar" aria-valuenow="0.0" aria-valuemin="0" aria-valuemax="100" style="width: 0.0%; color: #000000;">
-                                                0.0%
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>10</td>
-                                    <td>3</td>
-                                </tr><tr class="even" role="row">
-                                    <td class="sorting_1">det02</td>
-                                    <td>DET_Nebbi,Zombo</td>
-                                    <td>108</td>
-                                    <td>
-                                        <div class="progress">
-                                            <div class="progress-bar progress-bar-info" role="progressbar" aria-valuenow="53.0" aria-valuemin="0" aria-valuemax="100" style="width: 53.0%; color: #000000;">
-                                                53.0%
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>2</td>
-                                    <td>37</td>
-                                </tr><tr class="odd" role="row">
-                                    <td class="sorting_1">det03</td>
-                                    <td>DET_Moyo,Yumbe</td>
-                                    <td>106</td>
-                                    <td>
-                                        <div class="progress">
-                                            <div class="progress-bar progress-bar-info" role="progressbar" aria-valuenow="0.0" aria-valuemin="0" aria-valuemax="100" style="width: 0.0%; color: #000000;">
-                                                0.0%
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>24</td>
-                                    <td>1</td>
-                                </tr><tr class="even" role="row">
-                                    <td class="sorting_1">det04</td>
-                                    <td>DET_Arua</td>
-                                    <td>144</td>
-                                    <td>
-                                        <div class="progress">
-                                            <div class="progress-bar progress-bar-info" role="progressbar" aria-valuenow="0.0" aria-valuemin="0" aria-valuemax="100" style="width: 0.0%; color: #000000;">
-                                                0.0%
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>0</td>
-                                    <td>7</td>
-                                </tr><tr class="odd" role="row">
-                                    <td class="sorting_1">det05</td>
-                                    <td>DET_Adjumani</td>
-                                    <td>18</td>
-                                    <td>
-                                        <div class="progress">
-                                            <div class="progress-bar progress-bar-info" role="progressbar" aria-valuenow="0.0" aria-valuemin="0" aria-valuemax="100" style="width: 0.0%; color: #000000;">
-                                                0.0%
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>8</td>
-                                    <td>0</td>
-                                </tr><tr class="even" role="row">
-                                    <td class="sorting_1">det06</td>
-                                    <td>DET_Apac</td>
-                                    <td>52</td>
-                                    <td>
-                                        <div class="progress">
-                                            <div class="progress-bar progress-bar-info" role="progressbar" aria-valuenow="0.0" aria-valuemin="0" aria-valuemax="100" style="width: 0.0%; color: #000000;">
-                                                0.0%
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>13</td>
-                                    <td>7</td>
-                                </tr><tr class="odd" role="row">
-                                    <td class="sorting_1">det07</td>
-                                    <td>DET_Pader</td>
-                                    <td>106</td>
-                                    <td>
-                                        <div class="progress">
-                                            <div class="progress-bar progress-bar-info" role="progressbar" aria-valuenow="86.0" aria-valuemin="0" aria-valuemax="100" style="width: 86.0%; color: #000000;">
-                                                86.0%
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>4</td>
-                                    <td>1</td>
-                                </tr><tr class="even" role="row">
-                                    <td class="sorting_1">det08</td>
-                                    <td>DET_Lira</td>
-                                    <td>189</td>
-                                    <td>
-                                        <div class="progress">
-                                            <div class="progress-bar progress-bar-info" role="progressbar" aria-valuenow="0.0" aria-valuemin="0" aria-valuemax="100" style="width: 0.0%; color: #000000;">
-                                                0.0%
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>5</td>
-                                    <td>7</td>
-                                </tr><tr class="odd" role="row">
-                                    <td class="sorting_1">det09</td>
-                                    <td>DET_Gulu</td>
-                                    <td>84</td>
-                                    <td>
-                                        <div class="progress">
-                                            <div class="progress-bar progress-bar-info" role="progressbar" aria-valuenow="0.0" aria-valuemin="0" aria-valuemax="100" style="width: 0.0%; color: #000000;">
-                                                0.0%
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>0</td>
-                                    <td>2</td>
-                                </tr><tr class="even" role="row">
-                                    <td class="sorting_1">det10</td>
-                                    <td>DET_Agago</td>
-                                    <td>10</td>
-                                    <td>
-                                        <div class="progress">
-                                            <div class="progress-bar progress-bar-info" role="progressbar" aria-valuenow="0.0" aria-valuemin="0" aria-valuemax="100" style="width: 0.0%; color: #000000;">
-                                                0.0%
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>1</td>
-                                    <td>0</td>
-                                </tr></tbody>
-                        </table><div class="dataTables_info" id="DataTables_Table_0_info" role="status" aria-live="polite">Showing 1 to 10 of 60 entries</div><div class="dataTables_paginate paging_full_numbers" id="DataTables_Table_0_paginate"><a class="paginate_button first disabled" aria-controls="DataTables_Table_0" data-dt-idx="0" tabindex="0" id="DataTables_Table_0_first">First</a><a class="paginate_button previous disabled" aria-controls="DataTables_Table_0" data-dt-idx="1" tabindex="0" id="DataTables_Table_0_previous">Previous</a><span><a class="paginate_button current" aria-controls="DataTables_Table_0" data-dt-idx="2" tabindex="0">1</a><a class="paginate_button " aria-controls="DataTables_Table_0" data-dt-idx="3" tabindex="0">2</a><a class="paginate_button " aria-controls="DataTables_Table_0" data-dt-idx="4" tabindex="0">3</a><a class="paginate_button " aria-controls="DataTables_Table_0" data-dt-idx="5" tabindex="0">4</a><a class="paginate_button " aria-controls="DataTables_Table_0" data-dt-idx="6" tabindex="0">5</a><a class="paginate_button " aria-controls="DataTables_Table_0" data-dt-idx="7" tabindex="0">6</a></span><a class="paginate_button next" aria-controls="DataTables_Table_0" data-dt-idx="8" tabindex="0" id="DataTables_Table_0_next">Next</a><a class="paginate_button last" aria-controls="DataTables_Table_0" data-dt-idx="9" tabindex="0" id="DataTables_Table_0_last">Last</a></div></div>
-                    </div>
-                </div>
-                <div class="panel-heading">Sales Call Plans</div>
-                <div class="row">
-                    <div class="col-md-12">
-                        <table class="table table-bordered margin-top-medium">
-                            <thead>
-                            <tr>
-                                <th>Rep</th>
-                                <th>Territory</th>
-                                <th>No. Tasks</th>
-                                <th>% Complete</th>
-                                <th>% Productivity</th>
-                                <th>Orders</th>
-                                <th>New Customers</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            
-                                <tr>
-                                    <td>sal07</td>
-                                    <td>SAL_Pallisa,Bukedea,Kapchorwa,Bulambuli,Kween,Bukwo,</td>
-                                    <td>1</td>
-                                    <td>
-                                        <div class="progress">
-                                            <div class="progress-bar progress-bar-info" role="progressbar" aria-valuenow="0.0" aria-valuemin="0" aria-valuemax="100" style="width: 0.0%; color: #000000;">
-                                                0.0%
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="progress">
-                                            <div class="progress-bar progress-bar-info" role="progressbar" aria-valuenow="0.0" aria-valuemin="0" aria-valuemax="100" style="width: 0.0%; color: #000000;">
-                                                0.0%
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>1</td>
-                                    <td>11</td>
-                                </tr>
-                            
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
+            <?php echo $content_for_layout; ?>
         </div>
     </div>
 
@@ -488,7 +288,7 @@
 
     <script src="/js/bundle-bundle_bootstrap_defer.js" type="text/javascript"></script>
 
-<script src="/js/bundle-bundle_bootstrap_utils_defer.js" type="text/javascript"></script>
+
 
 
 <script src="/js/bundle-bundle_dataTable_defer.js" type="text/javascript"></script>
