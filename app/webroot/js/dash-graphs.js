@@ -1,34 +1,3 @@
-/*******************************************
-Simple Bar Chart
-*******************************************/
-
-$("#bar-chart").dxChart({
-    dataSource: [
-        {day: "Mon", oranges: 3},
-        {day: "Tue", oranges: 2},
-        {day: "Wed", oranges: 3},
-        {day: "Thu", oranges: 4},
-        {day: "Fri", oranges: 6},
-        {day: "Sat", oranges: 11},
-        {day: "Sun", oranges: 4} ],
-  valueAxis:{
-    grid:{
-      color: '#9D9EA5',
-      width: 0.1
-      }
-  },
-  legend: {
-    visible: false,
-  },
-    series: {
-        argumentField: "day",
-        valueField: "oranges",
-        name: "My oranges",
-    visible: false,
-        type: "bar",
-        color: '#a49bc4'
-    }
-});
 
 /*******************************************
 Side by Side Bar

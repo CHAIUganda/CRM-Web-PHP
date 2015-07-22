@@ -1,18 +1,18 @@
 <?php
 App::uses('AppModel', 'Model');
 /**
- * Detailertask Model
+ * Dbchangeset Model
  *
- * @property ClientRef $ClientRef
+ * @property Change $Change
  */
-class Detailertask extends AppModel {
+class Dbchangeset extends AppModel {
 
 /**
  * Use table
  *
  * @var mixed False or table name
  */
-	public $useTable = 'detailertask';
+	public $useTable = 'dbchangeset';
 
 
 	//The Associations below have been created with all possible keys, those that are not needed can be removed
@@ -23,9 +23,9 @@ class Detailertask extends AppModel {
  * @var array
  */
 	public $belongsTo = array(
-		'ClientRef' => array(
-			'className' => 'ClientRef',
-			'foreignKey' => 'client_ref_id',
+		'Change' => array(
+			'className' => 'Change',
+			'foreignKey' => 'change_id',
 			'conditions' => '',
 			'fields' => '',
 			'order' => ''

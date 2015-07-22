@@ -1,18 +1,18 @@
 <?php
 App::uses('AppModel', 'Model');
 /**
- * Detailertask Model
+ * Order Model
  *
  * @property ClientRef $ClientRef
  */
-class Detailertask extends AppModel {
+class Order extends AppModel {
 
 /**
  * Use table
  *
  * @var mixed False or table name
  */
-	public $useTable = 'detailertask';
+	public $useTable = 'order';
 
 
 	//The Associations below have been created with all possible keys, those that are not needed can be removed
