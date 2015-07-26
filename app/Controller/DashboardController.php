@@ -16,7 +16,7 @@ class DashboardController extends AppController {
  * @return void
  */
 	public function index() {
-        $this->set("detailer_visits", $this->median_visits_by_detailers());
+        $this->set("detailer_visits", $this->average_visits_by_detailers());
         $this->set("zinc_stats", $this->zinc_percentage_availability());
         $this->set("zinc_price", $this->median_zinc_price());
         $this->set("ors_price", $this->median_ors_price());
@@ -104,7 +104,7 @@ class DashboardController extends AppController {
 		$this->client = new Everyman\Neo4j\Client();
         $this->client->getTransport()->setAuth("neo4j", "neo4j");
 
-		$query = new Everyman\Neo4j\Cypher\Query($this->client, "start n = node(25237) match n-[:`USER_TERRITORY`]-(t) match 
+		$query = new Everyman\Neo4j\Cypher\Query($this->client, "start n = node(". $this->_user['User']['neo_id'] .") match n-[:`USER_TERRITORY`]-(t) match 
         	t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
         	task-[:`COMPLETED_TASK`]-(user) optional match task-[:`HAS_DETAILER_STOCK`]-(stock) where stock.category = 
         	\"zinc\" return task.uuid, task.description, task.completionDate, user.username, stock.uuid, stock.category, stock.stockLevel 
@@ -124,32 +124,51 @@ class DashboardController extends AppController {
 
         $res = array();
         foreach ($tasks as $task) {
+            $epoch = floor($task["task.completionDate"]/1000);
+            $dt = new DateTime("@$epoch");
+            $item[$column] = $dt->format('Y-m-d');
+            $task["month"] = $dt->format("F");
+
         	if (!isset($res[$task["user.username"]])) {
         		$res[$task["user.username"]] = array();
-        		$res[$task["user.username"]]["Tasks"] = array();
+        		$res[$task["user.username"]] = array();
         	}
 
-        	$res[$task["user.username"]]["Tasks"][$task["task.uuid"]] = 0;
+            if(!isset($res[$task["user.username"]][$task["month"]])){
+                $res[$task["user.username"]][$task["month"]] = array();
+            }
+
+        	$res[$task["user.username"]][$task["month"]][$task["task.uuid"]] = 0;
         	if ($task["stock.stockLevel"] > 0) {
-        		$res[$task["user.username"]]["Tasks"][$task["task.uuid"]] = 1;
+        		$res[$task["user.username"]][$task["month"]][$task["task.uuid"]] = 1;
         	}
         }
-
         $stockAvailabilityStats = array();
-        foreach (array_keys($res) as $username) {
-        	$stockAvailabilityStats[$username] = $this->calculate_positive_percentage($res[$username]["Tasks"]);
-        }
+        foreach ($res as $username => $monthData) {
+            if(!isset($stockAvailabilityStats[$username])){
+                $stockAvailabilityStats[$username] = array();
+                $stockAvailabilityStats[$username] = $this->getMonths();
+            }
 
+            foreach($monthData as $month => $data){
+                $stockAvailabilityStats[$username][$month] = $this->calculate_positive_percentage($res[$username][$month]);
+            }
+        }
         return $stockAvailabilityStats;
 	}
 
-	function median_visits_by_detailers(){
+	function average_visits_by_detailers(){
+        $otherMonth = date('F', mktime(0, 0, 0, date('m')-2, 1, date('Y')));
+        $lastMonth = date('F', mktime(0, 0, 0, date('m')-1, 1, date('Y')));
+        $thisMonth = date('F');
+
 		$this->client = new Everyman\Neo4j\Client();
         $this->client->getTransport()->setAuth("neo4j", "neo4j");
 
-        $query = new Everyman\Neo4j\Cypher\Query($this->client, "start n = node(25237) match n-[:`USER_TERRITORY`]-(t) match 
+        $query = new Everyman\Neo4j\Cypher\Query($this->client, "start n = node(". $this->_user['User']['neo_id'] .") match n-[:`USER_TERRITORY`]-(t) match 
         	t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) optional match 
         	task-[:`COMPLETED_TASK`]-(user) return distinct task.uuid, task.description, task.completionDate, user.username");
+
         $results = $query->getResultSet();
 
         $stats = array();
@@ -166,23 +185,33 @@ class DashboardController extends AppController {
         			$epoch = floor($result[$column]/1000);
 					$dt = new DateTime("@$epoch");
 					$item[$column] = $dt->format('Y-m-d');
+                    $item["month"] = $dt->format("F");
         		}
         	}
 
         	if (!isset($stats[$item["user.username"]])) {
         		$stats[$item["user.username"]] = array();
 			}
-			if (!isset($stats[$item["user.username"]][$item["task.completionDate"]])) {
-    			$stats[$item["user.username"]][$item["task.completionDate"]] = 1;
-			} else {
-				$stats[$item["user.username"]][$item["task.completionDate"]]++;
+			if (!isset($stats[$item["user.username"]][$item["month"]])) {
+                $stats[$item["user.username"]][$item["month"]] = array();
+			}
+            if(!isset($stats[$item["user.username"]][$item["month"]][$item["task.completionDate"]])){
+                $stats[$item["user.username"]][$item["month"]][$item["task.completionDate"]] = 1;
+            } else {
+				$stats[$item["user.username"]][$item["month"]][$item["task.completionDate"]]++;
 			}
         	$res[] = $item;
         }
 
+        unset($stats["anon"]);
         $medians = array();
-        foreach ($stats as $key => $value) {
-        	$medians[$key] = $this->calculate_average(array_values($value));
+        foreach ($stats as $detName => $detData) {
+            foreach ($detData as $month => $values) {
+                if(!isset($medians[$detName])){
+                    $medians[$detName] = $this->getMonths();
+                }
+                $medians[$detName][$month] = $this->calculate_average(array_values($values));
+            }
         }
 
         return $medians;
@@ -192,7 +221,7 @@ class DashboardController extends AppController {
 		$this->client = new Everyman\Neo4j\Client();
         $this->client->getTransport()->setAuth("neo4j", "neo4j");
 
-		$query = new Everyman\Neo4j\Cypher\Query($this->client, "start n = node(25237) match n-[:`USER_TERRITORY`]-(t) match 
+		$query = new Everyman\Neo4j\Cypher\Query($this->client, "start n = node(". $this->_user['User']['neo_id'] .") match n-[:`USER_TERRITORY`]-(t) match 
         	t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
         	task-[:`COMPLETED_TASK`]-(user) optional match task-[:`HAS_DETAILER_STOCK`]-(stock) where stock.category = 
         	\"zinc\" return task.uuid, task.description, task.completionDate, user.username, stock.uuid, stock.category, stock.stockLevel
@@ -212,19 +241,35 @@ class DashboardController extends AppController {
 
         $res[] = array();
         foreach ($tasks as $task) {
+            $epoch = floor($task["task.completionDate"]/1000);
+            $dt = new DateTime("@$epoch");
+            $item[$column] = $dt->format('Y-m-d');
+            $task["month"] = $dt->format("F");
+
         	if (!isset($res[$task["user.username"]])) {
         		$res[$task["user.username"]] = array();
         	}
 
+            if(!isset($res[$task["user.username"]][$task["month"]])){
+                $res[$task["user.username"]][$task["month"]] = array();
+            }
         	if (!empty($task["stock.sellingPrice"])) {
-        		$res[$task["user.username"]][] = $task["stock.sellingPrice"];
+        		$res[$task["user.username"]][$task["month"]][] = $task["stock.sellingPrice"];
         	}
         }
         
         $stats = array();
-        foreach (array_keys($res) as $value) {
-        	$stats[$value] = $this->calculate_median($res[$value]);
+        foreach ($res as $detName=>$monthData) {
+            if(!isset($stats[$detName])){
+                $stats[$detName] = array();
+                $stats[$detName] = $this->getMonths();
+            }
+
+            foreach($monthData as $month => $data){
+                $stats[$detName][$month] = $this->calculate_median($res[$detName][$month]);
+            }
         }
+        unset($stats[0]);
 
         return $stats;
 	}
@@ -233,7 +278,7 @@ class DashboardController extends AppController {
 		$this->client = new Everyman\Neo4j\Client();
         $this->client->getTransport()->setAuth("neo4j", "neo4j");
 
-		$query = new Everyman\Neo4j\Cypher\Query($this->client, "start n = node(25237) match n-[:`USER_TERRITORY`]-(t) match 
+		$query = new Everyman\Neo4j\Cypher\Query($this->client, "start n = node(". $this->_user['User']['neo_id'] .") match n-[:`USER_TERRITORY`]-(t) match 
         	t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
         	task-[:`COMPLETED_TASK`]-(user) optional match task-[:`HAS_DETAILER_STOCK`]-(stock) where stock.category = 
         	\"ors\" return task.uuid, task.description, task.completionDate, user.username, stock.uuid, stock.category, stock.stockLevel
@@ -253,20 +298,35 @@ class DashboardController extends AppController {
 
         $res[] = array();
         foreach ($tasks as $task) {
-        	if (!isset($res[$task["user.username"]])) {
-        		$res[$task["user.username"]] = array();
-        	}
+            $epoch = floor($task["task.completionDate"]/1000);
+            $dt = new DateTime("@$epoch");
+            $item[$column] = $dt->format('Y-m-d');
+            $task["month"] = $dt->format("F");
 
-        	if (!empty($task["stock.sellingPrice"])) {
-        		$res[$task["user.username"]][] = $task["stock.sellingPrice"];
-        	}
+        	if (!isset($res[$task["user.username"]])) {
+                $res[$task["user.username"]] = array();
+            }
+
+            if(!isset($res[$task["user.username"]][$task["month"]])){
+                $res[$task["user.username"]][$task["month"]] = array();
+            }
+            if (!empty($task["stock.sellingPrice"])) {
+                $res[$task["user.username"]][$task["month"]][] = $task["stock.sellingPrice"];
+            }
         }
         
         $stats = array();
-        foreach (array_keys($res) as $value) {
-        	$stats[$value] = $this->calculate_median($res[$value]);
-        }
+        foreach ($res as $detName=>$monthData) {
+            if(!isset($stats[$detName])){
+                $stats[$detName] = array();
+                $stats[$detName] = $this->getMonths();
+            }
 
+            foreach($monthData as $month => $data){
+                $stats[$detName][$month] = $this->calculate_median($res[$detName][$month]);
+            }
+        }
+        unset($stats[0]);
         return $stats;
 	}
 
@@ -307,4 +367,13 @@ class DashboardController extends AppController {
 		}
 		return ($positive_count/count($arr))*100;
 	}
+
+    function getMonths(){
+        $months = array();
+
+        for ($x = 1; $x < 13; $x++) {
+            $months[date('F', mktime(0, 0, 0, $x, 1))] = 0;
+        }
+        return $months;
+    }
 }

@@ -1,7 +1,19 @@
 <div class="row">
   <div class="col-md-6">
       <div class="panel panel-default">
-            <div class="panel-heading">Median Daily Visits by Detailers</div>
+            <div class="panel-heading">
+            Average Daily Visits by Detailers
+              <div class="pull-right">
+                <div class="btn-group">
+                  <select>
+                    <option>1 Month</option>
+                    <option>2 Months</option>
+                    <option>3 Months</option>
+                  </select>
+                </div>
+                <button type="button" class="btn btn-default btn-sm btn-circle">GO</button>
+              </div>
+            </div>
             <div class="panel-body">
               <div id="detailer-visits" style="height:250px;"></div>
             </div>
@@ -10,7 +22,19 @@
     
     <div class="col-md-6">
       <div class="panel panel-default">
-            <div class="panel-heading">Zinc/ORS Availability by Detailer (%)</div>
+            <div class="panel-heading">
+            Zinc/ORS Availability by Detailer (%)
+            <div class="pull-right">
+              <div class="btn-group">
+                <select>
+                  <option>1 Month</option>
+                  <option>2 Months</option>
+                  <option>3 Months</option>
+                </select>
+              </div>
+              <button type="button" class="btn btn-default btn-sm btn-circle">GO</button>
+            </div>
+            </div>
             <div class="panel-body">
               <div id="zinc-availability" style="height:250px;"></div>
             </div>
@@ -21,7 +45,19 @@
 <div class="row">
   <div class="col-md-6">
       <div class="panel panel-default">
-            <div class="panel-heading">Zinc Price by Detailer (UGX)</div>
+            <div class="panel-heading">
+              Zinc Price by Detailer (UGX)
+              <div class="pull-right">
+                <div class="btn-group">
+                  <select>
+                    <option>1 Month</option>
+                    <option>2 Months</option>
+                    <option>3 Months</option>
+                  </select>
+                </div>
+                <button type="button" class="btn btn-default btn-sm btn-circle">GO</button>
+              </div>
+            </div>
             <div class="panel-body">
               <div id="zinc-price" style="height:250px;"></div>
             </div>
@@ -30,7 +66,19 @@
     
     <div class="col-md-6">
       <div class="panel panel-default">
-            <div class="panel-heading">ORS Price by Detailer (UGX)</div>
+            <div class="panel-heading">
+              ORS Price by Detailer (UGX)
+              <div class="pull-right">
+                <div class="btn-group">
+                  <select>
+                    <option>1 Month</option>
+                    <option>2 Months</option>
+                    <option>3 Months</option>
+                  </select>
+                </div>
+                <button type="button" class="btn btn-default btn-sm btn-circle">GO</button>
+              </div>
+            </div>
             <div class="panel-body">
               <div id="ors-price" style="height:250px;"></div>
             </div>
@@ -43,110 +91,170 @@
   *******************************************/
 
   $("#detailer-visits").dxChart({
-  dataSource: [
-      <?php
-      foreach ($detailer_visits as $key => $value) {
-        echo "{det: \"$key\", visits: $value},";
-      }
-      ?>
-      ],
-  valueAxis:{
-  grid:{
-    color: '#9D9EA5',
-    width: 0.1
-    }
-  },
-  legend: {
-  visible: false,
-  },
-  series: {
-      argumentField: "det",
-      valueField: "visits",
-      name: "Daily Visits",
-  visible: false,
-      type: "bar",
-      color: '#a49bc4'
-  }
-  });
-
-  $("#zinc-availability").dxChart({
     dataSource: [
-        <?php
-        foreach ($zinc_stats as $key => $value) {
-          echo "{det: \"$key\", zinc_percent: $value},";
-        }
-        ?>
+          <?php
+          foreach ($detailer_visits as $detName=>$monthData) {
+            echo "{det: \"$detName\", visitsJul: " . @$monthData['July'] . ", visitsJun: ". @$monthData['June'] .", visitsMay: " . @$monthData['May'] . "},";
+          }
+          ?>
         ],
-    valueAxis:{
+    commonSeriesSettings: {
+        argumentField: "det",
+        type: "bar",
+        hoverMode: "allArgumentPoints",
+        selectionMode: "allArgumentPoints",
+        label: {
+            visible: true,
+            format: "fixedPoint",
+            precision: 0
+        }
+    },
+    series: [
+        { valueField: "visitsMay", name: "May", color: '#485D81' },
+        { valueField: "visitsJun", name: "June", color: '#243C63' },
+        { valueField: "visitsJul", name: "July", color: '#4E77BD' },
+    ],
+    legend: {
+        visible: false
+    },
+  valueAxis:{
     grid:{
       color: '#9D9EA5',
       width: 0.1
       }
+  },
+    pointClick: function (point) {
+        this.select();
     },
     legend: {
-    visible: false,
-    },
-    series: {
-        argumentField: "det",
-        valueField: "zinc_percent",
-        name: "Zinc Availability",
-    visible: false,
-        type: "bar",
-        color: '#a49bc4'
-    }
+            verticalAlignment: 'top',
+            horizontalAlignment: 'right'
+        }
+  });
+
+  $("#zinc-availability").dxChart({
+        dataSource: [
+          <?php
+          foreach ($zinc_stats as $detName => $monthData) {
+            echo "{det: \"$detName\", availJul: " . @$monthData['July'] . ", availJun: ". @$monthData['June'] .", availMay: " . @$monthData['May'] . "},";
+          }
+          ?>
+        ],
+        commonSeriesSettings: {
+            argumentField: "det",
+            type: "bar",
+            hoverMode: "allArgumentPoints",
+            selectionMode: "allArgumentPoints",
+            label: {
+                visible: true,
+                format: "fixedPoint",
+                precision: 0
+            }
+        },
+        series: [
+            { valueField: "availMay", name: "May", color: '#485D81' },
+            { valueField: "availJun", name: "June", color: '#243C63' },
+            { valueField: "availJul", name: "July", color: '#4E77BD' },
+        ],
+        legend: {
+            visible: false
+        },
+      valueAxis:{
+        grid:{
+          color: '#9D9EA5',
+          width: 0.1
+          }
+      },
+        pointClick: function (point) {
+            this.select();
+        },
+        legend: {
+                verticalAlignment: 'top',
+                horizontalAlignment: 'right'
+            }
   });
 
 $("#zinc-price").dxChart({
     dataSource: [
-        <?php
-        foreach ($zinc_price as $key => $value) {
-          echo "{det: \"$key\", zinc_price: $value},";
+      <?php
+      foreach ($zinc_price as $detName => $monthData) {
+        echo "{det: \"$detName\", availJul: " . @$monthData['July'] . ", availJun: ". @$monthData['June'] .", availMay: " . @$monthData['May'] . "},";
+      }
+      ?>
+    ],
+    commonSeriesSettings: {
+        argumentField: "det",
+        type: "bar",
+        hoverMode: "allArgumentPoints",
+        selectionMode: "allArgumentPoints",
+        label: {
+            visible: true,
+            format: "fixedPoint",
+            precision: 0
         }
-        ?>
-        ],
-    valueAxis:{
+    },
+    series: [
+        { valueField: "availMay", name: "May", color: '#485D81' },
+        { valueField: "availJun", name: "June", color: '#243C63' },
+        { valueField: "availJul", name: "July", color: '#4E77BD' },
+    ],
+    legend: {
+        visible: false
+    },
+  valueAxis:{
     grid:{
       color: '#9D9EA5',
       width: 0.1
       }
+  },
+    pointClick: function (point) {
+        this.select();
     },
     legend: {
-    visible: false,
-    },
-    series: {
-        argumentField: "det",
-        valueField: "zinc_price",
-        name: "Zinc Price",
-    visible: false,
-        type: "bar",
-        color: '#a49bc4'
-    }
+            verticalAlignment: 'top',
+            horizontalAlignment: 'right'
+        }
   });
 
 $("#ors-price").dxChart({
     dataSource: [
-        <?php
-        foreach ($ors_price as $key => $value) {
-          echo "{det: \"$key\", ors_price: $value},";
+      <?php
+      foreach ($ors_price as $detName => $monthData) {
+        echo "{det: \"$detName\", availJul: " . @$monthData['July'] . ", availJun: ". @$monthData['June'] .", availMay: " . @$monthData['May'] . "},";
+      }
+      ?>
+    ],
+    commonSeriesSettings: {
+        argumentField: "det",
+        type: "bar",
+        hoverMode: "allArgumentPoints",
+        selectionMode: "allArgumentPoints",
+        label: {
+            visible: true,
+            format: "fixedPoint",
+            precision: 0
         }
-        ?>
-        ],
-    valueAxis:{
+    },
+    series: [
+        { valueField: "availMay", name: "May", color: '#485D81' },
+        { valueField: "availJun", name: "June", color: '#243C63' },
+        { valueField: "availJul", name: "July", color: '#4E77BD' },
+    ],
+    legend: {
+        visible: false
+    },
+  valueAxis:{
     grid:{
       color: '#9D9EA5',
       width: 0.1
       }
+  },
+    pointClick: function (point) {
+        this.select();
     },
     legend: {
-    visible: false,
-    },
-    series: {
-        argumentField: "det",
-        valueField: "ors_price",
-        name: "ORS Price",
-    visible: false,
-        type: "bar",
-        color: '#a49bc4'
-    }
+            verticalAlignment: 'top',
+            horizontalAlignment: 'right'
+        }
   });
 </script>

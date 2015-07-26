@@ -69,7 +69,9 @@ class FormAuthenticate extends BaseAuthenticate {
 		$userModel = $this->settings['userModel'];
 		list(, $model) = pluginSplit($userModel);
 
+
 		$fields = $this->settings['fields'];
+
 		if (!$this->_checkFields($request, $model, $fields)) {
 			return false;
 		}

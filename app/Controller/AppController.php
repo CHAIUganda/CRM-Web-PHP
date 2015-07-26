@@ -31,4 +31,81 @@ App::uses('Controller', 'Controller');
  * @link		http://book.cakephp.org/2.0/en/controllers.html#the-app-controller
  */
 class AppController extends Controller {
+	var $helpers = array('Html','Form','Session');
+	var $uses = array('User');
+    var $components = array('Auth' => array(
+        'authenticate' => array(
+            'Form' => array(
+                'passwordHasher' => 'Blowfish'
+            )
+        )
+    ),'Session');
+    var $_user;
+    function getNeo4jUser($uuid){
+        $this->client = new Everyman\Neo4j\Client();
+            $this->client->getTransport()->setAuth("neo4j", "neo4j");
+
+            $query = new Everyman\Neo4j\Cypher\Query($this->client, "MATCH (n:`User`) where n.uuid = \"$uuid\" RETURN n.username as username, n.password as password, id(n) as node_id");
+            $results = $query->getResultSet();
+            if (empty($results)) {
+                return array();
+            } else {
+                $user = array();
+                foreach ($results as $result) {
+                    $columns = $result->columns();
+                    foreach ($columns as $column) {
+                        $user[$column] = $result[$column];
+                    }
+                    break;
+                }
+                return $user;
+            }
+    }
+    function beforeFilter() {
+        parent::beforeFilter();
+        $this->Auth->loginError = "Sorry your username or password is incorrect";
+    	$this->Auth->loginAction = array('admin' => false, 'controller' => 'users', 'action' => 'login');
+    	$this->Auth->loginRedirect = array('admin' => false, 'controller' => 'dashboard', 'action' => 'index');
+        $this->Auth->loginError = "Sorry your username or password is incorrect";
+        $this->Auth->logoutRedirect = array("controller"=>"users", "action"=>"login");
+
+        $id = $this->Auth->user("id");
+        if(!empty($id)){
+            $authUser = $this->User->read(null, $this->Auth->user("id"));
+            $neo_user = $this->getNeo4jUser($authUser['User']['uuid']);
+            $authUser['User']['neo_id'] = $neo_user['node_id'];
+            $this->_user = $authUser;
+            $this->set("user", $authUser);
+        } else {
+            $this->_user = array();
+            $this->set("user", array());
+        }
+        
+        if(!empty($id) && $this->action == "home" && $this->name == "Pages"){
+            //$this->redirect("/dashboards");
+        }
+    }
+
+    private function allowAccess() {
+        if(in_array($this->name, array("Users"))) {
+            $this->Auth->allow('*');
+        }
+    }
+
+    function logSQL(){
+        $sources = ConnectionManager::sourceList();
+        if (!isset($logs)):
+    	   $logs = array();
+    	   foreach ($sources as $source):
+            $db =& ConnectionManager::getDataSource($source);
+    		if (!$db->isInterfaceSupported('getLog')):
+    			continue;
+    		endif;
+    		$logs[$source] = $db->getLog(false,false);
+    	   endforeach;
+        endif;
+        echo '<pre>';
+    			print_r($logs);
+        echo '</pre>';
+    }
 }
