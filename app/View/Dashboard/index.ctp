@@ -1,18 +1,19 @@
+<form action="<?php echo "http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]"; ?>">
 <div class="row">
   <div class="col-md-6">
       <div class="panel panel-default">
             <div class="panel-heading">
-            Average Daily Visits by Detailers
-              <div class="pull-right">
-                <div class="btn-group">
-                  <select>
-                    <option>1 Month</option>
-                    <option>2 Months</option>
-                    <option>3 Months</option>
-                  </select>
+                Average Daily Visits by Detailers
+                <div class="pull-right">
+                        <div class="btn-group">
+                            <select name="dailyVisits">
+                                <option value="1">1 Month</option>
+                                <option value="2">2 Months</option>
+                                <option value="3">3 Months</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-default btn-sm btn-circle">GO</button>
                 </div>
-                <button type="button" class="btn btn-default btn-sm btn-circle">GO</button>
-              </div>
             </div>
             <div class="panel-body">
               <div id="detailer-visits" style="height:250px;"></div>
@@ -24,16 +25,16 @@
       <div class="panel panel-default">
             <div class="panel-heading">
             Zinc/ORS Availability by Detailer (%)
-            <div class="pull-right">
-              <div class="btn-group">
-                <select>
-                  <option>1 Month</option>
-                  <option>2 Months</option>
-                  <option>3 Months</option>
-                </select>
-              </div>
-              <button type="button" class="btn btn-default btn-sm btn-circle">GO</button>
-            </div>
+                <div class="pull-right">
+                        <div class="btn-group">
+                            <select name="zincPercent">
+                                <option value="1">1 Month</option>
+                                <option value="2">2 Months</option>
+                                <option value="3">3 Months</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-default btn-sm btn-circle">GO</button>
+                </div>
             </div>
             <div class="panel-body">
               <div id="zinc-availability" style="height:250px;"></div>
@@ -47,16 +48,16 @@
       <div class="panel panel-default">
             <div class="panel-heading">
               Zinc Price by Detailer (UGX)
-              <div class="pull-right">
-                <div class="btn-group">
-                  <select>
-                    <option>1 Month</option>
-                    <option>2 Months</option>
-                    <option>3 Months</option>
-                  </select>
+                <div class="pull-right">
+                        <div class="btn-group">
+                            <select name="zincPrice">
+                                <option value="1">1 Month</option>
+                                <option value="2">2 Months</option>
+                                <option value="3">3 Months</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-default btn-sm btn-circle">GO</button>
                 </div>
-                <button type="button" class="btn btn-default btn-sm btn-circle">GO</button>
-              </div>
             </div>
             <div class="panel-body">
               <div id="zinc-price" style="height:250px;"></div>
@@ -67,17 +68,18 @@
     <div class="col-md-6">
       <div class="panel panel-default">
             <div class="panel-heading">
-              ORS Price by Detailer (UGX)
-              <div class="pull-right">
-                <div class="btn-group">
-                  <select>
-                    <option>1 Month</option>
-                    <option>2 Months</option>
-                    <option>3 Months</option>
-                  </select>
+                ORS Price by Detailer (UGX)
+                <div class="pull-right">
+                        <div class="btn-group">
+                            <select name="ORSPrice">
+                                <option value="1">1 Month</option>
+                                <option value="2">2 Months</option>
+                                <option value="3">3 Months</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-default btn-sm btn-circle">GO</button>
+                    
                 </div>
-                <button type="button" class="btn btn-default btn-sm btn-circle">GO</button>
-              </div>
             </div>
             <div class="panel-body">
               <div id="ors-price" style="height:250px;"></div>
@@ -85,6 +87,8 @@
         </div>
     </div>
 </div>
+
+</form>
 <script type="text/javascript">
   /*******************************************
   Simple Bar Chart

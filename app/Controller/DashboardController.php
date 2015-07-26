@@ -1,5 +1,5 @@
 <?php
-require(APP . 'vendor/autoload.php');
+require(APP . 'Vendor/autoload.php');
 
 App::uses('AppController', 'Controller');
 /**
