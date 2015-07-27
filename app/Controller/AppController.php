@@ -43,7 +43,7 @@ class AppController extends Controller {
     ),'Session');
     var $_user;
     function getNeo4jUser($uuid){
-        $this->client = new Everyman\Neo4j\Client();
+            $this->client = new Everyman\Neo4j\Client();
             $this->client->getTransport()->setAuth("neo4j", "neo4j");
 
             $query = new Everyman\Neo4j\Cypher\Query($this->client, "MATCH (n:`User`) where n.uuid = \"$uuid\" RETURN n.username as username, n.password as password, id(n) as node_id");

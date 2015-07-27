@@ -6,6 +6,10 @@
                 Average Daily Visits by Detailers
                 <div class="pull-right">
                         <div class="btn-group">
+                            <select name="classification">
+                                <option value="1">Monthly</option>
+                                <option value="2">Quarterly</option>
+                            </select>
                             <select name="dailyVisits">
                                 <option value="1">1 Month</option>
                                 <option value="2">2 Months</option>
