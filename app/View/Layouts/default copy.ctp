@@ -1,6 +1,6 @@
 <!DOCTYPE html>
-
-<html lang=""><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<html lang="">
+<head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <title>Welcome to chai-crm</title>
 
     <meta charset="utf-8">
@@ -18,18 +18,20 @@
     <link href="/css/bundle-bundle_bootstrap_head.css" type="text/css" rel="stylesheet" media="screen, projection">
     <link href="/css/bundle-bundle_bootstrap_utils_head.css" type="text/css" rel="stylesheet" media="screen, projection">
     <link href="/css/bundle-bundle_dataTable_head.css" type="text/css" rel="stylesheet" media="screen, projection">
-
-    <script src="/js/jquery-1.11.1.min.js" type="text/javascript"></script>
-    <script src="/js/globalize/globalize.min.js"></script>
-    <script src="/js/DevExpressChartjs/dx.chartjs.js"></script>
     <meta name="layout" content="kickstart">
     
-
-
     <!-- Le HTML5 shim, for IE6-8 support of HTML elements -->
     <!--[if lt IE 9]>
-        <script src="https://html5shim.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
+		<script src="https://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+    <script src="/js/jquery-1.11.1.min.js" type="text/javascript"></script>
+    <script src="/js/globalize/globalize.min.js"></script>
+    <script src="/js/underscore/underscore-min.js"></script>
+    <script src="/js/moment/moment.js"></script>
+    <script src="/js/bootstrap/bootstrap.min.js"></script>
+    <script src="/js/bootstrap-datetimepicker/bootstrap-datetimepicker.js"></script>
+
+    <script src="/js/DevExpressChartJS/dx.chartjs.js"></script>
 
     
 </head>
@@ -40,16 +42,16 @@
         omnitechBase = '/chai-crm';
     </script>
     <div class="container" id="header" style="margin-top: 10px; max-width: 1170px; padding: 0;">
-        <div class="server-status" style="background: red">
+    	<div class="server-status" style="background: red">
            DEVELOPMENT SERVER
         </div>
         <div class="clear"></div>
         <div class="logo">
-            <a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>">
-                <img src="/img/Clinton-Health.png" absolute="true">
+            <a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/chai-crm/">
+            	<img src="/img/Clinton-Health.png" absolute="true">
             </a>
         </div>
-        <!-- Main menu in one row (e.g., controller entry points -->
+	    <!-- Main menu in one row (e.g., controller entry points -->
         <nav role="navigation" class="navbar navbar-inverse" style="border-radius: 0px;">
             <!-- Brand and toggle get grouped for better mobile display -->
             <div class="navbar-header">
@@ -63,7 +65,7 @@
             <!-- Collection of nav links, forms, and other content for toggling -->
             <div id="navbarCollapse-sticky-wrapper" class="sticky-wrapper" style="height: 50px;"><div id="navbarCollapse" class="collapse navbar-collapse" style="width: 748px;">
                 <ul class="nav navbar-nav">
-                    <li class="active"><a href="./template_files/template.html"><i class="glyphicon glyphicon-home"></i>Home</a></li>
+                    <li class="active"><a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/chai-crm/"><i class="glyphicon glyphicon-home"></i>Home</a></li>
                         <li>
                             <a data-toggle="dropdown" class="dropdown-toggle" href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/chai-crm/home/index#"><i class="glyphicon glyphicon-briefcase"></i>Products <b class="caret"></b></a>
                             <ul role="menu" class="dropdown-menu multi-level" aria-labelledby="dropdownMenu">
@@ -98,25 +100,16 @@
                                 <a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/chai-crm/taskSetting/generationOrder">Generate Calls</a>
                             </li>
                         </ul>
-
                     </li>
-
-                
-                    
                         <li>
                             <a data-toggle="dropdown" class="dropdown-toggle" href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/chai-crm/home/index#"><i class="glyphicon glyphicon-dashboard"></i>Reports <b class="caret"></b></a>
 
                             <ul role="menu" class="dropdown-menu multi-level" aria-labelledby="dropdownMenu">
-                                <li><a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>">Dashboard</a></li>
-                                <li><a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>">Availability</a></li>
-                                <li><a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>">Price</a></li>
-                                <li><a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>">Productivity</a></li>
-
                                 <li><a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/chai-crm/report/index">Reports</a></li>
                                 <li><a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/chai-crm/reportGroup/index">Report Groups</a></li>
                             </ul>
-                        </li>
 
+                        </li>
                         <li class="dropdown">
                             <a data-toggle="dropdown" class="dropdown-toggle" href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/chai-crm/home/index#"><i class="glyphicon glyphicon-wrench"></i>Settings <b class="caret"></b></a>
                             <ul role="menu" class="dropdown-menu multi-level" aria-labelledby="dropdownMenu">
@@ -149,12 +142,10 @@
                             </ul>
                         </li>
                     
-                </ul>
-
-                
+                </ul>                
                 <ul class="nav navbar-nav navbar-right">
                     <li class="dropdown">
-                        <a data-toggle="dropdown" class="dropdown-toggle glyphicon glyphicon-user" href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/chai-crm/home/index#">Users(<?php echo $user["User"]["username"] ?>) <b class="caret"></b></a>
+                        <a data-toggle="dropdown" class="dropdown-toggle glyphicon glyphicon-user" href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/chai-crm/home/index#">Users(root) <b class="caret"></b></a>
                         <ul role="menu" class="dropdown-menu multi-level" aria-labelledby="dropdownMenu">
                             <li>
                                 <a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/chai-crm/user/index">
@@ -184,7 +175,7 @@
                             </li>
 
                             <li>
-                                <a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>/users/logout">
+                                <a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/chai-crm/logout/index">
                                     <i class="glyphicon glyphicon-off"></i>Log out</a>
                             </li>
                         </ul>
@@ -192,7 +183,7 @@
                 </ul>
             </div></div>
         </nav>
-    </div>
+	</div>
 
     <div ng-app="omnitechApp">
         <div class="container" style="max-width: 1170px; padding: 0; margin-bottom: 3px;">
@@ -201,7 +192,10 @@
             <!-- 
         This menu is used to show function that can be triggered on the content (an object or list of objects).
         -->
-        <?php echo $content_for_layout; ?>
+        </div>
+
+        <div id="Content" class="container">
+            <?php echo $content_for_layout; ?>
         </div>
     </div>
 
@@ -210,7 +204,7 @@
     <div class="container" style="width: 100%; padding: 0;">
         <footer class="footer">
             <div class="container">
-                <p>CHAI 2015</p>
+                <p>CHAI 2015<br></p>
             </div>
         </footer>
     </div>
@@ -219,7 +213,6 @@
     <script src="/js/jquery.sticky.js" type="text/javascript"></script>
     <script src="/js/utils.js" type="text/javascript"></script>
     <script src="/js/bundle-bundle_bootstrap_defer.js" type="text/javascript"></script>
-    <script src="/js/bundle-bundle_bootstrap_utils_defer.js" type="text/javascript"></script>
     <script src="/js/bundle-bundle_dataTable_defer.js" type="text/javascript"></script>
     <script type="text/javascript">
         $('.pageableTable').DataTable({
@@ -227,4 +220,5 @@
         });
     </script>
 </div>
+
 </body></html>

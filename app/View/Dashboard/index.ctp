@@ -6,14 +6,12 @@
                 Average Daily Visits by Detailers
                 <div class="pull-right">
                         <div class="btn-group">
-                            <select name="classification">
+                            <select name="visitClassification" onchange="updateOptions(event, 'dailyVisits')">
                                 <option value="1">Monthly</option>
                                 <option value="2">Quarterly</option>
                             </select>
-                            <select name="dailyVisits">
-                                <option value="1">1 Month</option>
-                                <option value="2">2 Months</option>
-                                <option value="3">3 Months</option>
+                            <select name="dailyVisits" id="dailyVisits">
+                                <option value="jan">Jan '15</option><option value="feb">Feb '15</option><option value="mar">Mar '15</option><option value="apr">Apr '15</option><option value="may">May '15</option><option value="jun">Jun '15</option><option value="jul">Jul '15</option><option value="aug">Aug '15</option>
                             </select>
                         </div>
                         <button type="submit" class="btn btn-default btn-sm btn-circle">GO</button>
@@ -31,10 +29,12 @@
             Zinc/ORS Availability by Detailer (%)
                 <div class="pull-right">
                         <div class="btn-group">
-                            <select name="zincPercent">
-                                <option value="1">1 Month</option>
-                                <option value="2">2 Months</option>
-                                <option value="3">3 Months</option>
+                            <select name="orsAvailClassification" onchange="updateOptions(event, 'zincPercent')">
+                                <option value="1">Monthly</option>
+                                <option value="2">Quarterly</option>
+                            </select>
+                            <select name="zincPercent" id="zincPercent">
+                                <option value="jan">Jan '15</option><option value="feb">Feb '15</option><option value="mar">Mar '15</option><option value="apr">Apr '15</option><option value="may">May '15</option><option value="jun">Jun '15</option><option value="jul">Jul '15</option><option value="aug">Aug '15</option>
                             </select>
                         </div>
                         <button type="submit" class="btn btn-default btn-sm btn-circle">GO</button>
@@ -54,10 +54,12 @@
               Zinc Price by Detailer (UGX)
                 <div class="pull-right">
                         <div class="btn-group">
-                            <select name="zincPrice">
-                                <option value="1">1 Month</option>
-                                <option value="2">2 Months</option>
-                                <option value="3">3 Months</option>
+                            <select name="zincClassification" onchange="updateOptions(event, 'zincPrice')">
+                                <option value="1">Monthly</option>
+                                <option value="2">Quarterly</option>
+                            </select>
+                            <select name="zincPrice" id="zincPrice">
+                                <option value="jan">Jan '15</option><option value="feb">Feb '15</option><option value="mar">Mar '15</option><option value="apr">Apr '15</option><option value="may">May '15</option><option value="jun">Jun '15</option><option value="jul">Jul '15</option><option value="aug">Aug '15</option>
                             </select>
                         </div>
                         <button type="submit" class="btn btn-default btn-sm btn-circle">GO</button>
@@ -75,10 +77,12 @@
                 ORS Price by Detailer (UGX)
                 <div class="pull-right">
                         <div class="btn-group">
-                            <select name="ORSPrice">
-                                <option value="1">1 Month</option>
-                                <option value="2">2 Months</option>
-                                <option value="3">3 Months</option>
+                            <select name="orsClassification" onchange="updateOptions(event, 'ORSPrice')">
+                                <option value="1">Monthly</option>
+                                <option value="2">Quarterly</option>
+                            </select>
+                            <select name="ORSPrice" id="ORSPrice">
+                                <option value="jan">Jan '15</option><option value="feb">Feb '15</option><option value="mar">Mar '15</option><option value="apr">Apr '15</option><option value="may">May '15</option><option value="jun">Jun '15</option><option value="jul">Jul '15</option><option value="aug">Aug '15</option>
                             </select>
                         </div>
                         <button type="submit" class="btn btn-default btn-sm btn-circle">GO</button>
@@ -94,6 +98,41 @@
 
 </form>
 <script type="text/javascript">
+    /* Dropdown adjustment */
+    function updateOptions(event, destSelect){
+        var months = {
+            "jan": "Jan \'15",
+            "feb": "Feb \'15",
+            "mar": "Mar \'15",
+            "apr": "Apr \'15",
+            "may": "May \'15",
+            "jun": "Jun \'15",
+            "jul": "Jul \'15",
+            "aug": "Aug \'15",
+        };
+
+        var quarters = {
+            "q1": "Q1 \'15",
+            "q2": "Q2 \'15",
+            "q3": "Q3 \'15",
+            "q4": "Q3 \'15"
+        };
+        var mode = event.srcElement.value;
+        var newOptions;
+        if (mode === "1") {
+            newOptions = months;
+        } else {
+            newOptions = quarters;
+        }
+        var $el = $("#" + destSelect);
+        $el.empty(); // remove old options
+        $.each(newOptions, function(value,key) {
+          $el.append($("<option></option>")
+             .attr("value", value).text(key));
+        });
+
+    }
+
   /*******************************************
   Simple Bar Chart
   *******************************************/
