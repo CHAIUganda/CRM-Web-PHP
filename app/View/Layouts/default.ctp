@@ -21,7 +21,7 @@
 
     <script src="/js/jquery-1.11.1.min.js" type="text/javascript"></script>
     <script src="/js/globalize/globalize.min.js"></script>
-    <script src="/js/DevExpressChartjs/dx.chartjs.js"></script>
+    <script src="/js/DevExpressChartJS/dx.chartjs.js"></script>
     <meta name="layout" content="kickstart">
     
 
