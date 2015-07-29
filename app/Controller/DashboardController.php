@@ -101,12 +101,32 @@ class DashboardController extends AppController {
 
 
 	function zinc_percentage_availability(){
+        // Get filters
+        @$classification = $_GET['orsAvailClassification'];
+        @$period = $_GET['zincPercent'];
+
+        if(!in_array($classification, array(1,2))){
+            $classification = 2;
+        }
+
+        if(!in_array($period, array(1,2,3,4,5,6,7,8,9,10,11,12))){
+            $period = 1;
+        }
+
+        $date_range = array();
+        if ($classification == 1) {
+            $date_range = $this->getTimesForMonth($period);
+        } else if ($classification == 2) {
+            $date_range = $this->getTimesForQuarter($period);
+        }
+
 		$this->client = new Everyman\Neo4j\Client();
         $this->client->getTransport()->setAuth("neo4j", "neo4j");
 
 		$query = new Everyman\Neo4j\Cypher\Query($this->client, "start n = node(". $this->_user['User']['neo_id'] .") match n-[:`USER_TERRITORY`]-(t) match 
         	t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
-        	task-[:`COMPLETED_TASK`]-(user) optional match task-[:`HAS_DETAILER_STOCK`]-(stock) where stock.category = 
+        	task-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
+             $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]-(stock) where stock.category = 
         	\"zinc\" return task.uuid, task.description, task.completionDate, user.username, stock.uuid, stock.category, stock.stockLevel 
         	LIMIT 1000");
         $results = $query->getResultSet();
@@ -147,7 +167,7 @@ class DashboardController extends AppController {
         foreach ($res as $username => $monthData) {
             if(!isset($stockAvailabilityStats[$username])){
                 $stockAvailabilityStats[$username] = array();
-                $stockAvailabilityStats[$username] = $this->getMonths();
+                $stockAvailabilityStats[$username] = $this->getMonths($classification, $period);
             }
 
             foreach($monthData as $month => $data){
@@ -158,17 +178,34 @@ class DashboardController extends AppController {
 	}
 
 	function average_visits_by_detailers(){
-        $otherMonth = date('F', mktime(0, 0, 0, date('m')-2, 1, date('Y')));
-        $lastMonth = date('F', mktime(0, 0, 0, date('m')-1, 1, date('Y')));
-        $thisMonth = date('F');
+        // Get filters
+        @$classification = $_GET['visitClassification'];
+        @$period = $_GET['dailyVisitsPeriod'];
+
+        if(!in_array($classification, array(1,2))){
+            $classification = 2;
+        }
+
+        if(!in_array($period, array(1,2,3,4,5,6,7,8,9,10,11,12))){
+            $period = 1;
+        }
+
+        $date_range = array();
+        if ($classification == 1) {
+            $date_range = $this->getTimesForMonth($period);
+        } else if ($classification == 2) {
+            $date_range = $this->getTimesForQuarter($period);
+        }
 
 		$this->client = new Everyman\Neo4j\Client();
         $this->client->getTransport()->setAuth("neo4j", "neo4j");
 
-        $query = new Everyman\Neo4j\Cypher\Query($this->client, "start n = node(". $this->_user['User']['neo_id'] .") match n-[:`USER_TERRITORY`]-(t) match 
-        	t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) optional match 
-        	task-[:`COMPLETED_TASK`]-(user) return distinct task.uuid, task.description, task.completionDate, user.username");
+        $qs = "start n = node(". $this->_user['User']['neo_id'] .") match n-[:`USER_TERRITORY`]-(t) match 
+            t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
+            task-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
+             $date_range[1] . " return distinct task.uuid, task.description, task.completionDate, user.username";
 
+        $query = new Everyman\Neo4j\Cypher\Query($this->client, $qs);
         $results = $query->getResultSet();
 
         $stats = array();
@@ -208,22 +245,40 @@ class DashboardController extends AppController {
         foreach ($stats as $detName => $detData) {
             foreach ($detData as $month => $values) {
                 if(!isset($medians[$detName])){
-                    $medians[$detName] = $this->getMonths();
+                    $medians[$detName] = $this->getMonths($classification, $period);
                 }
                 $medians[$detName][$month] = $this->calculate_average(array_values($values));
             }
         }
-
         return $medians;
 	}
 
 	function median_zinc_price(){
+        @$classification = $_GET['zincClassification'];
+        @$period = $_GET['zincPrice'];
+
+        if(!in_array($classification, array(1,2))){
+            $classification = 2;
+        }
+
+        if(!in_array($period, array(1,2,3,4,5,6,7,8,9,10,11,12))){
+            $period = 1;
+        }
+
+        $date_range = array();
+        if ($classification == 1) {
+            $date_range = $this->getTimesForMonth($period);
+        } else if ($classification == 2) {
+            $date_range = $this->getTimesForQuarter($period);
+        }
+
 		$this->client = new Everyman\Neo4j\Client();
         $this->client->getTransport()->setAuth("neo4j", "neo4j");
 
 		$query = new Everyman\Neo4j\Cypher\Query($this->client, "start n = node(". $this->_user['User']['neo_id'] .") match n-[:`USER_TERRITORY`]-(t) match 
         	t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
-        	task-[:`COMPLETED_TASK`]-(user) optional match task-[:`HAS_DETAILER_STOCK`]-(stock) where stock.category = 
+        	task-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
+             $date_range[1] . " optional match task-[:`HAS_DETAILER_STOCK`]-(stock) where stock.category = 
         	\"zinc\" return task.uuid, task.description, task.completionDate, user.username, stock.uuid, stock.category, stock.stockLevel
         	, stock.sellingPrice LIMIT 1000");
         $results = $query->getResultSet();
@@ -262,7 +317,7 @@ class DashboardController extends AppController {
         foreach ($res as $detName=>$monthData) {
             if(!isset($stats[$detName])){
                 $stats[$detName] = array();
-                $stats[$detName] = $this->getMonths();
+                $stats[$detName] = $this->getMonths($classification, $period);
             }
 
             foreach($monthData as $month => $data){
@@ -275,12 +330,31 @@ class DashboardController extends AppController {
 	}
 
 	function median_ors_price(){
+        @$classification = $_GET['orsClassification'];
+        @$period = $_GET['ORSPrice'];
+
+        if(!in_array($classification, array(1,2))){
+            $classification = 2;
+        }
+
+        if(!in_array($period, array(1,2,3,4,5,6,7,8,9,10,11,12))){
+            $period = 1;
+        }
+
+        $date_range = array();
+        if ($classification == 1) {
+            $date_range = $this->getTimesForMonth($period);
+        } else if ($classification == 2) {
+            $date_range = $this->getTimesForQuarter($period);
+        }
+
 		$this->client = new Everyman\Neo4j\Client();
         $this->client->getTransport()->setAuth("neo4j", "neo4j");
 
 		$query = new Everyman\Neo4j\Cypher\Query($this->client, "start n = node(". $this->_user['User']['neo_id'] .") match n-[:`USER_TERRITORY`]-(t) match 
         	t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
-        	task-[:`COMPLETED_TASK`]-(user) optional match task-[:`HAS_DETAILER_STOCK`]-(stock) where stock.category = 
+        	task-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
+             $date_range[1] . " optional match task-[:`HAS_DETAILER_STOCK`]-(stock) where stock.category = 
         	\"ors\" return task.uuid, task.description, task.completionDate, user.username, stock.uuid, stock.category, stock.stockLevel
         	, stock.sellingPrice LIMIT 1000");
         $results = $query->getResultSet();
@@ -319,7 +393,7 @@ class DashboardController extends AppController {
         foreach ($res as $detName=>$monthData) {
             if(!isset($stats[$detName])){
                 $stats[$detName] = array();
-                $stats[$detName] = $this->getMonths();
+                $stats[$detName] = $this->getMonths($classification, $period);
             }
 
             foreach($monthData as $month => $data){
@@ -368,12 +442,92 @@ class DashboardController extends AppController {
 		return ($positive_count/count($arr))*100;
 	}
 
-    function getMonths(){
+    function getMonths($classification = 2, $period = 1){
+        $start = 1;
+        $end = 13;
+        if ($classification == 1) {
+            $start = $period;
+            $end = $period + 1;
+        }
+
+        if ($classification == 2) {
+            $start = 1 + (3 * ($period - 1));
+            $end = $start + 3;
+        }
         $months = array();
 
-        for ($x = 1; $x < 13; $x++) {
+        for ($x = $start; $x < $end; $x++) {
             $months[date('F', mktime(0, 0, 0, $x, 1))] = 0;
         }
+
         return $months;
+    }
+
+    function test(){
+        $timestamp = strtotime( 'first day of ' . date( 'F Y'));
+        echo "First Day: " . date( 'F jS Y h:i:s A', $timestamp) . " : " . $timestamp . " of " . date( 'F Y') . "<br>";
+
+        $timestamp = strtotime( 'last day of ' . date( 'F Y'));
+        echo "Last Day: " . date( 'F jS Y h:i:s A', $timestamp) . " : " . $timestamp;
+
+        $times  = array();
+        for($month = 1; $month <= 12; $month++) {
+            $first_minute = mktime(0, 0, 0, $month, 1);
+            $last_minute = mktime(23, 59, 0, $month, date('t', $first_minute));
+            $times[$month] = array($first_minute, $last_minute);
+        }
+
+        pr($this->getTimesForMonth(1));
+
+        pr($this->getTimesForQuarter(1));
+        pr($this->_user['User']['neo_id']);
+        exit();
+    }
+
+    function getTimesForMonth($month){
+        $times  = array();
+        $first_minute = mktime(0, 0, 0, $month, 1);
+        $last_minute = mktime(23, 59, 0, $month, date('t', $first_minute));
+        $times = array($first_minute*1000, $last_minute*1000);
+
+        return $times;
+    }
+
+    function getTimesForQuarter($quarter){
+        $results = array();
+        switch ($quarter) {
+            case 1:
+                $firstMonth = $this->getTimesForMonth(1);
+                $lastMonth = $this->getTimesForMonth(3);
+                $results[0] = $firstMonth[0];
+                $results[1] = $lastMonth[1];
+                break;
+            case 2:
+                $firstMonth = $this->getTimesForMonth(4);
+                $lastMonth = $this->getTimesForMonth(6);
+                $results[0] = $firstMonth[0];
+                $results[1] = $lastMonth[1];
+                break;
+            case 3:
+                $firstMonth = $this->getTimesForMonth(7);
+                $lastMonth = $this->getTimesForMonth(9);
+                $results[0] = $firstMonth[0];
+                $results[1] = $lastMonth[1];
+                break;
+            case 4:
+                $firstMonth = $this->getTimesForMonth(10);
+                $lastMonth = $this->getTimesForMonth(12);
+                $results[0] = $firstMonth[0];
+                $results[1] = $lastMonth[1];
+                break;
+            default:
+                $firstMonth = $this->getTimesForMonth(1);
+                $lastMonth = $this->getTimesForMonth(3);
+                $results[0] = $firstMonth[0];
+                $results[1] = $lastMonth[1];
+                break;
+        }
+
+        return $results;
     }
 }

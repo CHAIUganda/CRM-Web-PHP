@@ -42,7 +42,6 @@ class BlowfishPasswordHasher extends AbstractPasswordHasher {
  * @return bool True if hashes match else false.
  */
 	public function check($password, $hashedPassword) {
-		echo "Hashed: $hashedPassword Pass: $password";
 		return $hashedPassword === Security::hash($password, 'blowfish', $hashedPassword);
 	}
 
