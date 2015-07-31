@@ -1,5 +1,4 @@
 <?php
-$colors = array(" #243C63", "#4E77BD", "#788fb5");
 
 function isSelected($type, $val, $chart){
   $data = array();
@@ -10,6 +9,9 @@ function isSelected($type, $val, $chart){
 
   $fieldName = $data[$chart][$type];
 
+  if (empty($_GET[$fieldName]) && $type == 2 && $val == ceil(date("n")/3)) {
+    return "selected=\"selected\"";
+  }
   if (@$_GET[$fieldName] == $val) {
     return "selected=\"selected\"";
   } else {
@@ -17,6 +19,74 @@ function isSelected($type, $val, $chart){
   }
 }
 
+function printChart($datasource, $chartDiv, $line = null){
+  $colors = array(" #243C63", "#4E77BD", "#788fb5", "#acb9ce");
+  ?>
+  var <?=$chartDiv?> = [
+          <?php
+          $months = array();
+          foreach ($datasource as $detName => $monthData) {
+            foreach($monthData as $monthName=>$average){
+              $months[$monthName] = 0;
+              echo "{det: \"$detName\", month:\"$monthName\", visits: $monthData[$monthName]}, ";
+            }
+
+            if($line != null){
+              echo "{det: \"$detName\", month:\"Target RRP UGX: $line\", visits: $line}, ";
+            }
+          }
+          ?>
+        ];
+  var colors = [<?php foreach ($colors as $color) {
+    echo "\"$color\",";
+  } ?>];
+  var months = [<?php foreach (array_keys($months) as $month) {
+    echo "\"$month\",";
+  } ?>];
+  if (<?=$chartDiv?>.length > 0) {
+    $("#chartEmpty-<?=$chartDiv?>").css("display", "none");
+  };
+  $("#<?php echo $chartDiv ?>").dxChart({
+    dataSource: <?=$chartDiv?>,
+    commonSeriesSettings: {
+        argumentField: "det",
+        valueField: "visits",
+        type: "bar",
+        hoverMode: "allArgumentPoints",
+        selectionMode: "allArgumentPoints",
+        label: {
+            visible: true,
+            format: "fixedPoint",
+            precision: 0
+        }
+    },
+    
+    legend: {
+        visible: false
+    },
+  valueAxis:{
+    grid:{
+      color: '#9D9EA5',
+      width: 0.1
+      }
+  },
+    pointClick: function (point) {
+        this.select();
+    },
+    legend: {
+      verticalAlignment: 'top',
+      horizontalAlignment: 'right'
+    },
+    seriesTemplate: {
+        nameField: "month",
+        customizeSeries: function(valueFromNameField) {
+            return valueFromNameField === "Target RRP UGX: <?=$line?>" ? { type: "line", label: { text:"stuff", visible: false }, color: "#68C701" } : {color: colors[months.indexOf(valueFromNameField) % 4]};
+        }
+    }
+  });
+
+<?php
+}
 ?>
 
 <form action="<?php echo "http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]"; ?>">
@@ -58,7 +128,9 @@ function isSelected($type, $val, $chart){
                 </div>
             </div>
             <div class="panel-body">
-              <div id="detailer-visits" style="height:250px;"></div>
+              <div id="detailer_visits" style="height:250px;">
+                       <span id="chartEmpty-detailer_visits" style="position:absolute;top:150px;left:100px;color: #5f8b95; font-size: 28px;">No Available Data</span>
+              </div>
             </div>
         </div>
     </div>
@@ -99,7 +171,9 @@ function isSelected($type, $val, $chart){
                 </div>
             </div>
             <div class="panel-body">
-              <div id="zinc-availability" style="height:250px;"></div>
+              <div id="zinc_availability" style="height:250px;">
+                <span id="chartEmpty-zinc_availability" style="position:absolute;top:150px;left:100px;color: #5f8b95; font-size: 28px;">No Available Data</span>
+              </div>
             </div>
         </div>
     </div>
@@ -142,7 +216,9 @@ function isSelected($type, $val, $chart){
                 </div>
             </div>
             <div class="panel-body">
-              <div id="zinc-price" style="height:250px;"></div>
+              <div id="zinc_price" style="height:250px;">
+                <span id="chartEmpty-zinc_price" style="position:absolute;top:150px;left:100px;color: #5f8b95; font-size: 28px;">No Available Data</span>
+              </div>
             </div>
         </div>
     </div>
@@ -184,7 +260,9 @@ function isSelected($type, $val, $chart){
                 </div>
             </div>
             <div class="panel-body">
-              <div id="ors-price" style="height:250px;"></div>
+              <div id="ors_price" style="height:250px;">
+                <span id="chartEmpty-ors_price" style="position:absolute;top:150px;left:100px;color: #5f8b95; font-size: 28px;">No Available Data</span>
+              </div>
             </div>
         </div>
     </div>
@@ -228,214 +306,12 @@ function isSelected($type, $val, $chart){
           $el.append($("<option></option>")
              .attr("value", value).text(key));
         });
-
     }
 
-  /*******************************************
-  Simple Bar Chart
-  *******************************************/
-
-  $("#detailer-visits").dxChart({
-    dataSource: [
-          <?php
-          $months = array();
-          foreach ($detailer_visits as $detName => $monthData) {
-            echo "{det: \"$detName\",";
-            foreach($monthData as $monthName=>$average){
-              $months[$monthName] = 0;
-              echo "avail$monthName: " . @$monthData[$monthName] . ",";
-            }
-            echo "},";
-          }
-          ?>
-        ],
-    commonSeriesSettings: {
-        argumentField: "det",
-        type: "bar",
-        hoverMode: "allArgumentPoints",
-        selectionMode: "allArgumentPoints",
-        label: {
-            visible: true,
-            format: "fixedPoint",
-            precision: 0
-        }
-    },
-    series: [
-        <?php
-        $i = 0;
-        foreach ($months as $month=>$val) {
-          echo "{ valueField: \"avail$month\", name: \"$month\", color: '". $colors[$i % 3] ."' },";
-          $i++;
-        }?>
-    ],
-    legend: {
-        visible: false
-    },
-  valueAxis:{
-    grid:{
-      color: '#9D9EA5',
-      width: 0.1
-      }
-  },
-    pointClick: function (point) {
-        this.select();
-    },
-    legend: {
-            verticalAlignment: 'top',
-            horizontalAlignment: 'right'
-        }
-  });
-
-  $("#zinc-availability").dxChart({
-        dataSource: [
-          <?php
-          $zincAvailMonths = array();
-          foreach ($zinc_stats as $detName => $monthData) {
-            echo "{det: \"$detName\",";
-            foreach($monthData as $monthName=>$average){
-              $zincAvailMonths[$monthName] = 0;
-              echo "avail$monthName: " . @$monthData[$monthName] . ",";
-            }
-            echo "},";
-          }
-          ?>
-        ],
-        commonSeriesSettings: {
-            argumentField: "det",
-            type: "bar",
-            hoverMode: "allArgumentPoints",
-            selectionMode: "allArgumentPoints",
-            label: {
-                visible: true,
-                format: "fixedPoint",
-                precision: 0
-            }
-        },
-        series: [
-            <?php
-            $i = 0;
-            foreach ($zincAvailMonths as $month=>$val) {
-              echo "{ valueField: \"avail$month\", name: \"$month\", color: '". $colors[$i % 3] ."' },";
-              $i++;
-            }?>
-        ],
-        legend: {
-            visible: false
-        },
-      valueAxis:{
-        grid:{
-          color: '#9D9EA5',
-          width: 0.1
-          }
-      },
-        pointClick: function (point) {
-            this.select();
-        },
-        legend: {
-                verticalAlignment: 'top',
-                horizontalAlignment: 'right'
-            }
-  });
-
-$("#zinc-price").dxChart({
-    dataSource: [
-      <?php
-        $zincPriceMonths = array();
-        foreach ($zinc_price as $detName => $monthData) {
-          echo "{det: \"$detName\",";
-          foreach($monthData as $monthName=>$average){
-            $zincPriceMonths[$monthName] = 0;
-            echo "avail$monthName: " . @$monthData[$monthName] . ",";
-          }
-          echo "},";
-        }
-        ?>
-    ],
-    commonSeriesSettings: {
-        argumentField: "det",
-        type: "bar",
-        hoverMode: "allArgumentPoints",
-        selectionMode: "allArgumentPoints",
-        label: {
-            visible: true,
-            format: "fixedPoint",
-            precision: 0
-        }
-    },
-    series: [
-        <?php
-        $i = 0;
-        foreach ($zincPriceMonths as $month=>$val) {
-          echo "{ valueField: \"avail$month\", name: \"$month\", color: '". $colors[$i % 3] ."' },";
-          $i++;
-        }?>
-    ],
-    legend: {
-        visible: false
-    },
-  valueAxis:{
-    grid:{
-      color: '#9D9EA5',
-      width: 0.1
-      }
-  },
-    pointClick: function (point) {
-        this.select();
-    },
-    legend: {
-            verticalAlignment: 'top',
-            horizontalAlignment: 'right'
-        }
-  });
-
-$("#ors-price").dxChart({
-    dataSource: [
-      <?php
-      $orsPriceMonths = array();
-      foreach ($ors_price as $detName => $monthData) {
-        echo "{det: \"$detName\",";
-        foreach($monthData as $monthName=>$average){
-          $orsPriceMonths[$monthName] = 0;
-          echo "avail$monthName: " . @$monthData[$monthName] . ",";
-        }
-        echo "},";
-      }
-      ?>
-    ],
-    commonSeriesSettings: {
-        argumentField: "det",
-        type: "bar",
-        hoverMode: "allArgumentPoints",
-        selectionMode: "allArgumentPoints",
-        label: {
-            visible: true,
-            format: "fixedPoint",
-            precision: 0
-        }
-    },
-    series: [
-        <?php
-        $i = 0;
-        foreach ($orsPriceMonths as $month=>$val) {
-          echo "{ valueField: \"avail$month\", name: \"$month\", color: '". $colors[$i % 3] ."' },";
-          $i++;
-        }?>
-    ],
-    legend: {
-        visible: false
-    },
-  valueAxis:{
-    grid:{
-      color: '#9D9EA5',
-      width: 0.1
-      }
-  },
-    pointClick: function (point) {
-        this.select();
-    },
-    legend: {
-            verticalAlignment: 'top',
-            horizontalAlignment: 'right'
-        }
-  });
+  <?php
+  printChart($detailer_visits, "detailer_visits");
+  printChart($zinc_stats, "zinc_availability");
+  printChart($zinc_price, "zinc_price", 900);
+  printChart($ors_price, "ors_price", 300);
+  ?>
 </script>
