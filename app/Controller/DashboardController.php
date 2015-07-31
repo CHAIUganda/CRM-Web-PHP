@@ -118,20 +118,28 @@ class DashboardController extends AppController {
             $epoch = floor($task["task.completionDate"]/1000);
             $dt = new DateTime("@$epoch");
             $task["month"] = $dt->format("F");
+            $task["week"] = $this->getWeekOfMonth($dt->format("j"));
 
         	if (!isset($res[$task["user.username"]])) {
         		$res[$task["user.username"]] = array();
         		$res[$task["user.username"]] = array();
         	}
 
-            if(!isset($res[$task["user.username"]][$task["month"]])){
-                $res[$task["user.username"]][$task["month"]] = array();
+            if($date_range["classification"] == 1){
+                if(!isset($res[$task["user.username"]][$task["week"]])){
+                    $res[$task["user.username"]][$task["week"]] = array();
+                }
+                if (!empty($task["stock.sellingPrice"])) {
+                    $res[$task["user.username"]][$task["week"]][] = $task["stock.sellingPrice"];
+                }
+            } else {
+                if(!isset($res[$task["user.username"]][$task["month"]])){
+                    $res[$task["user.username"]][$task["month"]] = array();
+                }
+                if (!empty($task["stock.sellingPrice"])) {
+                    $res[$task["user.username"]][$task["month"]][] = $task["stock.sellingPrice"];
+                }
             }
-
-        	$res[$task["user.username"]][$task["month"]][$task["task.uuid"]] = 0;
-        	if ($task["stock.stockLevel"] > 0) {
-        		$res[$task["user.username"]][$task["month"]][$task["task.uuid"]] = 1;
-        	}
         }
         $stockAvailabilityStats = array();
         foreach ($res as $username => $monthData) {
@@ -194,20 +202,34 @@ class DashboardController extends AppController {
 					$dt = new DateTime("@$epoch");
 					$item[$column] = $dt->format('Y-m-d');
                     $item["month"] = $dt->format("F");
+                    $item["week"] = $this->getWeekOfMonth($dt->format("j"));
         		}
         	}
 
         	if (!isset($stats[$item["user.username"]])) {
         		$stats[$item["user.username"]] = array();
 			}
-			if (!isset($stats[$item["user.username"]][$item["month"]])) {
-                $stats[$item["user.username"]][$item["month"]] = array();
-			}
-            if(!isset($stats[$item["user.username"]][$item["month"]][$item["task.completionDate"]])){
-                $stats[$item["user.username"]][$item["month"]][$item["task.completionDate"]] = 1;
+			
+            if($classification == 1){
+                if (!isset($stats[$item["user.username"]][$item["week"]])) {
+                    $stats[$item["user.username"]][$item["week"]] = array();
+                }
+                if(!isset($stats[$item["user.username"]][$item["week"]][$item["task.completionDate"]])){
+                    $stats[$item["user.username"]][$item["week"]][$item["task.completionDate"]] = 1;
+                } else {
+                    $stats[$item["user.username"]][$item["week"]][$item["task.completionDate"]]++;
+                }
             } else {
-				$stats[$item["user.username"]][$item["month"]][$item["task.completionDate"]]++;
-			}
+                if (!isset($stats[$item["user.username"]][$item["month"]])) {
+                    $stats[$item["user.username"]][$item["month"]] = array();
+                }
+                if(!isset($stats[$item["user.username"]][$item["month"]][$item["task.completionDate"]])){
+                    $stats[$item["user.username"]][$item["month"]][$item["task.completionDate"]] = 1;
+                } else {
+                    $stats[$item["user.username"]][$item["month"]][$item["task.completionDate"]]++;
+                }
+            }
+
         	$res[] = $item;
         }
 
@@ -269,11 +291,7 @@ class DashboardController extends AppController {
         foreach ($res as $detName=>$monthData) {
             if(!isset($stats[$detName])){
                 $stats[$detName] = array();
-                if ($classification == 1) {
-                    $stats[$detName] = $this->getWeeks();
-                } else {
-                    $stats[$detName] = $this->getMonths($classification, $period);
-                }
+                $stats[$detName] = $this->getMonths($classification, $period);
             }
 
             foreach($monthData as $month => $data){
@@ -382,7 +400,7 @@ class DashboardController extends AppController {
 				$positive_count++;
 			}
 		}
-		return ($positive_count/count($arr))*100;
+		return @($positive_count/count($arr))*100;
 	}
 
     function getMonths($classification = 2, $period = 1){
@@ -391,6 +409,7 @@ class DashboardController extends AppController {
         if ($classification == 1) {
             $start = $period;
             $end = $period + 1;
+            return array("W1"=>0, "W2"=>0, "W3"=>0, "W4"=>0);
         }
 
         if ($classification == 2) {

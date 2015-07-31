@@ -129,7 +129,7 @@ function printChart($datasource, $chartDiv, $line = null){
             </div>
             <div class="panel-body">
               <div id="detailer_visits" style="height:250px;">
-                       <span id="chartEmpty-detailer_visits" style="position:absolute;top:150px;left:100px;color: #5f8b95; font-size: 28px;">No Available Data</span>
+                       <span id="chartEmpty-detailer_visits" style="position:absolute;top:150px;left:100px;color: #5f8b95; font-size: 20px;">There is no data for the selected time period.</span>
               </div>
             </div>
         </div>
@@ -172,7 +172,7 @@ function printChart($datasource, $chartDiv, $line = null){
             </div>
             <div class="panel-body">
               <div id="zinc_availability" style="height:250px;">
-                <span id="chartEmpty-zinc_availability" style="position:absolute;top:150px;left:100px;color: #5f8b95; font-size: 28px;">No Available Data</span>
+                <span id="chartEmpty-zinc_availability" style="position:absolute;top:150px;left:100px;color: #5f8b95; font-size: 20px;">There is no data for the selected time period.</span>
               </div>
             </div>
         </div>
@@ -217,7 +217,7 @@ function printChart($datasource, $chartDiv, $line = null){
             </div>
             <div class="panel-body">
               <div id="zinc_price" style="height:250px;">
-                <span id="chartEmpty-zinc_price" style="position:absolute;top:150px;left:100px;color: #5f8b95; font-size: 28px;">No Available Data</span>
+                <span id="chartEmpty-zinc_price" style="position:absolute;top:150px;left:100px;color: #5f8b95; font-size: 20px;">No There is no data for the selected time period.</span>
               </div>
             </div>
         </div>
@@ -261,7 +261,7 @@ function printChart($datasource, $chartDiv, $line = null){
             </div>
             <div class="panel-body">
               <div id="ors_price" style="height:250px;">
-                <span id="chartEmpty-ors_price" style="position:absolute;top:150px;left:100px;color: #5f8b95; font-size: 28px;">No Available Data</span>
+                <span id="chartEmpty-ors_price" style="position:absolute;top:150px;left:100px;color: #5f8b95; font-size: 20px;">No There is no data for the selected time period.</span>
               </div>
             </div>
         </div>
@@ -302,9 +302,16 @@ function printChart($datasource, $chartDiv, $line = null){
         }
         var $el = $("#" + destSelect);
         $el.empty(); // remove old options
+        var d = new Date();
+
         $.each(newOptions, function(value,key) {
-          $el.append($("<option></option>")
+          if ((d.getMonth() + 1) == value) {
+            $el.append($("<option selected=\"selected\"></option>")
              .attr("value", value).text(key));
+          } else {
+            $el.append($("<option></option>")
+             .attr("value", value).text(key));
+          }
         });
     }
 
