@@ -155,7 +155,7 @@ function printChart($datasource, $chartDiv, $line = null){
     <div class="col-md-6">
       <div class="panel panel-default">
             <div class="panel-heading">
-            Regional Zinc & ORS Availability (%)
+                Zinc & ORS Availability by Detailer (%)
                 <div class="pull-right">
                         <div class="btn-group">
                             <select name="rOrsAvailClassification" onchange="updateOptions(event, 'zincPercent')">

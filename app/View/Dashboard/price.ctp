@@ -1,5 +1,4 @@
 <?php
-
 function isSelected($type, $val, $chart){
   $data = array();
   $data[1] = array(1 => "visitClassification", 2 => "dailyVisitsPeriod");
@@ -113,7 +112,7 @@ function printChart($datasource, $chartDiv, $line = null){
   <div class="col-md-6">
       <div class="panel panel-default">
             <div class="panel-heading">
-                Average Daily Visits by Detailers
+                Zinc Price by Region (UGX) 10 Tablets
                 <div class="pull-right">
                         <div class="btn-group">
                             <select name="visitClassification" onchange="updateOptions(event, 'dailyVisits')">
@@ -157,7 +156,7 @@ function printChart($datasource, $chartDiv, $line = null){
     <div class="col-md-6">
       <div class="panel panel-default">
             <div class="panel-heading">
-            Zinc/ORS Availability by Detailer (%)
+            ORS Price by Region (UGX) 10 Tablets
                 <div class="pull-right">
                         <div class="btn-group">
                             <select name="orsAvailClassification" onchange="updateOptions(event, 'zincPercent')">
@@ -335,8 +334,8 @@ function printChart($datasource, $chartDiv, $line = null){
     }
 
   <?php
-  printChart($detailer_visits, "detailer_visits");
-  printChart($zinc_stats, "zinc_availability");
+  printChart($regional_zinc_price, "detailer_visits", 900);
+  printChart($regional_ors_price, "zinc_availability", 300);
   printChart($zinc_price, "zinc_price", 900);
   printChart($ors_price, "ors_price", 300);
   ?>

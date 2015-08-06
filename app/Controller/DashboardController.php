@@ -31,8 +31,10 @@ class DashboardController extends AppController {
     }
 
     public function price(){
-        $this->set("detailer_visits", $this->average_visits_by_detailers());
-        $this->set("zinc_stats", $this->zinc_percentage_availability());
+        set_time_limit(0);
+        $this->set("regional_zinc_price", $this->average_regional_zinc_price());
+        $this->set("regional_ors_price", $this->average_regional_ors_price());
+
         $this->set("zinc_price", $this->median_zinc_price());
         $this->set("ors_price", $this->median_ors_price());
     }
@@ -107,7 +109,7 @@ class DashboardController extends AppController {
             t<-[:`SC_IN_TERRITORY`]-(sc) match sc<-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]->(task) match 
             task<-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
              $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]->(stock) where stock.category = 
-            \"zinc\" return task.uuid, task.description, task.completionDate, user.username, stock.uuid, stock.category, 
+            \"ors\" return task.uuid, task.description, task.completionDate, user.username, stock.uuid, stock.category, 
             stock.stockLevel");
         
         $res = array();
@@ -294,7 +296,120 @@ class DashboardController extends AppController {
         }
         return $medians;
 	}
+    function average_regional_zinc_price(){
+        @$classification = $_GET['zincClassification'];
+        @$period = $_GET['zincPrice'];
 
+        $date_range = $this->getTimeRange($classification, $period);
+        
+
+        $tasks = $this->runNeoQuery("MATCH (task:`DetailerTask`) where task.completionDate > ". $date_range[0] .
+            " AND task.completionDate < " . $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]->(stock) 
+            match task<-[:`COMPLETED_TASK`]-(user) match (user)-[:`USER_TERRITORY`]->(t)
+            where stock.category = \"zinc\" match (t)<-[:`SC_IN_TERRITORY`]-(sc) match (ds)-[:`HAS_SUB_COUNTY`]->(sc) 
+            match (rg)-[:`HAS_DISTRICT`]->(ds) RETURN distinct task.uuid, task.description, task.completionDate, user.username, 
+            stock.uuid, stock.category, stock.stockLevel, stock.sellingPrice, t.name, rg.name");
+
+        $res[] = array();
+        foreach ($tasks as $task) {
+            $epoch = floor($task["task.completionDate"]/1000);
+            $dt = new DateTime("@$epoch");
+            $task["month"] = $dt->format("F");
+            $task["week"] = $this->getWeekOfMonth($dt->format("j"));
+
+            if (!isset($res[$task["rg.name"]])) {
+                $res[$task["rg.name"]] = array();
+            }
+
+            if($date_range["classification"] == 1){
+                if(!isset($res[$task["rg.name"]][$task["week"]])){
+                    $res[$task["rg.name"]][$task["week"]] = array();
+                }
+                if (!empty($task["stock.sellingPrice"])) {
+                    $res[$task["rg.name"]][$task["week"]][] = $task["stock.sellingPrice"];
+                }
+            } else {
+                if(!isset($res[$task["rg.name"]][$task["month"]])){
+                    $res[$task["rg.name"]][$task["month"]] = array();
+                }
+                if (!empty($task["stock.sellingPrice"])) {
+                    $res[$task["rg.name"]][$task["month"]][] = $task["stock.sellingPrice"];
+                }
+            }
+            
+        }
+        
+        $stats = array();
+        foreach ($res as $detName=>$monthData) {
+            if(!isset($stats[$detName])){
+                $stats[$detName] = array();
+                $stats[$detName] = $this->getMonths($classification, $period);
+            }
+
+            foreach($monthData as $month => $data){
+                $stats[$detName][$month] = $this->calculate_median($res[$detName][$month]);
+            }
+        }
+        unset($stats[0]);
+
+        return $stats;
+    }
+
+    function average_regional_ors_price(){
+        @$classification = $_GET['zincClassification'];
+        @$period = $_GET['zincPrice'];
+
+        $date_range = $this->getTimeRange($classification, $period);
+        $tasks = $this->runNeoQuery("MATCH (task:`DetailerTask`) where task.completionDate > ". $date_range[0] .
+            " AND task.completionDate < " . $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]->(stock) 
+            match task<-[:`COMPLETED_TASK`]-(user) match (user)-[:`USER_TERRITORY`]->(t)
+            where stock.category = \"ors\" match (t)<-[:`SC_IN_TERRITORY`]-(sc) match (ds)-[:`HAS_SUB_COUNTY`]->(sc) 
+            match (rg)-[:`HAS_DISTRICT`]->(ds) RETURN distinct task.uuid, task.description, task.completionDate, user.username, 
+            stock.uuid, stock.category, stock.stockLevel, stock.sellingPrice, t.name, rg.name");
+
+        $res[] = array();
+        foreach ($tasks as $task) {
+            $epoch = floor($task["task.completionDate"]/1000);
+            $dt = new DateTime("@$epoch");
+            $task["month"] = $dt->format("F");
+            $task["week"] = $this->getWeekOfMonth($dt->format("j"));
+
+            if (!isset($res[$task["rg.name"]])) {
+                $res[$task["rg.name"]] = array();
+            }
+
+            if($date_range["classification"] == 1){
+                if(!isset($res[$task["rg.name"]][$task["week"]])){
+                    $res[$task["rg.name"]][$task["week"]] = array();
+                }
+                if (!empty($task["stock.sellingPrice"])) {
+                    $res[$task["rg.name"]][$task["week"]][] = $task["stock.sellingPrice"];
+                }
+            } else {
+                if(!isset($res[$task["rg.name"]][$task["month"]])){
+                    $res[$task["rg.name"]][$task["month"]] = array();
+                }
+                if (!empty($task["stock.sellingPrice"])) {
+                    $res[$task["rg.name"]][$task["month"]][] = $task["stock.sellingPrice"];
+                }
+            }
+        }
+        
+        $stats = array();
+        foreach ($res as $detName=>$monthData) {
+            if(!isset($stats[$detName])){
+                $stats[$detName] = array();
+                $stats[$detName] = $this->getMonths($classification, $period);
+            }
+
+            foreach($monthData as $month => $data){
+                $stats[$detName][$month] = $this->calculate_median($res[$detName][$month]);
+            }
+        }
+        unset($stats[0]);
+
+        return $stats;
+    }
 	function median_zinc_price(){
         @$classification = $_GET['zincClassification'];
         @$period = $_GET['zincPrice'];
@@ -306,7 +421,6 @@ class DashboardController extends AppController {
              $date_range[1] . " optional match task-[:`HAS_DETAILER_STOCK`]-(stock) where stock.category = 
             \"zinc\" return task.uuid, task.description, task.completionDate, user.username, stock.uuid, stock.category,
             stock.stockLevel, stock.sellingPrice");
-
         $res[] = array();
         foreach ($tasks as $task) {
             $epoch = floor($task["task.completionDate"]/1000);
