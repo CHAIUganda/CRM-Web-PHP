@@ -108,9 +108,9 @@
 
                             <ul role="menu" class="dropdown-menu multi-level" aria-labelledby="dropdownMenu">
                                 <li><a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>">Dashboard</a></li>
-                                <li><a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>">Availability</a></li>
-                                <li><a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>">Price</a></li>
-                                <li><a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>">Productivity</a></li>
+                                <li><a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>/dashboard/availability">Availability</a></li>
+                                <li><a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>/dashboard/price">Price</a></li>
+                                <li><a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>/dashboard/productivity">Productivity</a></li>
 
                                 <li><a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/chai-crm/report/index">Reports</a></li>
                                 <li><a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/chai-crm/reportGroup/index">Report Groups</a></li>

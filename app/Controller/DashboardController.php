@@ -22,83 +22,133 @@ class DashboardController extends AppController {
         $this->set("ors_price", $this->median_ors_price());
 	}
 
-/**
- * view method
- *
- * @throws NotFoundException
- * @param string $id
- * @return void
- */
-	public function view($id = null) {
-		if (!$this->DetailerTask->exists($id)) {
-			throw new NotFoundException(__('Invalid company'));
-		}
-		$options = array('conditions' => array('Company.' . $this->Company->primaryKey => $id));
-		$this->set('company', $this->Company->find('first', $options));
-	}
+    public function availability(){
+        $this->set("nZincStats", $this->avail_nzinc_ors_avail());
+        $this->set("rZincStats", $this->avail_rzinc_ors_avail());
 
-/**
- * add method
- *
- * @return void
- */
-	public function add() {
-		if ($this->request->is('post')) {
-			$this->Company->create();
-			if ($this->Company->save($this->request->data)) {
-				$this->Session->setFlash(__('The company has been saved'));
-				$this->redirect(array('action' => 'index'));
-			} else {
-				$this->Session->setFlash(__('The company could not be saved. Please, try again.'));
-			}
-		}
-	}
+        //pr($this->avail_nzinc_ors_avail());
+        //pr($this->avail_rzinc_ors_avail());
+    }
 
-/**
- * edit method
- *
- * @throws NotFoundException
- * @param string $id
- * @return void
- */
-	public function edit($id = null) {
-		if (!$this->Company->exists($id)) {
-			throw new NotFoundException(__('Invalid company'));
-		}
-		if ($this->request->is('post') || $this->request->is('put')) {
-			if ($this->Company->save($this->request->data)) {
-				$this->Session->setFlash(__('The company has been saved'));
-				$this->redirect(array('action' => 'index'));
-			} else {
-				$this->Session->setFlash(__('The company could not be saved. Please, try again.'));
-			}
-		} else {
-			$options = array('conditions' => array('Company.' . $this->Company->primaryKey => $id));
-			$this->request->data = $this->Company->find('first', $options);
-		}
-	}
+    public function price(){
+        $this->set("detailer_visits", $this->average_visits_by_detailers());
+        $this->set("zinc_stats", $this->zinc_percentage_availability());
+        $this->set("zinc_price", $this->median_zinc_price());
+        $this->set("ors_price", $this->median_ors_price());
+    }
 
-/**
- * delete method
- *
- * @throws NotFoundException
- * @param string $id
- * @return void
- */
-	public function delete($id = null) {
-		$this->Company->id = $id;
-		if (!$this->Company->exists()) {
-			throw new NotFoundException(__('Invalid company'));
-		}
-		$this->request->onlyAllow('post', 'delete');
-		if ($this->Company->delete()) {
-			$this->Session->setFlash(__('Company deleted'));
-			$this->redirect(array('action' => 'index'));
-		}
-		$this->Session->setFlash(__('Company was not deleted'));
-		$this->redirect(array('action' => 'index'));
-	}
+    public function productivity(){
+        $this->set("detailer_visits", $this->average_visits_by_detailers());
+        $this->set("zinc_stats", $this->zinc_percentage_availability());
+        $this->set("zinc_price", $this->median_zinc_price());
+        $this->set("ors_price", $this->median_ors_price());
+    }
+    function avail_nzinc_ors_avail(){
+        // Get filters
+        @$classification = $_GET['nOrsAvailClassification'];
+        @$period = $_GET['nZincPercent'];
 
+        $date_range = $this->getTimeRange($classification, $period);
+
+        $tasks = $this->runNeoQuery("MATCH (task:`DetailerTask`) where task.completionDate > ". $date_range[0] .
+            " AND task.completionDate < " . $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]->(stock) 
+            match task<-[:`COMPLETED_TASK`]-(user) match (user)-[:`USER_TERRITORY`]->(t)
+            where stock.category = \"zinc\" match (t)<-[:`SC_IN_TERRITORY`]-(sc) match (ds)-[:`HAS_SUB_COUNTY`]->(sc) 
+            match (rg)-[:`HAS_DISTRICT`]->(ds) RETURN distinct task.uuid, task.description, task.completionDate, user.username, 
+            stock.uuid, stock.category, stock.stockLevel, t.name, rg.name");
+
+        $res = array();
+        //pr($tasks);
+        foreach ($tasks as $task) {
+            $epoch = floor($task["task.completionDate"]/1000);
+            $dt = new DateTime("@$epoch");
+            $task["month"] = $dt->format("F");
+            $task["week"] = $this->getWeekOfMonth($dt->format("j"));
+
+            if (!isset($res[$task["rg.name"]])) {
+                $res[$task["rg.name"]] = array();
+            }
+
+            if($date_range["classification"] == 1){
+                $res[$task["rg.name"]][$task["week"]][$task["task.uuid"]] = 0;
+                if ($task["stock.stockLevel"] > 0) {
+                    $res[$task["rg.name"]][$task["week"]][$task["task.uuid"]] = 1;
+                }
+            } else {
+                $res[$task["rg.name"]][$task["month"]][$task["task.uuid"]] = 0;
+                if ($task["stock.stockLevel"] > 0) {
+                    $res[$task["rg.name"]][$task["month"]][$task["task.uuid"]] = 1;
+                }
+            }
+        }
+
+        $stockAvailabilityStats = array();
+        foreach ($res as $username => $monthData) {
+            if(!isset($stockAvailabilityStats[$username])){
+                $stockAvailabilityStats[$username] = array();
+                $stockAvailabilityStats[$username] = $this->getMonths($classification, $period);
+            }
+
+            foreach($monthData as $month => $data){
+                $stockAvailabilityStats[$username][$month] = $this->calculate_positive_percentage($res[$username][$month]);
+            }
+        }
+        return $stockAvailabilityStats;
+    }
+
+    function avail_rzinc_ors_avail(){
+        // Get filters
+        @$classification = $_GET['rOrsAvailClassification'];
+        @$period = $_GET['rZincPercent'];
+
+        $date_range = $this->getTimeRange($classification, $period);
+
+        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]->(t) match 
+            t<-[:`SC_IN_TERRITORY`]-(sc) match sc<-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]->(task) match 
+            task<-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
+             $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]->(stock) where stock.category = 
+            \"zinc\" return task.uuid, task.description, task.completionDate, user.username, stock.uuid, stock.category, 
+            stock.stockLevel");
+        
+        $res = array();
+
+        foreach ($tasks as $task) {
+            $epoch = floor($task["task.completionDate"]/1000);
+            $dt = new DateTime("@$epoch");
+            $task["month"] = $dt->format("F");
+            $task["week"] = $this->getWeekOfMonth($dt->format("j"));
+
+            if (!isset($res[$task["user.username"]])) {
+                $res[$task["user.username"]] = array();
+                $res[$task["user.username"]] = array();
+            }
+
+            if($date_range["classification"] == 1){
+                $res[$task["user.username"]][$task["week"]][$task["task.uuid"]] = 0;
+                if ($task["stock.stockLevel"] > 0) {
+                    $res[$task["user.username"]][$task["week"]][$task["task.uuid"]] = 1;
+                }
+            } else {
+                $res[$task["user.username"]][$task["month"]][$task["task.uuid"]] = 0;
+                if ($task["stock.stockLevel"] > 0) {
+                    $res[$task["user.username"]][$task["month"]][$task["task.uuid"]] = 1;
+                }
+            }
+        }
+
+        $stockAvailabilityStats = array();
+        foreach ($res as $username => $monthData) {
+            if(!isset($stockAvailabilityStats[$username])){
+                $stockAvailabilityStats[$username] = array();
+                $stockAvailabilityStats[$username] = $this->getMonths($classification, $period);
+            }
+
+            foreach($monthData as $month => $data){
+                $stockAvailabilityStats[$username][$month] = $this->calculate_positive_percentage($res[$username][$month]);
+            }
+        }
+        return $stockAvailabilityStats;
+    }
 
 	function zinc_percentage_availability(){
         // Get filters
@@ -106,12 +156,14 @@ class DashboardController extends AppController {
         @$period = $_GET['zincPercent'];
 
 		$date_range = $this->getTimeRange($classification, $period);
-        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`USER_TERRITORY`]-(t) match 
+
+        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t) match 
             t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
             task-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
              $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]-(stock) where stock.category = 
-            \"zinc\" return task.uuid, task.description, task.completionDate, user.username, stock.uuid, stock.category, stock.stockLevel 
-            LIMIT 1000");
+            \"zinc\" return task.uuid, task.description, task.completionDate, user.username, stock.uuid, stock.category,
+            stock.stockLevel ");
+        
         $res = array();
 
         foreach ($tasks as $task) {
@@ -126,21 +178,18 @@ class DashboardController extends AppController {
         	}
 
             if($date_range["classification"] == 1){
-                if(!isset($res[$task["user.username"]][$task["week"]])){
-                    $res[$task["user.username"]][$task["week"]] = array();
-                }
-                if (!empty($task["stock.sellingPrice"])) {
-                    $res[$task["user.username"]][$task["week"]][] = $task["stock.sellingPrice"];
+                $res[$task["user.username"]][$task["week"]][$task["task.uuid"]] = 0;
+                if ($task["stock.stockLevel"] > 0) {
+                    $res[$task["user.username"]][$task["week"]][$task["task.uuid"]] = 1;
                 }
             } else {
-                if(!isset($res[$task["user.username"]][$task["month"]])){
-                    $res[$task["user.username"]][$task["month"]] = array();
-                }
-                if (!empty($task["stock.sellingPrice"])) {
-                    $res[$task["user.username"]][$task["month"]][] = $task["stock.sellingPrice"];
+                $res[$task["user.username"]][$task["month"]][$task["task.uuid"]] = 0;
+                if ($task["stock.stockLevel"] > 0) {
+                    $res[$task["user.username"]][$task["month"]][$task["task.uuid"]] = 1;
                 }
             }
         }
+
         $stockAvailabilityStats = array();
         foreach ($res as $username => $monthData) {
             if(!isset($stockAvailabilityStats[$username])){
@@ -179,7 +228,7 @@ class DashboardController extends AppController {
 		$this->client = new Everyman\Neo4j\Client();
         $this->client->getTransport()->setAuth("neo4j", "neo4j");
 
-        $qs = "start n = node(". $this->_user['User']['neo_id'] .") match n-[:`USER_TERRITORY`]-(t) match 
+        $qs = "start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t) match 
             t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
             task-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
              $date_range[1] . " return distinct task.uuid, task.description, task.completionDate, user.username";
@@ -251,12 +300,12 @@ class DashboardController extends AppController {
         @$period = $_GET['zincPrice'];
 
         $date_range = $this->getTimeRange($classification, $period);
-        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`USER_TERRITORY`]-(t) match 
+        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t) match 
             t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
             task-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
              $date_range[1] . " optional match task-[:`HAS_DETAILER_STOCK`]-(stock) where stock.category = 
-            \"zinc\" return task.uuid, task.description, task.completionDate, user.username, stock.uuid, stock.category, stock.stockLevel
-            , stock.sellingPrice LIMIT 1000");
+            \"zinc\" return task.uuid, task.description, task.completionDate, user.username, stock.uuid, stock.category,
+            stock.stockLevel, stock.sellingPrice");
 
         $res[] = array();
         foreach ($tasks as $task) {
@@ -309,12 +358,12 @@ class DashboardController extends AppController {
 
         $date_range = $this->getTimeRange($classification, $period);
 
-		$tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`USER_TERRITORY`]-(t) match 
+		$tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t) match 
             t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
             task-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
              $date_range[1] . " optional match task-[:`HAS_DETAILER_STOCK`]-(stock) where stock.category = 
             \"ors\" return task.uuid, task.description, task.completionDate, user.username, stock.uuid, stock.category, stock.stockLevel
-            , stock.sellingPrice LIMIT 1000");
+            , stock.sellingPrice");
 
         $res[] = array();
         foreach ($tasks as $task) {
