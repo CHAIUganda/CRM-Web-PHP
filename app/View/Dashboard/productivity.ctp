@@ -4,7 +4,7 @@ function isSelected($type, $val, $chart){
   $data = array();
   $data[1] = array(1 => "visitClassification", 2 => "dailyVisitsPeriod");
   $data[2] = array(1 => "orsAvailClassification", 2 => "zincPercent");
-  $data[3] = array(1 => "zincClassification", 2 => "zincPrice");
+  $data[3] = array(1 => "visitClassification", 2 => "dailyVisitsPeriod");
   $data[4] = array(1 => "orsClassification", 2 => "ORSPrice");
 
   $fieldName = $data[$chart][$type];
@@ -19,8 +19,8 @@ function isSelected($type, $val, $chart){
   }
 }
 
-function printChart($datasource, $chartDiv, $line = null){
-  $colors = array(" #243C63", "#4E77BD", "#788fb5", "#acb9ce");
+function printChart($datasource, $chartDiv, $line = null, $type = "bar"){
+  $colors = array("#4E77BD", "#767A87", "#68C701");
   ?>
   var <?=$chartDiv?> = [
           <?php
@@ -51,7 +51,7 @@ function printChart($datasource, $chartDiv, $line = null){
     commonSeriesSettings: {
         argumentField: "det",
         valueField: "visits",
-        type: "bar",
+        type: "<?=$type?>",
         hoverMode: "allArgumentPoints",
         selectionMode: "allArgumentPoints",
         label: {
@@ -113,7 +113,7 @@ function printChart($datasource, $chartDiv, $line = null){
   <div class="col-md-6">
       <div class="panel panel-default">
             <div class="panel-heading">
-                Average Daily Visits by Detailers
+                Total Weekly Visits
                 <div class="pull-right">
                         <div class="btn-group">
                             <select name="visitClassification" onchange="updateOptions(event, 'dailyVisits')">
@@ -157,7 +157,7 @@ function printChart($datasource, $chartDiv, $line = null){
     <div class="col-md-6">
       <div class="panel panel-default">
             <div class="panel-heading">
-            Zinc/ORS Availability by Detailer (%)
+            Task Completion by Region (%)
                 <div class="pull-right">
                         <div class="btn-group">
                             <select name="orsAvailClassification" onchange="updateOptions(event, 'zincPercent')">
@@ -190,8 +190,8 @@ function printChart($datasource, $chartDiv, $line = null){
                 </div>
             </div>
             <div class="panel-body">
-              <div id="zinc_availability" style="height:250px;">
-                <span id="chartEmpty-zinc_availability" style="position:absolute;top:150px;left:100px;color: #5f8b95; font-size: 20px;">There is no data for the selected time period.</span>
+              <div id="rtask_completion" style="height:250px;">
+                <span id="chartEmpty-rtask_completion" style="position:absolute;top:150px;left:100px;color: #5f8b95; font-size: 20px;">There is no data for the selected time period.</span>
               </div>
             </div>
         </div>
@@ -202,15 +202,15 @@ function printChart($datasource, $chartDiv, $line = null){
   <div class="col-md-6">
       <div class="panel panel-default">
             <div class="panel-heading">
-              Zinc Price by Detailer (UGX)
+              Average Daily Visits by Detailer (Diarrhoea)
                 <div class="pull-right">
                         <div class="btn-group">
-                            <select name="zincClassification" onchange="updateOptions(event, 'zincPrice')">
+                            <select name="visitClassification" onchange="updateOptions(event, 'zincPrice')">
                                 <option value="2" <?php echo isSelected(1, 2, 3);?>>Quarter</option>
                                 <option value="1" <?php echo isSelected(1, 1, 3);?>>Month</option>
                             </select>
-                            <select name="zincPrice" id="zincPrice">
-                              <?php if(@$_GET['zincClassification'] == 1){ ?>
+                            <select name="dailyVisitsPeriod" id="zincPrice">
+                              <?php if(@$_GET['visitClassification'] == 1){ ?>
                                 <option value="1" <?php echo isSelected(2, 1, 3);?>>Jan '15</option>
                                 <option value="2" <?php echo isSelected(2, 2, 3);?>>Feb '15</option>
                                 <option value="3" <?php echo isSelected(2, 3, 3);?>>Mar '15</option>
@@ -235,8 +235,8 @@ function printChart($datasource, $chartDiv, $line = null){
                 </div>
             </div>
             <div class="panel-body">
-              <div id="zinc_price" style="height:250px;">
-                <span id="chartEmpty-zinc_price" style="position:absolute;top:150px;left:100px;color: #5f8b95; font-size: 20px;">No There is no data for the selected time period.</span>
+              <div id="dv" style="height:250px;">
+                <span id="chartEmpty-dv" style="position:absolute;top:150px;left:100px;color: #5f8b95; font-size: 20px;">No There is no data for the selected time period.</span>
               </div>
             </div>
         </div>
@@ -245,7 +245,7 @@ function printChart($datasource, $chartDiv, $line = null){
     <div class="col-md-6">
       <div class="panel panel-default">
             <div class="panel-heading">
-                ORS Price by Detailer (UGX)
+                Task Completion by Detailer (%)
                 <div class="pull-right">
                         <div class="btn-group">
                             <select name="orsClassification" onchange="updateOptions(event, 'ORSPrice')">
@@ -279,8 +279,8 @@ function printChart($datasource, $chartDiv, $line = null){
                 </div>
             </div>
             <div class="panel-body">
-              <div id="ors_price" style="height:250px;">
-                <span id="chartEmpty-ors_price" style="position:absolute;top:150px;left:100px;color: #5f8b95; font-size: 20px;">No There is no data for the selected time period.</span>
+              <div id="dtask_completion" style="height:250px;">
+                <span id="chartEmpty-dtask_completion" style="position:absolute;top:150px;left:100px;color: #5f8b95; font-size: 20px;">No There is no data for the selected time period.</span>
               </div>
             </div>
         </div>
@@ -335,9 +335,9 @@ function printChart($datasource, $chartDiv, $line = null){
     }
 
   <?php
-  printChart($detailer_visits, "detailer_visits");
-  printChart($zinc_stats, "zinc_availability");
-  printChart($zinc_price, "zinc_price", 900);
-  printChart($ors_price, "ors_price", 300);
+  printChart($dv, "detailer_visits");
+  printChart($rtask_completion, "rtask_completion", null, "stackedBar");
+  printChart($detailer_visits, "dv");
+  printChart($dtask_completion, "dtask_completion", null, "stackedBar");
   ?>
 </script>

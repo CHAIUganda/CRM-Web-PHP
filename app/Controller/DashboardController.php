@@ -25,9 +25,6 @@ class DashboardController extends AppController {
     public function availability(){
         $this->set("nZincStats", $this->avail_nzinc_ors_avail());
         $this->set("rZincStats", $this->avail_rzinc_ors_avail());
-
-        //pr($this->avail_nzinc_ors_avail());
-        //pr($this->avail_rzinc_ors_avail());
     }
 
     public function price(){
@@ -40,11 +37,105 @@ class DashboardController extends AppController {
     }
 
     public function productivity(){
-        $this->set("detailer_visits", $this->average_visits_by_detailers());
-        $this->set("zinc_stats", $this->zinc_percentage_availability());
-        $this->set("zinc_price", $this->median_zinc_price());
-        $this->set("ors_price", $this->median_ors_price());
+        set_time_limit(0);
+        $this->set("dv", $this->average_visits_by_detailers("all"));
+        $this->set("rtask_completion", $this->rtask_completion());
+        $this->set("detailer_visits", $this->average_visits_by_detailers("diarrhoea"));
+        $this->set("dtask_completion", $this->dtask_completion());
     }
+
+    public function rtask_completion(){
+        // Get filters
+        @$classification = $_GET['orsAvailClassification'];
+        @$period = $_GET['zincPercent'];
+
+        $date_range = $this->getTimeRange($classification, $period);
+
+        $tasks = $this->runNeoQuery("MATCH (task:`Task`) where task.completionDate > ". $date_range[0] .
+            " AND task.completionDate < " . $date_range[1] . " 
+            match task<-[:`COMPLETED_TASK`]-(user) match (user)-[:`USER_TERRITORY`]->(t)
+            match (t)<-[:`SC_IN_TERRITORY`]-(sc) match (ds)-[:`HAS_SUB_COUNTY`]->(sc) 
+            match (rg)-[:`HAS_DISTRICT`]->(ds) RETURN distinct task.uuid, task.description, task.completionDate, task.status, user.username, 
+            t.name, rg.name");
+        
+        $res = array();
+        foreach ($tasks as $task) {
+            $epoch = floor($task["task.completionDate"]/1000);
+            $dt = new DateTime("@$epoch");
+            $task["month"] = $dt->format("F");
+            $task["week"] = $this->getWeekOfMonth($dt->format("j"));
+
+            if (!isset($res[$task["rg.name"]])) {
+                $res[$task["rg.name"]] = array();
+            }
+
+            $res[$task["rg.name"]][$task["task.status"]][$task["task.uuid"]] = 0;
+        }
+
+        $stockAvailabilityStats = array();
+        foreach ($res as $username => $monthData) {
+            if(!isset($stockAvailabilityStats[$username])){
+                $stockAvailabilityStats[$username] = array("complete"=>0, "cancelled"=>0, "new"=>0);
+            }
+
+            $total = 0;
+            foreach($monthData as $month => $data){
+                $total += count($res[$username][$month]);
+            }
+
+            foreach($monthData as $month => $data){
+                $stockAvailabilityStats[$username][$month] = (count($res[$username][$month])/$total) * 100;
+            }
+        }
+
+        return $stockAvailabilityStats;
+    }
+
+    public function dtask_completion(){
+        // Get filters
+        @$classification = $_GET['orsAvailClassification'];
+        @$period = $_GET['zincPercent'];
+
+        $date_range = $this->getTimeRange($classification, $period);
+
+        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]->(t) match 
+            t<-[:`SC_IN_TERRITORY`]-(sc) match sc<-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]->(task) match 
+            task<-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
+             $date_range[1] . " return task.uuid, task.description, task.completionDate, task.status, user.username");
+        
+        $res = array();
+        foreach ($tasks as $task) {
+            $epoch = floor($task["task.completionDate"]/1000);
+            $dt = new DateTime("@$epoch");
+            $task["month"] = $dt->format("F");
+            $task["week"] = $this->getWeekOfMonth($dt->format("j"));
+
+            if (!isset($res[$task["user.username"]])) {
+                $res[$task["user.username"]] = array();
+            }
+
+            $res[$task["user.username"]][$task["task.status"]][$task["task.uuid"]] = 0;
+        }
+
+        $stockAvailabilityStats = array();
+        foreach ($res as $username => $monthData) {
+            if(!isset($stockAvailabilityStats[$username])){
+                $stockAvailabilityStats[$username] = array("complete"=>0, "cancelled"=>0, "new"=>0);
+            }
+
+            $total = 0;
+            foreach($monthData as $month => $data){
+                $total += count($res[$username][$month]);
+            }
+
+            foreach($monthData as $month => $data){
+                $stockAvailabilityStats[$username][$month] = (count($res[$username][$month])/$total) * 100;
+            }
+        }
+
+        return $stockAvailabilityStats;
+    }
+
     function avail_nzinc_ors_avail(){
         // Get filters
         @$classification = $_GET['nOrsAvailClassification'];
@@ -206,7 +297,7 @@ class DashboardController extends AppController {
         return $stockAvailabilityStats;
 	}
 
-	function average_visits_by_detailers(){
+	function average_visits_by_detailers($type){
         // Get filters
         @$classification = $_GET['visitClassification'];
         @$period = $_GET['dailyVisitsPeriod'];
@@ -230,10 +321,19 @@ class DashboardController extends AppController {
 		$this->client = new Everyman\Neo4j\Client();
         $this->client->getTransport()->setAuth("neo4j", "neo4j");
 
-        $qs = "start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t) match 
+        $qs = "";
+        if ($type == "diarrhoea") {
+            $qs = "start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t) match 
+            t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task:`DetailerTask`) match 
+            (task)-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
+             $date_range[1] . " return distinct task.uuid, task.description, task.completionDate, user.username";
+        } else {
+            $qs = "start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t) match 
             t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
             task-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
              $date_range[1] . " return distinct task.uuid, task.description, task.completionDate, user.username";
+        }
+        
 
         $query = new Everyman\Neo4j\Cypher\Query($this->client, $qs);
         $results = $query->getResultSet();
@@ -297,8 +397,8 @@ class DashboardController extends AppController {
         return $medians;
 	}
     function average_regional_zinc_price(){
-        @$classification = $_GET['zincClassification'];
-        @$period = $_GET['zincPrice'];
+        @$classification = $_GET['visitClassification'];
+        @$period = $_GET['dailyVisitsPeriod'];
 
         $date_range = $this->getTimeRange($classification, $period);
         
@@ -356,8 +456,8 @@ class DashboardController extends AppController {
     }
 
     function average_regional_ors_price(){
-        @$classification = $_GET['zincClassification'];
-        @$period = $_GET['zincPrice'];
+        @$classification = $_GET['orsAvailClassification'];
+        @$period = $_GET['zincPercent'];
 
         $date_range = $this->getTimeRange($classification, $period);
         $tasks = $this->runNeoQuery("MATCH (task:`DetailerTask`) where task.completionDate > ". $date_range[0] .
