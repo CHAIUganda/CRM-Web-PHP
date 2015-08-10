@@ -16,7 +16,7 @@ class DashboardController extends AppController {
  * @return void
  */
 	public function index() {
-        $this->set("detailer_visits", $this->average_visits_by_detailers());
+        $this->set("detailer_visits", $this->average_visits_by_detailers("all"));
         $this->set("zinc_stats", $this->zinc_percentage_availability());
         $this->set("zinc_price", $this->median_zinc_price());
         $this->set("ors_price", $this->median_ors_price());
