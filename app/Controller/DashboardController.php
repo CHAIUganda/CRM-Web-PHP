@@ -667,6 +667,15 @@ class DashboardController extends AppController {
 	}
 
     function getMonths($classification = 2, $period = 1){
+        if(!in_array($classification, array(1,2))){
+            $classification = 2;
+        }
+
+        if(!in_array($period, array(1,2,3,4,5,6,7,8,9,10,11,12))){
+            $month = date("n");
+            $period = ceil($month/3);
+        }
+        
         $start = 1;
         $end = 13;
         if ($classification == 1) {
