@@ -38,12 +38,58 @@ class DashboardController extends AppController {
 
     public function productivity(){
         set_time_limit(0);
-        $this->set("dv", $this->average_visits_by_detailers("all"));
+        $this->set("weekly_visits", $this->dweekly_visits());
         $this->set("rtask_completion", $this->rtask_completion());
         $this->set("detailer_visits", $this->average_visits_by_detailers("diarrhoea"));
         $this->set("dtask_completion", $this->dtask_completion());
     }
 
+    public function dweekly_visits(){
+        // Get filters
+        @$classification = $_GET['weeklyVisitClassification'];
+        @$period = $_GET['weeklyDailyVisitsPeriod'];
+
+        $date_range = $this->getTimeRange($classification, $period);
+        
+        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t) match 
+            t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match cust-[:`IN_SEGMENT`]->seg
+            match task-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
+             $date_range[1] . " return task.uuid, task.description, task.completionDate, user.username, seg.name");
+        
+        $res = array();
+
+        foreach ($tasks as $task) {
+            $epoch = floor($task["task.completionDate"]/1000);
+            $dt = new DateTime("@$epoch");
+            $task["month"] = $dt->format("F");
+            $task["week"] = $this->getWeekOfMonth($dt->format("j"));
+            $task["day_of_week"] = $dt->format("l");
+
+            if (!isset($res[$task["day_of_week"]])) {
+                $res[$task["day_of_week"]] = array();
+            }
+            if(empty($res[$task["day_of_week"]][$task["seg.name"]])){
+                $res[$task["day_of_week"]][$task["seg.name"]] = array();
+            }
+            
+            $res[$task["day_of_week"]][$task["seg.name"]][$task["task.uuid"]] = 1;
+        }
+
+        $segments = array("A"=>0,"B"=>0,"C"=>0,"D"=>0);
+        $stockAvailabilityStats = array("Monday"=>$segments, "Tuesday"=>$segments, "Wednesday"=>$segments,
+         "Thursday"=>$segments, "Friday"=>$segments, "Saturday"=>$segments, "Sunday"=>$segments);
+        foreach ($res as $username => $monthData) {
+            if(!isset($stockAvailabilityStats[$username])){
+                $stockAvailabilityStats[$username] = array("A"=>0,"B"=>0,"C"=>0,"D"=>0);
+            }
+
+            foreach($monthData as $month => $data){
+                $stockAvailabilityStats[$username][$month] = count($res[$username][$month]);
+            }
+        }
+
+        return $stockAvailabilityStats;
+    }
     public function rtask_completion(){
         // Get filters
         @$classification = $_GET['orsAvailClassification'];
@@ -675,7 +721,7 @@ class DashboardController extends AppController {
             $month = date("n");
             $period = ceil($month/3);
         }
-        
+
         $start = 1;
         $end = 13;
         if ($classification == 1) {

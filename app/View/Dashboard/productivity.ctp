@@ -2,7 +2,7 @@
 
 function isSelected($type, $val, $chart){
   $data = array();
-  $data[1] = array(1 => "visitClassification", 2 => "dailyVisitsPeriod");
+  $data[1] = array(1 => "weeklyVisitClassification", 2 => "weeklyDailyVisitsPeriod");
   $data[2] = array(1 => "orsAvailClassification", 2 => "zincPercent");
   $data[3] = array(1 => "visitClassification", 2 => "dailyVisitsPeriod");
   $data[4] = array(1 => "orsClassification", 2 => "ORSPrice");
@@ -116,12 +116,12 @@ function printChart($datasource, $chartDiv, $line = null, $type = "bar"){
                 Total Weekly Visits
                 <div class="pull-right">
                         <div class="btn-group">
-                            <select name="visitClassification" onchange="updateOptions(event, 'dailyVisits')">
+                            <select name="weeklyVisitClassification" onchange="updateOptions(event, 'dailyVisits')">
                             <option value="2" <?php echo isSelected(1, 2, 1);?>>Quarter</option>
                                 <option value="1" <?php echo isSelected(1, 1, 1);?>>Month</option>
                             </select>
-                            <select name="dailyVisitsPeriod" id="dailyVisits">
-                              <?php if(@$_GET['visitClassification'] == 1){ ?>
+                            <select name="weeklyDailyVisitsPeriod" id="dailyVisits">
+                              <?php if(@$_GET['weeklyVisitClassification'] == 1){ ?>
                                 <option value="1" <?php echo isSelected(2, 1, 1);?>>Jan '15</option>
                                 <option value="2" <?php echo isSelected(2, 2, 1);?>>Feb '15</option>
                                 <option value="3" <?php echo isSelected(2, 3, 1);?>>Mar '15</option>
@@ -335,7 +335,7 @@ function printChart($datasource, $chartDiv, $line = null, $type = "bar"){
     }
 
   <?php
-  printChart($dv, "detailer_visits");
+  printChart($weekly_visits, "detailer_visits", null, "stackedBar");
   printChart($rtask_completion, "rtask_completion", null, "stackedBar");
   printChart($detailer_visits, "dv");
   printChart($dtask_completion, "dtask_completion", null, "stackedBar");
