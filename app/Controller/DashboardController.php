@@ -42,18 +42,31 @@ class DashboardController extends AppController {
         $this->set("rtask_completion", $this->rtask_completion());
         $this->set("detailer_visits", $this->average_visits_by_detailers("diarrhoea"));
         $this->set("dtask_completion", $this->dtask_completion());
+        $this->set("detailers", $this->detailers());
+    }
+
+    public function detailers(){
+        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t) match t<-[:`USER_TERRITORY`]-(user)
+            match (user)-[:`HAS_ROLE`]->role where role.authority = \"ROLE_DETAILER\" return  user.username as username, id(user) as user_id limit 1000");
+
+        return $tasks;
     }
 
     public function dweekly_visits(){
         // Get filters
         @$classification = $_GET['weeklyVisitClassification'];
         @$period = $_GET['weeklyDailyVisitsPeriod'];
-
+        @$detId = $_GET['detId'];
         $date_range = $this->getTimeRange($classification, $period);
         
+        $det_filter = "";
+        if (!empty($detId) || $detId != 0) {
+            $det_filter = "id(user) = " . $detId . " and ";
+        }
+
         $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t) match 
             t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match cust-[:`IN_SEGMENT`]->seg
-            match task-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
+            match task-[:`COMPLETED_TASK`]-(user) where $det_filter task.completionDate > " . $date_range[0] . " and task.completionDate < ".
              $date_range[1] . " return task.uuid, task.description, task.completionDate, user.username, seg.name");
         
         $res = array();

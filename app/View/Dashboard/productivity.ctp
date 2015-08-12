@@ -106,7 +106,35 @@ function printChart($datasource, $chartDiv, $line = null, $type = "bar"){
 
 <?php
 }
+
+function select_detname($detId){
+  if ($detId == @$_GET['detId']) {
+    return "selected=\"selected\"";
+  }
+}
 ?>
+<div class="row">
+    <div class="col-md-3 col-sm-6">
+    </div>
+    <div class="col-md-3 col-sm-6">
+      <div class="panel panel-default clearfix dashboard-stats rounded">
+          <span id="dashboard-stats-sparkline3" class="sparkline transit"></span>
+          <i class="fa fa-user bg-success transit stats-icon"></i>
+            <h3 class="transit">2,014 <small class="text-green"><i class="fa fa-caret-up"></i> 9%</small></h3>
+            <p class="text-muted transit">Average Daily Visits (National)</p>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+      <div class="panel panel-default clearfix dashboard-stats rounded">
+          <span id="dashboard-stats-sparkline4" class="sparkline transit"></span>
+          <i class="fa fa-warning bg-warning transit stats-icon"></i>
+            <h3 class="transit">-344 <small class="text-red"><i class="fa fa-caret-down"></i> 20%</small></h3>
+            <p class="text-muted transit">Average Task Completion (National)</p>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+    </div>
+</div>
 
 <form action="<?php echo "http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]"; ?>">
 <div class="row">
@@ -116,6 +144,13 @@ function printChart($datasource, $chartDiv, $line = null, $type = "bar"){
                 Total Weekly Visits
                 <div class="pull-right">
                         <div class="btn-group">
+                            <select name="detId">
+                              <option value="0" <?php echo select_detname(0); ?>>All</option>
+                            <?php foreach ($detailers as $detailer) { ?>
+                              <option value="<?=$detailer["user_id"];?>" <?php echo select_detname($detailer["user_id"]); ?>><?=$detailer["username"];?></option>
+                            <?php }?>
+                            </select>
+
                             <select name="weeklyVisitClassification" onchange="updateOptions(event, 'dailyVisits')">
                             <option value="2" <?php echo isSelected(1, 2, 1);?>>Quarter</option>
                                 <option value="1" <?php echo isSelected(1, 1, 1);?>>Month</option>
