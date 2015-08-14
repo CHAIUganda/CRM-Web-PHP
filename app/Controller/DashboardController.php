@@ -40,11 +40,99 @@ class DashboardController extends AppController {
 
     public function productivity(){
         set_time_limit(0);
+        $this->set("average_daily_visits", $this->average_daily_visits());
+        $this->set("average_task_completion", $this->average_task_completion());
+
         $this->set("weekly_visits", $this->dweekly_visits());
         $this->set("rtask_completion", $this->rtask_completion());
         $this->set("detailer_visits", $this->average_visits_by_detailers("diarrhoea"));
         $this->set("dtask_completion", $this->dtask_completion());
         $this->set("detailers", $this->detailers());
+    }
+    public function average_daily_visits(){
+        $classification = 1;
+        $dt = new DateTime();
+        //$thismonth_range = $this->getTimeRange($classification, $dt->format("n"));
+        //$lastmonth_range = $this->getTimeRange($classification, (intval($dt->format("n")) - 1));
+        $thismonth_range = $this->getTimeRange($classification, 3);
+        $lastmonth_range = $this->getTimeRange($classification, 2);
+
+        $tasks = $this->runNeoQuery("MATCH (task:`DetailerTask`) where task.completionDate > ". $lastmonth_range[0] .
+            " AND task.completionDate < " . $thismonth_range[1] . " RETURN distinct task.uuid, task.completionDate, task.status");
+
+        $res = array();
+        foreach ($tasks as $task) {
+            $epoch = floor($task["task.completionDate"]/1000);
+            $dt = new DateTime("@$epoch");
+            $task["month"] = $dt->format("F");
+            $task["week"] = $this->getWeekOfMonth($dt->format("j"));
+            $task["day"] = $dt->format("j");
+
+            if(empty($res[$task["month"]][$task["day"]])){
+                $res[$task["month"]][$task["day"]] = 0;
+            }
+            $res[$task["month"]][$task["day"]]++;
+        }
+        $data = array();
+        foreach($res as $month=>$values){
+            foreach ($values as $selling_price) {
+                $data[$month][] = $selling_price;
+            }
+        }
+        $res = array("February"=>0, "March"=>0);
+        foreach ($data as $month => $info) {
+            $res[$month] = $this->calculate_average($info);
+        }
+        //$lastMonth = $dt->format("F", strtotime("first day of previous month"));
+        //$thisMonth = $dt->format("F");
+        $lastMonth = "February";
+        $thisMonth = "March";
+
+        if($res[$lastMonth] == 0){
+            $res["change"] = 0;
+        } else {
+            $res["change"] = round(($res[$lastMonth] - $res[$thisMonth])/$res[$lastMonth], 2);
+        }
+
+        return $res;
+    }
+
+    public function average_task_completion(){
+        $classification = 1;
+        $dt = new DateTime();
+        //$thismonth_range = $this->getTimeRange($classification, $dt->format("n"));
+        //$lastmonth_range = $this->getTimeRange($classification, (intval($dt->format("n")) - 1));
+        $thismonth_range = $this->getTimeRange($classification, 3);
+        $lastmonth_range = $this->getTimeRange($classification, 2);
+
+        $zinc_tasks = $this->runNeoQuery("MATCH (task:`DetailerTask`) where task.completionDate > ". $lastmonth_range[0] .
+            " AND task.completionDate < " . $thismonth_range[1] . "  RETURN distinct task.uuid, task.completionDate, task.status");
+
+        $res = array();
+        foreach ($zinc_tasks as $task) {
+            $epoch = floor($task["task.completionDate"]/1000);
+            $dt = new DateTime("@$epoch");
+            $task["month"] = $dt->format("F");
+            $task["week"] = $this->getWeekOfMonth($dt->format("j"));
+
+            if(empty($res[$task["month"]][$task["task.status"]])){
+                $res[$task["month"]][$task["task.status"]] = 0;
+            }
+            $res[$task["month"]][$task["task.status"]]++;
+        }
+        
+        //$lastMonth = $dt->format("F", strtotime("first day of previous month"));
+        //$thisMonth = $dt->format("F");
+        $lastMonth = "February";
+        $thisMonth = "March";
+
+        if($res[$lastMonth]["complete"] == 0){
+            $res["change"] = 0;
+        } else {
+            $res["change"] = round(($res[$thisMonth]["complete"] - $res[$lastMonth]["complete"])/$res[$lastMonth]["complete"], 2);
+        }
+
+        return $res;
     }
 
     public function percentagePriceChange($drug){
@@ -80,10 +168,9 @@ class DashboardController extends AppController {
         }
         $res = array("February"=>0, "March"=>0);
         foreach ($data as $month => $info) {
-            $res[$month] = number_format($this->calculate_average($info));
+            $res[$month] = $this->calculate_average($info);
         }
         
-
         //$lastMonth = $dt->format("F", strtotime("first day of previous month"));
         //$thisMonth = $dt->format("F");
         $lastMonth = "February";
@@ -92,7 +179,7 @@ class DashboardController extends AppController {
         if($res[$lastMonth] == 0){
             $res["change"] = 0;
         } else {
-            $res["change"] = round(($res[$thisMonth] - $res[$lastMonth])/$res[$lastMonth], 2);
+            $res["change"] = round(($res[$lastMonth] - $res[$thisMonth])/$res[$lastMonth], 2);
         }
 
         return $res;

@@ -120,7 +120,11 @@ function select_detname($detId){
       <div class="panel panel-default clearfix dashboard-stats rounded">
           <span id="dashboard-stats-sparkline3" class="sparkline transit"></span>
           <i class="fa fa-user bg-success transit stats-icon"></i>
-            <h3 class="transit">2,014 <small class="text-green"><i class="fa fa-caret-up"></i> 9%</small></h3>
+            <h3 class="transit"><?=number_format($average_daily_visits["March"])?>
+            <small class="<?php if($average_daily_visits["change"] < 0){ echo "text-red"; } else { echo "text-green";} ?>">
+            <i class="fa <?php if($average_daily_visits["change"] < 0){ echo "fa-caret-down"; } else { echo "fa-caret-up";} ?> "></i>
+             <?=abs($average_daily_visits["change"]*100)?> %
+            </small></h3>
             <p class="text-muted transit">Average Daily Visits (National)</p>
         </div>
     </div>
@@ -128,7 +132,11 @@ function select_detname($detId){
       <div class="panel panel-default clearfix dashboard-stats rounded">
           <span id="dashboard-stats-sparkline4" class="sparkline transit"></span>
           <i class="fa fa-warning bg-warning transit stats-icon"></i>
-            <h3 class="transit">-344 <small class="text-red"><i class="fa fa-caret-down"></i> 20%</small></h3>
+            <h3 class="transit"><?=number_format($average_task_completion["March"]["complete"])?>
+            <small class="<?php if($average_task_completion["change"] < 0){ echo "text-red"; } else { echo "text-green";} ?>">
+            <i class="fa <?php if($average_task_completion["change"] < 0){ echo "fa-caret-down"; } else { echo "fa-caret-up";} ?> "></i>
+             <?=abs($average_task_completion["change"]*100)?> %
+            </small></h3>
             <p class="text-muted transit">Average Task Completion (National)</p>
         </div>
     </div>

@@ -114,7 +114,7 @@ function printChart($datasource, $chartDiv, $line = null){
       <div class="panel panel-default clearfix dashboard-stats rounded">
           <span id="dashboard-stats-sparkline3" class="sparkline transit"></span>
           <i class="fa fa-user bg-success transit stats-icon"></i>
-            <h3 class="transit"><?=$zinc_price_change["March"]?>
+            <h3 class="transit"><?=number_format($zinc_price_change["March"])?>
             <small class="<?php if($zinc_price_change["change"] < 0){ echo "text-green"; } else { echo "text-red";} ?>">
             <i class="fa <?php if($zinc_price_change["change"] < 0){ echo "fa-caret-down"; } else { echo "fa-caret-up";} ?> "></i>
              <?=abs($zinc_price_change["change"]*100)?> %
@@ -126,7 +126,7 @@ function printChart($datasource, $chartDiv, $line = null){
       <div class="panel panel-default clearfix dashboard-stats rounded">
           <span id="dashboard-stats-sparkline4" class="sparkline transit"></span>
           <i class="fa fa-warning bg-warning transit stats-icon"></i>
-            <h3 class="transit"><?=$ors_price_change["March"]?>
+            <h3 class="transit"><?=number_format($ors_price_change["March"])?>
             <small class="<?php if($ors_price_change["change"] < 0){ echo "text-green"; } else { echo "text-red";} ?>">
             <i class="fa <?php if($ors_price_change["change"] < 0){ echo "fa-caret-down"; } else { echo "fa-caret-up";} ?> "></i>
              <?=abs($ors_price_change["change"]*100)?> %
