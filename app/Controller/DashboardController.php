@@ -29,6 +29,8 @@ class DashboardController extends AppController {
 
     public function price(){
         set_time_limit(0);
+        $this->set("zinc_price_change", $this->percentagePriceChange("zinc"));
+        $this->set("ors_price_change", $this->percentagePriceChange("ors"));
         $this->set("regional_zinc_price", $this->average_regional_zinc_price());
         $this->set("regional_ors_price", $this->average_regional_ors_price());
 
@@ -45,6 +47,56 @@ class DashboardController extends AppController {
         $this->set("detailers", $this->detailers());
     }
 
+    public function percentagePriceChange($drug){
+        $classification = 1;
+        $dt = new DateTime();
+        //$thismonth_range = $this->getTimeRange($classification, $dt->format("n"));
+        //$lastmonth_range = $this->getTimeRange($classification, (intval($dt->format("n")) - 1));
+        $thismonth_range = $this->getTimeRange($classification, 3);
+        $lastmonth_range = $this->getTimeRange($classification, 2);
+
+        $zinc_tasks = $this->runNeoQuery("MATCH (task:`DetailerTask`) where task.completionDate > ". $lastmonth_range[0] .
+            " AND task.completionDate < " . $thismonth_range[1] . " match task-[:`HAS_DETAILER_STOCK`]->(stock) 
+            where stock.category = \"$drug\" RETURN distinct task.uuid, task.completionDate, 
+            stock.uuid, stock.category, stock.stockLevel, stock.sellingPrice");
+
+        $res = array();
+        foreach ($zinc_tasks as $task) {
+            $epoch = floor($task["task.completionDate"]/1000);
+            $dt = new DateTime("@$epoch");
+            $task["month"] = $dt->format("F");
+            $task["week"] = $this->getWeekOfMonth($dt->format("j"));
+
+            if($task["stock.sellingPrice"] > 0){
+                $res[$task["month"]][$task["task.uuid"]] = $task["stock.sellingPrice"];
+            }
+        }
+
+        $data = array();
+        foreach($res as $month=>$values){
+            foreach ($values as $selling_price) {
+                $data[$month][] = $selling_price;
+            }
+        }
+        $res = array("February"=>0, "March"=>0);
+        foreach ($data as $month => $info) {
+            $res[$month] = number_format($this->calculate_average($info));
+        }
+        
+
+        //$lastMonth = $dt->format("F", strtotime("first day of previous month"));
+        //$thisMonth = $dt->format("F");
+        $lastMonth = "February";
+        $thisMonth = "March";
+
+        if($res[$lastMonth] == 0){
+            $res["change"] = 0;
+        } else {
+            $res["change"] = round(($res[$thisMonth] - $res[$lastMonth])/$res[$lastMonth], 2);
+        }
+
+        return $res;
+    }
     public function detailers(){
         $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t) match t<-[:`USER_TERRITORY`]-(user)
             match (user)-[:`HAS_ROLE`]->role where role.authority = \"ROLE_DETAILER\" return  user.username as username, id(user) as user_id limit 1000");
