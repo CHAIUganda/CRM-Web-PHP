@@ -1,0 +1,10 @@
+{
+    "require": {
+        "everyman/neo4jphp": "dev-master",
+        "fightbulc/moment": "*",
+        "league/csv": "^7.1"
+    },
+    "config": {
+        "vendor-dir": "Vendor/"
+    }
+}

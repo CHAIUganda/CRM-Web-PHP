@@ -1,6 +1,6 @@
 <?php
 require(APP . 'Vendor/autoload.php');
-
+use League\Csv\Writer;
 App::uses('AppController', 'Controller');
 /**
  * Dashboard Controller
@@ -16,11 +16,68 @@ class DashboardController extends AppController {
  * @return void
  */
 	public function index() {
+        if(!empty($_GET["export"])){
+            $this->export($_GET["export"]);
+            exit();
+        }
+
         $this->set("detailer_visits", $this->average_visits_by_detailers("all"));
         $this->set("zinc_stats", $this->zinc_percentage_availability());
         $this->set("zinc_price", $this->median_zinc_price());
         $this->set("ors_price", $this->median_ors_price());
 	}
+    public function export($export){
+        switch ($export) {
+            case 'average_daily':
+                $this->exportCSV($this->average_visits_by_detailers("all"));
+                break;
+            case 'zinc_availability':
+                $this->exportCSV($this->zinc_percentage_availability());
+                break;
+            case 'zinc_price':
+                $this->exportCSV($this->median_zinc_price());
+                break;
+            case 'ors_price':
+                $this->exportCSV($this->median_ors_price());
+                break;
+            default:
+                break;
+        }
+    }
+
+    public function exportCSV($data){
+        $lines = array();
+        
+        $months = array();
+        $detailers = array();
+
+        foreach($data as $detailer=>$months){
+            $line = array();
+            foreach($months as $monthName => $monthValue){
+                $months[$monthName] = 0;
+                $detailers[$detailer] = 0;
+            }
+        }
+
+        $months = array_keys($months);
+        $detailers = array_keys($detailers);
+
+        $csv = Writer::createFromFileObject(new SplTempFileObject());
+        //Write Header
+        $csv->insertOne(array_merge(array("Months"), $detailers));
+
+        foreach ($months as $month) {
+            $line = array();
+            $line[] = $month;
+            foreach ($detailers as $detailer) {
+                $line[] = $data[$detailer][$month];
+            }
+            $csv->insertOne($line);
+        }
+        
+        $csv->output('report.csv');
+        die;
+    }
 
     public function availability(){
         $this->set("nZincStats", $this->avail_nzinc_ors_avail());

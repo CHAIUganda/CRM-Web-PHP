@@ -7,4 +7,5 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'Moment\\' => array($vendorDir . '/fightbulc/moment/src'),
+    'League\\Csv\\' => array($vendorDir . '/league/csv/src'),
 );
