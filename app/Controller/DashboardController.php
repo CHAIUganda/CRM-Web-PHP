@@ -29,49 +29,55 @@ class DashboardController extends AppController {
     public function export($export){
         switch ($export) {
             case 'average_daily':
-                $this->exportCSV($this->average_visits_by_detailers("all"));
+                $this->exportCSV($this->average_visits_by_detailers_export("all"));
                 break;
             case 'zinc_availability':
-                $this->exportCSV($this->zinc_percentage_availability());
+                $this->formatExport($this->zinc_percentage_availability_export());
                 break;
             case 'zinc_price':
-                $this->exportCSV($this->median_zinc_price());
+                $this->formatExport($this->median_zinc_price_export());
                 break;
             case 'ors_price':
-                $this->exportCSV($this->median_ors_price());
+                $this->formatExport($this->median_ors_price_export());
                 break;
             default:
                 break;
         }
     }
 
-    public function exportCSV($data){
-        $lines = array();
+    public function formatExport($data){
+        $csv = Writer::createFromFileObject(new SplTempFileObject());
         
-        $months = array();
-        $detailers = array();
+        $detailer_task = $data["detailer_task"];
+        //pr($detailer_task);
 
-        foreach($data as $detailer=>$months){
-            $line = array();
-            foreach($months as $monthName => $monthValue){
-                $months[$monthName] = 0;
-                $detailers[$detailer] = 0;
+        $title = array("Date", $data["title"], "Detailer Name", "Detailer ID", "Region");
+        $csv->insertOne($title);
+
+        foreach ($data["lines"] as $detailerName => $detailerData) {
+            foreach ($detailerData as $date => $value) {
+                $line = array();
+                $line[] = $date;
+                $line[] = $value;
+                if (!empty($detailer_task[$detailerName]["user.name"])) {
+                    $line[] = $detailer_task[$detailerName]["user.name"];
+                } else {
+                    $line[] = $detailer_task[$detailerName]["user.username"];
+                }
+                
+                $line[] = $detailer_task[$detailerName]["user_id"];
+                $line[] = $detailer_task[$detailerName]["rg.name"];
+
+                $csv->insertOne($line);
             }
         }
-
-        $months = array_keys($months);
-        $detailers = array_keys($detailers);
-
+        $csv->output('report.csv');
+        die;
+    }
+    public function exportCSV($lines){
         $csv = Writer::createFromFileObject(new SplTempFileObject());
-        //Write Header
-        $csv->insertOne(array_merge(array("Months"), $detailers));
 
-        foreach ($months as $month) {
-            $line = array();
-            $line[] = $month;
-            foreach ($detailers as $detailer) {
-                $line[] = $data[$detailer][$month];
-            }
+        foreach ($lines as $line) {
             $csv->insertOne($line);
         }
         
@@ -498,6 +504,54 @@ class DashboardController extends AppController {
         return $stockAvailabilityStats;
     }
 
+    function zinc_percentage_availability_export(){
+        // Get filters
+        @$classification = $_GET['orsAvailClassification'];
+        @$period = $_GET['zincPercent'];
+
+        $date_range = $this->getTimeRange($classification, $period);
+
+        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t) match 
+            t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
+            task-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
+             $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]-(stock) where stock.category = 
+            \"zinc\" match (t)<-[:`SC_IN_TERRITORY`]-(sc) match (ds)-[:`HAS_SUB_COUNTY`]->(sc) 
+            match (rg)-[:`HAS_DISTRICT`]->(ds) return task.uuid, task.description, task.completionDate, user.username, user.name, id(user) as user_id,
+            stock.uuid, stock.category, stock.stockLevel, rg.name ");
+
+        $res = array();
+        $detailer_task = array();
+        foreach ($tasks as $task) {
+            $epoch = floor($task["task.completionDate"]/1000);
+            $dt = new DateTime("@$epoch");
+            $task["day"] = $dt->format("M. j, Y");
+
+            if (!isset($res[$task["user.username"]])) {
+                $res[$task["user.username"]] = array();
+                $res[$task["user.username"]] = array();
+            }
+
+            $res[$task["user.username"]][$task["day"]][$task["task.uuid"]] = 0;
+            if ($task["stock.stockLevel"] > 0) {
+                $res[$task["user.username"]][$task["day"]][$task["task.uuid"]] = 1;
+            }
+
+            $detailer_task[$task["user.username"]] = $task;
+        }
+
+        $stockAvailabilityStats = array();
+        foreach ($res as $username => $monthData) {
+            if(!isset($stockAvailabilityStats[$username])){
+                $stockAvailabilityStats[$username] = array();
+            }
+
+            foreach($monthData as $month => $data){
+                $stockAvailabilityStats[$username][$month] = $this->calculate_positive_percentage($res[$username][$month]);
+            }
+        }
+
+        return array("lines"=>$stockAvailabilityStats, "detailer_task"=>$detailer_task, "title"=>"Zinc Availability");
+    }
 	function zinc_percentage_availability(){
         // Get filters
         @$classification = $_GET['orsAvailClassification'];
@@ -651,6 +705,65 @@ class DashboardController extends AppController {
         }
         return $medians;
 	}
+
+    function average_visits_by_detailers_export(){
+        @$classification = $_GET['visitClassification'];
+        @$period = $_GET['dailyVisitsPeriod'];
+
+        $date_range = $this->getTimeRange($classification, $period);
+        
+
+        $tasks = $this->runNeoQuery("MATCH (task:`DetailerTask`) where task.completionDate > ". $date_range[0] .
+            " AND task.completionDate < " . $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]->(stock) 
+            match task<-[:`COMPLETED_TASK`]-(user) match (user)-[:`USER_TERRITORY`]->(t)
+            where stock.category = \"zinc\" match (t)<-[:`SC_IN_TERRITORY`]-(sc) match (ds)-[:`HAS_SUB_COUNTY`]->(sc) 
+            match (rg)-[:`HAS_DISTRICT`]->(ds) RETURN distinct task.uuid, task.description, task.completionDate, id(user) as user_id,
+            user.name, user.username, t.name, rg.name");
+        //echo count($tasks);
+        //pr($tasks);
+        $res = array();
+        $detailer_task = array();
+        foreach ($tasks as $task) {
+            $epoch = floor($task["task.completionDate"]/1000);
+            $dt = new DateTime("@$epoch");
+            $completionDate = $dt->format("M. j, Y");
+            if (!isset($res[$completionDate])) {
+                $res[$completionDate] = array();
+            }
+
+            if(!isset($res[$completionDate][$task["user.username"]])){
+                $res[$completionDate][$task["user.username"]] = array();
+            }
+            
+            $res[$completionDate][$task["user.username"]][] = $task["task.uuid"];
+            $detailer_task[$task["user.username"]] = $task;
+        }
+
+        $lines = array();
+        $titles = array("Date", "Detailer Name", "Detailer ID",  "Region", "Visits #");
+        $lines[] = $titles;
+
+        foreach ($res as $date => $moredata) {
+            foreach ($moredata as $detailerName => $visits) {
+                $line = array();
+                $task_info = $detailer_task[$detailerName];
+
+                $line[] = $date;
+                if (!empty($task_info["user.name"])) {
+                    $line[] = $task_info["user.name"];
+                } else {
+                    $line[] = $task_info["user.username"];
+                }
+                $line[] = $task_info["user_id"];
+                $line[] = $task_info["rg.name"];
+                $line[] = count($visits);
+                $lines[] = $line;
+            }
+        }
+
+        return $lines;
+    }
+
     function average_regional_zinc_price(){
         @$classification = $_GET['visitClassification'];
         @$period = $_GET['dailyVisitsPeriod'];
@@ -765,6 +878,54 @@ class DashboardController extends AppController {
 
         return $stats;
     }
+
+    function median_zinc_price_export(){
+        @$classification = $_GET['zincClassification'];
+        @$period = $_GET['zincPrice'];
+
+        $date_range = $this->getTimeRange($classification, $period);
+        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t) match 
+            t-[:`SC_IN_TERRITORY`]-(sc) match (ds)-[:`HAS_SUB_COUNTY`]->(sc) 
+            match (rg)-[:`HAS_DISTRICT`]->(ds) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
+            task-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
+             $date_range[1] . " optional match task-[:`HAS_DETAILER_STOCK`]-(stock) where stock.category = 
+            \"zinc\"  return task.uuid, task.description, task.completionDate, user.username, id(user) as user_id,
+             user.name, stock.uuid, stock.category, stock.stockLevel, stock.sellingPrice, rg.name");
+        $res[] = array();
+        $detailer_task = array();
+        foreach ($tasks as $task) {
+            $epoch = floor($task["task.completionDate"]/1000);
+            $dt = new DateTime("@$epoch");
+            $task["day"] = $dt->format("M. j, Y");
+
+            if (!isset($res[$task["user.username"]])) {
+                $res[$task["user.username"]] = array();
+            }
+
+            if(!isset($res[$task["user.username"]][$task["day"]])){
+                $res[$task["user.username"]][$task["day"]] = array();
+            }
+            if (!empty($task["stock.sellingPrice"])) {
+                $res[$task["user.username"]][$task["day"]][] = $task["stock.sellingPrice"];
+            }
+            $detailer_task[$task["user.username"]] = $task;
+        }
+        
+        $stats = array();
+        foreach ($res as $detName=>$monthData) {
+            if(!isset($stats[$detName])){
+                $stats[$detName] = array();
+            }
+
+            foreach($monthData as $month => $data){
+                $stats[$detName][$month] = $this->calculate_median($res[$detName][$month]);
+            }
+        }
+        unset($stats[0]);
+
+        return array("lines"=>$stats, "detailer_task"=>$detailer_task, "title"=>"Average Zinc Price");
+    }
+
 	function median_zinc_price(){
         @$classification = $_GET['zincClassification'];
         @$period = $_GET['zincPrice'];
@@ -882,6 +1043,55 @@ class DashboardController extends AppController {
         unset($stats[0]);
         return $stats;
 	}
+
+    function median_ors_price_export(){
+        @$classification = $_GET['orsClassification'];
+        @$period = $_GET['ORSPrice'];
+
+        $date_range = $this->getTimeRange($classification, $period);
+
+        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t) match 
+            t-[:`SC_IN_TERRITORY`]-(sc) match (ds)-[:`HAS_SUB_COUNTY`]->(sc) 
+            match (rg)-[:`HAS_DISTRICT`]->(ds) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
+            task-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
+             $date_range[1] . " optional match task-[:`HAS_DETAILER_STOCK`]-(stock) where stock.category = 
+            \"ors\" return task.uuid, task.description, task.completionDate, user.username, user.name, id(user) as user_id,
+             stock.uuid, stock.category, stock.stockLevel, stock.sellingPrice, rg.name");
+
+        $res[] = array();
+        $detailer_task = array();
+        foreach ($tasks as $task) {
+            $epoch = floor($task["task.completionDate"]/1000);
+            $dt = new DateTime("@$epoch");
+            $task["day"] = $dt->format("M. j, Y");
+
+            if (!isset($res[$task["user.username"]])) {
+                $res[$task["user.username"]] = array();
+            }
+
+            if(!isset($res[$task["user.username"]][$task["day"]])){
+                $res[$task["user.username"]][$task["day"]] = array();
+            }
+            if (!empty($task["stock.sellingPrice"])) {
+                $res[$task["user.username"]][$task["day"]][] = $task["stock.sellingPrice"];
+            }
+            $detailer_task[$task["user.username"]] = $task;
+        }
+        
+        $stats = array();
+        foreach ($res as $detName=>$monthData) {
+            if(!isset($stats[$detName])){
+                $stats[$detName] = array();
+            }
+
+            foreach($monthData as $month => $data){
+                $stats[$detName][$month] = $this->calculate_median($res[$detName][$month]);
+            }
+        }
+        unset($stats[0]);
+
+        return array("lines"=>$stats, "detailer_task"=>$detailer_task, "title"=>"Average ORS Price");
+    }
 
 	function calculate_median($arr) {
 		sort($arr);
