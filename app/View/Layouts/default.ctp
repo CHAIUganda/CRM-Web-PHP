@@ -22,10 +22,13 @@
     <script src="/js/jquery-1.11.1.min.js" type="text/javascript"></script>
     <script src="/js/globalize/globalize.min.js"></script>
     <script src="/js/DevExpressChartJS/dx.chartjs.js"></script>
+    <script type="text/javascript" src="http://gabelerner.github.io/canvg/rgbcolor.js"></script> 
+    <script type="text/javascript" src="http://gabelerner.github.io/canvg/StackBlur.js"></script>
+    <script type="text/javascript" src="http://gabelerner.github.io/canvg/canvg.js"></script> 
+
+    <script src="/js/saveSvgAsPng.js" type="text/javascript"></script>
+
     <meta name="layout" content="kickstart">
-    
-
-
     <!-- Le HTML5 shim, for IE6-8 support of HTML elements -->
     <!--[if lt IE 9]>
         <script src="https://html5shim.googlecode.com/svn/trunk/html5.js"></script>
@@ -221,6 +224,7 @@
     <script src="/js/bundle-bundle_bootstrap_defer.js" type="text/javascript"></script>
     <script src="/js/bundle-bundle_bootstrap_utils_defer.js" type="text/javascript"></script>
     <script src="/js/bundle-bundle_dataTable_defer.js" type="text/javascript"></script>
+    
     <script type="text/javascript">
         $('.pageableTable').DataTable({
             "pagingType": "full_numbers"

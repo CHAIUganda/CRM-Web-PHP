@@ -112,7 +112,6 @@ function printChart($datasource, $chartDiv, $line = null){
         });        
     }
   });
-
 <?php
 }
 ?>
@@ -157,11 +156,11 @@ function printChart($datasource, $chartDiv, $line = null){
             </div>
             <div class="panel-body">
               <div id="detailer_visits" style="height:250px;">
-                       <span id="chartEmpty-detailer_visits" style="position:absolute;top:150px;left:100px;color: #5f8b95; font-size: 20px;">There is no data for the selected time period.</span>
+                <span id="chartEmpty-detailer_visits" style="position:absolute;top:150px;left:100px;color: #5f8b95; font-size: 20px;">There is no data for the selected time period.</span>
               </div>
             </div>
             <div style="text-align: right; padding-right: 10px; padding-top: 5px; padding-bottom: 5px">
-              <button class="btn btn-primary" type="button">JPEG</button>
+              <button id="jpeg1" class="btn btn-primary" type="button">JPEG</button>
               <a href="?<?php echo exportLink("average_daily"); ?>"><button class="btn btn-primary" type="button">Excel</button></a>
             </div>
             
@@ -209,7 +208,7 @@ function printChart($datasource, $chartDiv, $line = null){
               </div>
             </div>
             <div style="text-align: right; padding-right: 10px; padding-top: 5px; padding-bottom: 5px">
-              <button class="btn btn-primary" type="button">JPEG</button>
+              <button id="jpeg2" class="btn btn-primary" type="button">JPEG</button>
               <a href="?<?php echo exportLink("zinc_availability"); ?>"><button class="btn btn-primary" type="button">Excel</button></a>
             </div>
         </div>
@@ -258,7 +257,7 @@ function printChart($datasource, $chartDiv, $line = null){
               </div>
             </div>
             <div style="text-align: right; padding-right: 10px; padding-top: 5px; padding-bottom: 5px">
-              <button class="btn btn-primary" type="button">JPEG</button>
+              <button id="jpeg3" class="btn btn-primary" type="button">JPEG</button>
               <a href="?<?php echo exportLink("zinc_price"); ?>"><button class="btn btn-primary" type="button">Excel</button></a>
             </div>
         </div>
@@ -306,14 +305,15 @@ function printChart($datasource, $chartDiv, $line = null){
               </div>
             </div>
             <div style="text-align: right; padding-right: 10px; padding-top: 5px; padding-bottom: 5px">
-              <button class="btn btn-primary" type="button">JPEG</button>
+              <button id="jpeg4" class="btn btn-primary" type="button">JPEG</button>
               <a href="?<?php echo exportLink("ors_price"); ?>"><button class="btn btn-primary" type="button">Excel</button></a>
             </div>
         </div>
     </div>
 </div>
-
 </form>
+<canvas id="canvas"></canvas>
+
 <script type="text/javascript">
     /* Dropdown adjustment */
     function updateOptions(event, destSelect){
@@ -366,4 +366,44 @@ function printChart($datasource, $chartDiv, $line = null){
   printChart($zinc_price, "zinc_price", 900);
   printChart($ors_price, "ors_price", 300);
   ?>
+  
+  var removeElements = function(text, selector) {
+    var wrapped = $("<div>" + text + "</div>");
+    wrapped.find(selector).remove();
+    return wrapped.html();
+  }
+
+  var chart1 = $('#detailer_visits').dxChart('instance');
+  var chart2 = $('#zinc_availability').dxChart('instance');
+  var chart3 = $('#zinc_price').dxChart('instance');
+  var chart4 = $('#ors_price').dxChart('instance');
+
+  function downloadSvg(chart_id){
+    var svg = chart_id.svg();
+    svg = removeElements(svg, "span");
+
+    var canvas = document.getElementById("canvas");
+    canvg(canvas, svg.trim());
+    var canvasdata = canvas.toDataURL("image/png");
+    var a = document.createElement("a");
+    a.download = "report.png";
+    a.href = canvasdata;
+    a.click();
+  }
+
+  $("#jpeg1").click(function(){
+    downloadSvg(chart1);
+  });
+
+  $("#jpeg2").click(function(){
+    downloadSvg(chart2);
+  });
+
+  $("#jpeg3").click(function(){
+    downloadSvg(chart3);
+  });
+
+  $("#jpeg4").click(function(){
+    downloadSvg(chart4);
+  });
 </script>
