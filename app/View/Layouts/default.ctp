@@ -8,11 +8,11 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <link rel="shortcut icon" href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/chai-crm/static/images/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/test-web-crm/static/images/favicon.ico" type="image/x-icon">
 
-    <link rel="apple-touch-icon" href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/chai-crm/home/assets/ico/apple-touch-icon.png">
-    <link rel="apple-touch-icon" href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/chai-crm/home/assets/ico/apple-touch-icon-72x72.png" sizes="72x72">
-    <link rel="apple-touch-icon" href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/chai-crm/home/assets/ico/apple-touch-icon-114x114.png" sizes="114x114">
+    <link rel="apple-touch-icon" href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/test-web-crm/home/assets/ico/apple-touch-icon.png">
+    <link rel="apple-touch-icon" href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/test-web-crm/home/assets/ico/apple-touch-icon-72x72.png" sizes="72x72">
+    <link rel="apple-touch-icon" href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/test-web-crm/home/assets/ico/apple-touch-icon-114x114.png" sizes="114x114">
     <link rel="stylesheet" href="/css/omnitech.css" type="text/css">
     
     <link href="/css/bundle-bundle_bootstrap_head.css" type="text/css" rel="stylesheet" media="screen, projection">
@@ -66,39 +66,39 @@
             <!-- Collection of nav links, forms, and other content for toggling -->
             <div id="navbarCollapse-sticky-wrapper" class="sticky-wrapper" style="height: 50px;"><div id="navbarCollapse" class="collapse navbar-collapse" style="width: 748px;">
                 <ul class="nav navbar-nav">
-                    <li class="active"><a href="./template_files/template.html"><i class="glyphicon glyphicon-home"></i>Home</a></li>
+                    <li class="active"><a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/test-web-crm/"><i class="glyphicon glyphicon-home"></i>Home</a></li>
                         <li>
-                            <a data-toggle="dropdown" class="dropdown-toggle" href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/chai-crm/home/index#"><i class="glyphicon glyphicon-briefcase"></i>Products <b class="caret"></b></a>
+                            <a data-toggle="dropdown" class="dropdown-toggle" href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/test-web-crm/home/index#"><i class="glyphicon glyphicon-briefcase"></i>Products <b class="caret"></b></a>
                             <ul role="menu" class="dropdown-menu multi-level" aria-labelledby="dropdownMenu">
-                                <li><a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/chai-crm/product/index">Products</a></li>
-                                <li><a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/chai-crm/productGroup/index">Product Groups</a></li>
+                                <li><a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/test-web-crm/product/index">Products</a></li>
+                                <li><a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/test-web-crm/productGroup/index">Product Groups</a></li>
 
                             </ul>
                         </li>
-                    <li><a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/chai-crm/customer/index"><i class="glyphicon glyphicon-home"></i>Customers</a>
+                    <li><a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/test-web-crm/customer/index"><i class="glyphicon glyphicon-home"></i>Customers</a>
                     </li>
                     
                     <li>
-                        <a data-toggle="dropdown" class="dropdown-toggle" href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/chai-crm/home/index#">
+                        <a data-toggle="dropdown" class="dropdown-toggle" href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/test-web-crm/home/index#">
                             <i class="glyphicon glyphicon-tasks"></i>Tasks <b class="caret"></b></a>
                         <ul role="menu" class="dropdown-menu multi-level" aria-labelledby="dropdownMenu">
                             <li>
-                                <a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/chai-crm/detailerTask/malaria">Malaria Details</a>
+                                <a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/test-web-crm/detailerTask/malaria">Malaria Details</a>
                             </li>
                             <li>
-                                <a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/chai-crm/detailerTask/index?status=new">Detailer</a>
+                                <a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/test-web-crm/detailerTask/index?status=new">Detailer</a>
                             </li>
                             <li>
-                                <a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/chai-crm/call/index?status=new">Orders</a>
+                                <a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/test-web-crm/call/index?status=new">Orders</a>
                             </li>
                             <li>
-                                <a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/chai-crm/sale/index?status=complete">Visits</a>
+                                <a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/test-web-crm/sale/index?status=complete">Visits</a>
                             </li>
                             <li>
-                                <a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/chai-crm/taskSetting/generationDetailer">Generate Detailing Tasks</a>
+                                <a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/test-web-crm/taskSetting/generationDetailer">Generate Detailing Tasks</a>
                             </li>
                             <li>
-                                <a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/chai-crm/taskSetting/generationOrder">Generate Calls</a>
+                                <a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/test-web-crm/taskSetting/generationOrder">Generate Calls</a>
                             </li>
                         </ul>
 
@@ -107,7 +107,7 @@
                 
                     
                         <li>
-                            <a data-toggle="dropdown" class="dropdown-toggle" href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/chai-crm/home/index#"><i class="glyphicon glyphicon-dashboard"></i>Reports <b class="caret"></b></a>
+                            <a data-toggle="dropdown" class="dropdown-toggle" href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/test-web-crm/home/index#"><i class="glyphicon glyphicon-dashboard"></i>Reports <b class="caret"></b></a>
 
                             <ul role="menu" class="dropdown-menu multi-level" aria-labelledby="dropdownMenu">
                                 <li><a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>">Dashboard</a></li>
@@ -115,38 +115,38 @@
                                 <li><a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>/dashboard/price">Price</a></li>
                                 <li><a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>/dashboard/productivity">Productivity</a></li>
 
-                                <li><a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/chai-crm/report/index">Reports</a></li>
-                                <li><a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/chai-crm/reportGroup/index">Report Groups</a></li>
+                                <li><a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/test-web-crm/report/index">Reports</a></li>
+                                <li><a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/test-web-crm/reportGroup/index">Report Groups</a></li>
                             </ul>
                         </li>
 
                         <li class="dropdown">
-                            <a data-toggle="dropdown" class="dropdown-toggle" href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/chai-crm/home/index#"><i class="glyphicon glyphicon-wrench"></i>Settings <b class="caret"></b></a>
+                            <a data-toggle="dropdown" class="dropdown-toggle" href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/test-web-crm/home/index#"><i class="glyphicon glyphicon-wrench"></i>Settings <b class="caret"></b></a>
                             <ul role="menu" class="dropdown-menu multi-level" aria-labelledby="dropdownMenu">
-                                <li><a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/chai-crm/region/index">Regions</a></li>
-                                <li><a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/chai-crm/district/index">Districts</a></li>
+                                <li><a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/test-web-crm/region/index">Regions</a></li>
+                                <li><a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/test-web-crm/district/index">Districts</a></li>
                                 <li>
-                                    <a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/chai-crm/subCounty/index">
+                                    <a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/test-web-crm/subCounty/index">
                                         Subcounties
                                     </a>
                                 </li>
                                 <li>
-                                    <a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/chai-crm/parish/index">
+                                    <a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/test-web-crm/parish/index">
                                         Parishes
                                     </a>
                                 </li>
                                 <li>
-                                    <a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/chai-crm/village/index">Village</a>
+                                    <a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/test-web-crm/village/index">Village</a>
                                 </li>
                                 <li>
-                                    <a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/chai-crm/customerSegment/index">Customer Segments</a>
+                                    <a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/test-web-crm/customerSegment/index">Customer Segments</a>
                                 </li>
                                 <li>
-                                    <a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/chai-crm/wholeSaler/index">Whole Salers</a>
+                                    <a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/test-web-crm/wholeSaler/index">Whole Salers</a>
                                 </li>
                                 
                                     <li>
-                                        <a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/chai-crm/setting/index">Advanced Settings</a>
+                                        <a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/test-web-crm/setting/index">Advanced Settings</a>
                                     </li>
                                 
                             </ul>
@@ -157,31 +157,31 @@
                 
                 <ul class="nav navbar-nav navbar-right">
                     <li class="dropdown">
-                        <a data-toggle="dropdown" class="dropdown-toggle glyphicon glyphicon-user" href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/chai-crm/home/index#">Users(<?php echo $user["User"]["username"] ?>) <b class="caret"></b></a>
+                        <a data-toggle="dropdown" class="dropdown-toggle glyphicon glyphicon-user" href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/test-web-crm/home/index#">Users(<?php echo $user["User"]["username"] ?>) <b class="caret"></b></a>
                         <ul role="menu" class="dropdown-menu multi-level" aria-labelledby="dropdownMenu">
                             <li>
-                                <a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/chai-crm/user/index">
+                                <a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/test-web-crm/user/index">
                                     <i class="glyphicon glyphicon-user"></i>Users
                                 </a>
                             </li>
                             <li>
-                                <a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/chai-crm/territory/index">
+                                <a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/test-web-crm/territory/index">
                                     <i class="glyphicon glyphicon-globe"></i>
                                     Territories
                                 </a>
                             </li>
                             <li>
-                                <a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/chai-crm/role/index">
+                                <a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/test-web-crm/role/index">
                                     <i class="glyphicon glyphicon-tags"></i>Roles
                                 </a>
                             </li>
                             <li>
-                                <a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/chai-crm/device/index">
+                                <a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/test-web-crm/device/index">
                                     <i class="glyphicon glyphicon-phone"></i>Devices</a>
                             </li>
 
                             <li>
-                                <a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/chai-crm/requestMap/index">
+                                <a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>:8080/test-web-crm/requestMap/index">
                                     <i class="glyphicon glyphicon-tags"></i>Access Levels
                                 </a>
                             </li>

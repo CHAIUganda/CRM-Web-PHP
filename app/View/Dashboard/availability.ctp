@@ -17,6 +17,15 @@ function isSelected($type, $val, $chart){
   }
 }
 
+function exportLink($chart_type){
+  $params = $_GET;
+  unset($params["export"]);
+  $params["export"] = $chart_type;
+  $new_query_string = http_build_query($params);
+
+  return $new_query_string;
+}
+
 function printChart($datasource, $chartDiv, $line = null){
   $colors = array(" #243C63", "#4E77BD", "#788fb5", "#acb9ce");
   ?>
@@ -149,6 +158,7 @@ function printChart($datasource, $chartDiv, $line = null){
                        <span id="chartEmpty-detailer_visits" style="position:absolute;top:150px;left:100px;color: #5f8b95; font-size: 20px;">There is no data for the selected time period.</span>
               </div>
             </div>
+            
         </div>
     </div>
     
