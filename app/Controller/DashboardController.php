@@ -26,6 +26,46 @@ class DashboardController extends AppController {
         $this->set("zinc_price", $this->median_zinc_price());
         $this->set("ors_price", $this->median_ors_price());
 	}
+
+    public function availability(){
+        if(!empty($_GET["export"])){
+            $this->export($_GET["export"]);
+            exit();
+        }
+
+        $this->set("nZincStats", $this->avail_nzinc_ors_avail());
+        $this->set("rZincStats", $this->avail_rzinc_ors_avail());
+    }
+
+    public function price(){
+        set_time_limit(0);
+        if(!empty($_GET["export"])){
+            $this->export($_GET["export"]);
+            exit();
+        }
+
+        $this->set("zinc_price_change", $this->percentagePriceChange("zinc"));
+        $this->set("ors_price_change", $this->percentagePriceChange("ors"));
+
+        $this->set("regional_zinc_price", $this->average_regional_zinc_price());
+        $this->set("regional_ors_price", $this->average_regional_ors_price());
+
+        $this->set("zinc_price", $this->median_zinc_price());
+        $this->set("ors_price", $this->median_ors_price());
+    }
+
+    public function productivity(){
+        set_time_limit(0);
+        $this->set("average_daily_visits", $this->average_daily_visits());
+        $this->set("average_task_completion", $this->average_task_completion());
+
+        $this->set("weekly_visits", $this->dweekly_visits());
+        $this->set("rtask_completion", $this->rtask_completion());
+        $this->set("detailer_visits", $this->average_visits_by_detailers("diarrhoea"));
+        $this->set("dtask_completion", $this->dtask_completion());
+        $this->set("detailers", $this->detailers());
+    }
+
     public function export($export){
         switch ($export) {
             case 'average_daily':
@@ -46,10 +86,43 @@ class DashboardController extends AppController {
             case 'rzinc_avail':
                 $this->availFormat($this->avail_rzinc_ors_avail_export());
                 break;
+            case 'rzinc_price':
+                $this->priceFormat($this->average_regional_zinc_price_export());
+                break;
+            case 'rors_price':
+                $this->priceFormat($this->average_regional_ors_price_export());
+                break;
+            case 'dzinc_price':
+                $this->formatExport($this->median_zinc_price_export());
+                break;
+            case 'dors_price':
+                $this->formatExport($this->median_ors_price_export());
+                break;
             default:
                 break;
         }
     }
+
+    public function priceFormat($data){
+        $csv = Writer::createFromFileObject(new SplTempFileObject());
+        
+        $title = array("Date", $data["title"], "Region");
+        $csv->insertOne($title);
+
+        foreach ($data["lines"] as $detailerName => $detailerData) {
+            foreach ($detailerData as $date => $value) {
+                $line = array();
+                $line[] = $date;
+                $line[] = $value;
+                $line[] = $detailerName;
+
+                $csv->insertOne($line);
+            }
+        }
+        $csv->output('report.csv');
+        die;
+    }
+
     public function availFormat($data){
         $csv = Writer::createFromFileObject(new SplTempFileObject());
         
@@ -109,38 +182,6 @@ class DashboardController extends AppController {
         die;
     }
 
-    public function availability(){
-        if(!empty($_GET["export"])){
-            $this->export($_GET["export"]);
-            exit();
-        }
-
-        $this->set("nZincStats", $this->avail_nzinc_ors_avail());
-        $this->set("rZincStats", $this->avail_rzinc_ors_avail());
-    }
-
-    public function price(){
-        set_time_limit(0);
-        $this->set("zinc_price_change", $this->percentagePriceChange("zinc"));
-        $this->set("ors_price_change", $this->percentagePriceChange("ors"));
-        $this->set("regional_zinc_price", $this->average_regional_zinc_price());
-        $this->set("regional_ors_price", $this->average_regional_ors_price());
-
-        $this->set("zinc_price", $this->median_zinc_price());
-        $this->set("ors_price", $this->median_ors_price());
-    }
-
-    public function productivity(){
-        set_time_limit(0);
-        $this->set("average_daily_visits", $this->average_daily_visits());
-        $this->set("average_task_completion", $this->average_task_completion());
-
-        $this->set("weekly_visits", $this->dweekly_visits());
-        $this->set("rtask_completion", $this->rtask_completion());
-        $this->set("detailer_visits", $this->average_visits_by_detailers("diarrhoea"));
-        $this->set("dtask_completion", $this->dtask_completion());
-        $this->set("detailers", $this->detailers());
-    }
     public function average_daily_visits(){
         $classification = 1;
         $dt = new DateTime();
@@ -880,6 +921,53 @@ class DashboardController extends AppController {
         return $lines;
     }
 
+    function average_regional_zinc_price_export(){
+        @$classification = $_GET['visitClassification'];
+        @$period = $_GET['dailyVisitsPeriod'];
+
+        $date_range = $this->getTimeRange($classification, $period);
+        
+
+        $tasks = $this->runNeoQuery("MATCH (task:`DetailerTask`) where task.completionDate > ". $date_range[0] .
+            " AND task.completionDate < " . $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]->(stock) 
+            match task<-[:`COMPLETED_TASK`]-(user) match (user)-[:`USER_TERRITORY`]->(t)
+            where stock.category = \"zinc\" match (t)<-[:`SC_IN_TERRITORY`]-(sc) match (ds)-[:`HAS_SUB_COUNTY`]->(sc) 
+            match (rg)-[:`HAS_DISTRICT`]->(ds) RETURN distinct task.uuid, task.description, task.completionDate, user.username, 
+            stock.uuid, stock.category, stock.stockLevel, stock.sellingPrice, t.name, rg.name");
+
+        $res[] = array();
+        foreach ($tasks as $task) {
+            $epoch = floor($task["task.completionDate"]/1000);
+            $dt = new DateTime("@$epoch");
+            $task["day"] = $dt->format("M. j, Y");
+
+            if (!isset($res[$task["rg.name"]])) {
+                $res[$task["rg.name"]] = array();
+            }
+
+            if(!isset($res[$task["rg.name"]][$task["day"]])){
+                $res[$task["rg.name"]][$task["day"]] = array();
+            }
+            if (!empty($task["stock.sellingPrice"])) {
+                $res[$task["rg.name"]][$task["day"]][] = $task["stock.sellingPrice"];
+            }
+        }
+        
+        $stats = array();
+        foreach ($res as $detName=>$monthData) {
+            if(!isset($stats[$detName])){
+                $stats[$detName] = array();
+            }
+
+            foreach($monthData as $month => $data){
+                $stats[$detName][$month] = $this->calculate_median($res[$detName][$month]);
+            }
+        }
+        unset($stats[0]);
+        
+        return array("lines"=>$stats, "title"=>"Average Zinc Price") ;
+    }
+
     function average_regional_zinc_price(){
         @$classification = $_GET['visitClassification'];
         @$period = $_GET['dailyVisitsPeriod'];
@@ -937,6 +1025,51 @@ class DashboardController extends AppController {
         unset($stats[0]);
 
         return $stats;
+    }
+
+    function average_regional_ors_price_export(){
+        @$classification = $_GET['orsAvailClassification'];
+        @$period = $_GET['zincPercent'];
+
+        $date_range = $this->getTimeRange($classification, $period);
+        $tasks = $this->runNeoQuery("MATCH (task:`DetailerTask`) where task.completionDate > ". $date_range[0] .
+            " AND task.completionDate < " . $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]->(stock) 
+            match task<-[:`COMPLETED_TASK`]-(user) match (user)-[:`USER_TERRITORY`]->(t)
+            where stock.category = \"ors\" match (t)<-[:`SC_IN_TERRITORY`]-(sc) match (ds)-[:`HAS_SUB_COUNTY`]->(sc) 
+            match (rg)-[:`HAS_DISTRICT`]->(ds) RETURN distinct task.uuid, task.description, task.completionDate, user.username, 
+            stock.uuid, stock.category, stock.stockLevel, stock.sellingPrice, t.name, rg.name");
+
+        $res[] = array();
+        foreach ($tasks as $task) {
+            $epoch = floor($task["task.completionDate"]/1000);
+            $dt = new DateTime("@$epoch");
+            $task["day"] = $dt->format("M. j, Y");
+
+            if (!isset($res[$task["rg.name"]])) {
+                $res[$task["rg.name"]] = array();
+            }
+
+            if(!isset($res[$task["rg.name"]][$task["day"]])){
+                $res[$task["rg.name"]][$task["day"]] = array();
+            }
+            if (!empty($task["stock.sellingPrice"])) {
+                $res[$task["rg.name"]][$task["day"]][] = $task["stock.sellingPrice"];
+            }
+        }
+        
+        $stats = array();
+        foreach ($res as $detName=>$monthData) {
+            if(!isset($stats[$detName])){
+                $stats[$detName] = array();
+            }
+
+            foreach($monthData as $month => $data){
+                $stats[$detName][$month] = $this->calculate_median($res[$detName][$month]);
+            }
+        }
+        unset($stats[0]);
+        
+        return array("lines"=>$stats, "title"=>"Average ORS Price") ;;
     }
 
     function average_regional_ors_price(){

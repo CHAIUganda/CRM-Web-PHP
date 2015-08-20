@@ -18,6 +18,15 @@ function isSelected($type, $val, $chart){
   }
 }
 
+function exportLink($chart_type){
+  $params = $_GET;
+  unset($params["export"]);
+  $params["export"] = $chart_type;
+  $new_query_string = http_build_query($params);
+
+  return $new_query_string;
+}
+
 function printChart($datasource, $chartDiv, $line = null){
   $colors = array(" #243C63", "#4E77BD", "#788fb5", "#acb9ce");
   ?>
@@ -181,6 +190,10 @@ function printChart($datasource, $chartDiv, $line = null){
                        <span id="chartEmpty-detailer_visits" style="position:absolute;top:150px;left:100px;color: #5f8b95; font-size: 20px;">There is no data for the selected time period.</span>
               </div>
             </div>
+            <div style="text-align: right; padding-right: 10px; padding-top: 5px; padding-bottom: 5px">
+              <button id="jpeg2" class="btn btn-primary" type="button">JPEG</button>
+              <a href="?<?php echo exportLink("rzinc_price"); ?>"><button class="btn btn-primary" type="button">Excel</button></a>
+            </div>
         </div>
     </div>
     
@@ -223,6 +236,10 @@ function printChart($datasource, $chartDiv, $line = null){
               <div id="zinc_availability" style="height:250px;">
                 <span id="chartEmpty-zinc_availability" style="position:absolute;top:150px;left:100px;color: #5f8b95; font-size: 20px;">There is no data for the selected time period.</span>
               </div>
+            </div>
+            <div style="text-align: right; padding-right: 10px; padding-top: 5px; padding-bottom: 5px">
+              <button id="jpeg2" class="btn btn-primary" type="button">JPEG</button>
+              <a href="?<?php echo exportLink("rors_price"); ?>"><button class="btn btn-primary" type="button">Excel</button></a>
             </div>
         </div>
     </div>
@@ -269,6 +286,10 @@ function printChart($datasource, $chartDiv, $line = null){
                 <span id="chartEmpty-zinc_price" style="position:absolute;top:150px;left:100px;color: #5f8b95; font-size: 20px;">No There is no data for the selected time period.</span>
               </div>
             </div>
+            <div style="text-align: right; padding-right: 10px; padding-top: 5px; padding-bottom: 5px">
+              <button id="jpeg2" class="btn btn-primary" type="button">JPEG</button>
+              <a href="?<?php echo exportLink("dzinc_price"); ?>"><button class="btn btn-primary" type="button">Excel</button></a>
+            </div>
         </div>
     </div>
     
@@ -312,6 +333,10 @@ function printChart($datasource, $chartDiv, $line = null){
               <div id="ors_price" style="height:250px;">
                 <span id="chartEmpty-ors_price" style="position:absolute;top:150px;left:100px;color: #5f8b95; font-size: 20px;">No There is no data for the selected time period.</span>
               </div>
+            </div>
+            <div style="text-align: right; padding-right: 10px; padding-top: 5px; padding-bottom: 5px">
+              <button id="jpeg2" class="btn btn-primary" type="button">JPEG</button>
+              <a href="?<?php echo exportLink("zors_price"); ?>"><button class="btn btn-primary" type="button">Excel</button></a>
             </div>
         </div>
     </div>
