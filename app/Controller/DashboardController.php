@@ -41,12 +41,34 @@ class DashboardController extends AppController {
                 $this->formatExport($this->median_ors_price_export());
                 break;
             case 'nzinc_avail':
-                $this->formatExport($this->avail_nzinc_ors_avail_export());
+                $this->availFormat($this->avail_nzinc_ors_avail_export());
+                break;
+            case 'rzinc_avail':
+                $this->availFormat($this->avail_rzinc_ors_avail_export());
+                break;
             default:
                 break;
         }
     }
+    public function availFormat($data){
+        $csv = Writer::createFromFileObject(new SplTempFileObject());
+        
+        $title = array("Date", $data["title"], "Zinc & ORS Availability");
+        $csv->insertOne($title);
 
+        foreach ($data["lines"] as $detailerName => $detailerData) {
+            foreach ($detailerData as $date => $value) {
+                $line = array();
+                $line[] = $date;
+                $line[] = $detailerName;
+                $line[] = $value;
+
+                $csv->insertOne($line);
+            }
+        }
+        $csv->output('report.csv');
+        die;
+    }
     public function formatExport($data){
         $csv = Writer::createFromFileObject(new SplTempFileObject());
         
@@ -438,7 +460,6 @@ class DashboardController extends AppController {
         foreach ($res as $username => $monthData) {
             if(!isset($stockAvailabilityStats[$username])){
                 $stockAvailabilityStats[$username] = array();
-                $stockAvailabilityStats[$username] = $this->getMonths($classification, $period);
             }
 
             foreach($monthData as $month => $data){
@@ -446,10 +467,7 @@ class DashboardController extends AppController {
             }
         }
 
-        pr($stockAvailabilityStats);
-        exit();
-
-        return $stockAvailabilityStats;
+        return array("lines"=>$stockAvailabilityStats, "title"=>"Region ");
     }
     function avail_nzinc_ors_avail(){
         // Get filters
@@ -503,7 +521,51 @@ class DashboardController extends AppController {
         }
         return $stockAvailabilityStats;
     }
+    function avail_rzinc_ors_avail_export(){
+        // Get filters
+        @$classification = $_GET['rOrsAvailClassification'];
+        @$period = $_GET['rZincPercent'];
 
+        $date_range = $this->getTimeRange($classification, $period);
+
+        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]->(t) match 
+            t<-[:`SC_IN_TERRITORY`]-(sc) match sc<-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]->(task) match 
+            task<-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
+             $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]->(stock) where stock.category = 
+            \"ors\" return task.uuid, task.description, task.completionDate, user.username, stock.uuid, stock.category, 
+            stock.stockLevel");
+        
+        $res = array();
+
+        foreach ($tasks as $task) {
+            $epoch = floor($task["task.completionDate"]/1000);
+            $dt = new DateTime("@$epoch");
+            $task["day"] = $dt->format("M. j, Y");
+
+            if (!isset($res[$task["user.username"]])) {
+                $res[$task["user.username"]] = array();
+                $res[$task["user.username"]] = array();
+            }
+
+            $res[$task["user.username"]][$task["day"]][$task["task.uuid"]] = 0;
+            if ($task["stock.stockLevel"] > 0) {
+                $res[$task["user.username"]][$task["day"]][$task["task.uuid"]] = 1;
+            }
+        }
+
+        $stockAvailabilityStats = array();
+        foreach ($res as $username => $monthData) {
+            if(!isset($stockAvailabilityStats[$username])){
+                $stockAvailabilityStats[$username] = array();
+            }
+
+            foreach($monthData as $month => $data){
+                $stockAvailabilityStats[$username][$month] = $this->calculate_positive_percentage($res[$username][$month]);
+            }
+        }
+
+        return array("lines"=>$stockAvailabilityStats, "title"=>"Detailer");
+    }
     function avail_rzinc_ors_avail(){
         // Get filters
         @$classification = $_GET['rOrsAvailClassification'];
