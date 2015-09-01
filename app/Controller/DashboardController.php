@@ -222,7 +222,7 @@ class DashboardController extends AppController {
 
     public function average_daily_visits(){
         $classification = 1;
-        $dt = new DateTime();
+        $dt = new Datetime();
         //$thismonth_range = $this->getTimeRange($classification, $dt->format("n"));
         //$lastmonth_range = $this->getTimeRange($classification, (intval($dt->format("n")) - 1));
         $thismonth_range = $this->getTimeRange($classification, 3);
@@ -270,7 +270,7 @@ class DashboardController extends AppController {
 
     public function average_task_completion(){
         $classification = 1;
-        $dt = new DateTime();
+        $dt = new Datetime();
         //$thismonth_range = $this->getTimeRange($classification, $dt->format("n"));
         //$lastmonth_range = $this->getTimeRange($classification, (intval($dt->format("n")) - 1));
         $thismonth_range = $this->getTimeRange($classification, 3);
@@ -308,7 +308,7 @@ class DashboardController extends AppController {
 
     public function percentagePriceChange($drug){
         $classification = 1;
-        $dt = new DateTime();
+        $dt = new Datetime();
         //$thismonth_range = $this->getTimeRange($classification, $dt->format("n"));
         //$lastmonth_range = $this->getTimeRange($classification, (intval($dt->format("n")) - 1));
         $thismonth_range = $this->getTimeRange($classification, 3);
@@ -778,10 +778,10 @@ class DashboardController extends AppController {
         $date_range = $this->getTimeRange($classification, $period);
 
         $tasks = $this->runNeoQuery("MATCH (task:`DetailerTask`) where task.completionDate > ". $date_range[0] .
-            " AND task.completionDate < " . $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]->(stock:`DetailerStock`) 
-            match task<-[:`COMPLETED_TASK`]-(user:`User`) match (user)-[:`USER_TERRITORY`]->(t:`Territory`)
-            where stock.category = \"zinc\" match (t)<-[:`SC_IN_TERRITORY`]-(sc:`SubCounty`) match (ds:`District`)-[:`HAS_SUB_COUNTY`]->(sc) 
-            match (rg:`Region`)-[:`HAS_DISTRICT`]->(ds) RETURN distinct task.uuid, task.description, task.completionDate, user.username, 
+            " AND task.completionDate < " . $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]->(stock) 
+            match task<-[:`COMPLETED_TASK`]-(user) match (user)-[:`USER_TERRITORY`]->(t)
+            where stock.category = \"zinc\" match (t)<-[:`SC_IN_TERRITORY`]-(sc:`SubCounty`) match (ds)-[:`HAS_SUB_COUNTY`]->(sc) 
+            match (rg)-[:`HAS_DISTRICT`]->(ds) RETURN distinct task.uuid, task.description, task.completionDate, user.username, 
             stock.uuid, stock.category, stock.stockLevel, t.name, rg.name");
 
         $res = array();
@@ -977,6 +977,7 @@ class DashboardController extends AppController {
         return array("lines"=>$stockAvailabilityStats, "detailer_task"=>$detailer_task, "title"=>"Zinc Availability");
     }
 	function zinc_percentage_availability(){
+        $time1 = time();
         // Get filters
         @$classification = $_GET['orsAvailClassification'];
         @$period = $_GET['zincPercent'];
@@ -1027,10 +1028,13 @@ class DashboardController extends AppController {
                 $stockAvailabilityStats[$username][$month] = $this->calculate_positive_percentage($res[$username][$month]);
             }
         }
+        $time2 = time();
+        $this->timeLog["zinc_percentage_availability"] = $time2 - $time1;
         return $stockAvailabilityStats;
 	}
 
 	function average_visits_by_detailers($type){
+        $time1 = time();
         // Get filters
         @$classification = $_GET['visitClassification'];
         @$period = $_GET['dailyVisitsPeriod'];
@@ -1127,6 +1131,9 @@ class DashboardController extends AppController {
                 $medians[$detName][$month] = $this->calculate_average(array_values($values));
             }
         }
+
+        $time2 = time();
+        $this->timeLog["average_visits_by_detailers"] = $time2 - $time1;
         return $medians;
 	}
 
@@ -1454,6 +1461,7 @@ class DashboardController extends AppController {
     }
 
 	function median_zinc_price(){
+        $time1 = time();
         @$classification = $_GET['zincClassification'];
         @$period = $_GET['zincPrice'];
 
@@ -1505,11 +1513,13 @@ class DashboardController extends AppController {
             }
         }
         unset($stats[0]);
-
+        $time2 = time();
+        $this->timeLog["median_zinc_price"] = $time2 - $time1;
         return $stats;
 	}
 
 	function median_ors_price(){
+        $time1 = time();
         @$classification = $_GET['orsClassification'];
         @$period = $_GET['ORSPrice'];
 
@@ -1568,6 +1578,9 @@ class DashboardController extends AppController {
             }
         }
         unset($stats[0]);
+
+        $time2 = time();
+        $this->timeLog["median_ors_price"] = $time2 - $time1;
         return $stats;
 	}
 
@@ -1737,6 +1750,7 @@ class DashboardController extends AppController {
     }
 
     function runNeoQuery($query){
+        $time1 = time();
         $this->client = new Everyman\Neo4j\Client();
         $this->client->getTransport()->setAuth("neo4j", "neo4j");
 
@@ -1753,7 +1767,11 @@ class DashboardController extends AppController {
 
             $tasks[] = $item;
         }
-
+        $time2 = time();
+        if (!isset($this->timeLog["query_time"])) {
+            $this->timeLog["query_time"] = array();
+        }
+        $this->timeLog["query_time"][] = $time2 - $time1;
         return $tasks;
     }
 
