@@ -10,12 +10,14 @@ App::uses('AppController', 'Controller');
 class DashboardController extends AppController {
 
 	var $client;
+    var $timeLog = array();
 /**
  * index method
  *
  * @return void
  */
 	public function index() {
+        $time1 = time();
         if(!empty($_GET["export"])){
             $this->export($_GET["export"]);
             exit();
@@ -25,9 +27,14 @@ class DashboardController extends AppController {
         $this->set("zinc_stats", $this->zinc_percentage_availability());
         $this->set("zinc_price", $this->median_zinc_price());
         $this->set("ors_price", $this->median_ors_price());
+
+        $time2 = time();
+        $this->timeLog["total"] = $time2 - $time1;
+        $this->set("time", $this->timeLog);
 	}
 
     public function availability(){
+        $time1 = time();
         if(!empty($_GET["export"])){
             $this->export($_GET["export"]);
             exit();
@@ -35,10 +42,15 @@ class DashboardController extends AppController {
 
         $this->set("nZincStats", $this->avail_nzinc_ors_avail());
         $this->set("rZincStats", $this->avail_rzinc_ors_avail());
+
+        $time2 = time();
+        $this->timeLog["total"] = $time2 - $time1;
+        $this->set("time", $this->timeLog);
     }
 
     public function price(){
         set_time_limit(0);
+        $time1 = time();
         if(!empty($_GET["export"])){
             $this->export($_GET["export"]);
             exit();
@@ -52,10 +64,15 @@ class DashboardController extends AppController {
 
         $this->set("zinc_price", $this->median_zinc_price());
         $this->set("ors_price", $this->median_ors_price());
+
+        $time2 = time();
+        $this->timeLog["total"] = $time2 - $time1;
+        $this->set("time", $this->timeLog);
     }
 
     public function productivity(){
         set_time_limit(0);
+        $time1 = time();
         if(!empty($_GET["export"])){
             $this->export($_GET["export"]);
             exit();
@@ -69,6 +86,10 @@ class DashboardController extends AppController {
         $this->set("detailer_visits", $this->average_visits_by_detailers("diarrhoea"));
         $this->set("dtask_completion", $this->dtask_completion());
         $this->set("detailers", $this->detailers());
+
+        $time2 = time();
+        $this->timeLog["total"] = $time2 - $time1;
+        $this->set("time", $this->timeLog);
     }
 
     public function export($export){
@@ -294,7 +315,7 @@ class DashboardController extends AppController {
         $lastmonth_range = $this->getTimeRange($classification, 2);
 
         $zinc_tasks = $this->runNeoQuery("MATCH (task:`DetailerTask`) where task.completionDate > ". $lastmonth_range[0] .
-            " AND task.completionDate < " . $thismonth_range[1] . " match task-[:`HAS_DETAILER_STOCK`]->(stock) 
+            " AND task.completionDate < " . $thismonth_range[1] . " match task-[:`HAS_DETAILER_STOCK`]->(stock:`DetailerStock`) 
             where stock.category = \"$drug\" RETURN distinct task.uuid, task.completionDate, 
             stock.uuid, stock.category, stock.stockLevel, stock.sellingPrice");
 
@@ -335,8 +356,8 @@ class DashboardController extends AppController {
         return $res;
     }
     public function detailers(){
-        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t) match t<-[:`USER_TERRITORY`]-(user)
-            match (user)-[:`HAS_ROLE`]->role where role.authority = \"ROLE_DETAILER\" return  user.username as username, id(user) as user_id limit 1000");
+        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t:`Territory`) match (t)<-[:`USER_TERRITORY`]-(user:`User`)
+            match (user)-[:`HAS_ROLE`]->(role:`Role`) where role.authority = \"ROLE_DETAILER\" return  user.username as username, id(user) as user_id limit 1000");
 
         return $tasks;
     }
@@ -353,7 +374,7 @@ class DashboardController extends AppController {
             $det_filter = "id(user) = " . $detId . " and ";
         }
 
-        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t) match 
+        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t:`Territory`) match 
             t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match cust-[:`IN_SEGMENT`]->seg
             match task-[:`COMPLETED_TASK`]-(user) where $det_filter task.completionDate > " . $date_range[0] . " and task.completionDate < ".
              $date_range[1] . " return task.uuid, task.description, task.completionDate, user.username, seg.name");
@@ -413,7 +434,7 @@ class DashboardController extends AppController {
             $det_filter = "id(user) = " . $detId . " and ";
         }
 
-        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t) match 
+        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t:`Territory`) match 
             t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match cust-[:`IN_SEGMENT`]->seg
             match task-[:`COMPLETED_TASK`]-(user) where $det_filter task.completionDate > " . $date_range[0] . " and task.completionDate < ".
              $date_range[1] . " return task.uuid, task.description, task.completionDate, user.username, seg.name");
@@ -583,7 +604,7 @@ class DashboardController extends AppController {
 
         $date_range = $this->getTimeRange($classification, $period);
 
-        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]->(t) match 
+        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]->(:`Territory`) match 
             t<-[:`SC_IN_TERRITORY`]-(sc) match sc<-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]->(task) match 
             task<-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
              $date_range[1] . " return task.uuid, task.description, task.completionDate, task.status, user.username");
@@ -665,7 +686,7 @@ class DashboardController extends AppController {
 
         $date_range = $this->getTimeRange($classification, $period);
 
-        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]->(t) match 
+        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]->(t:`Territory`) match 
             t<-[:`SC_IN_TERRITORY`]-(sc) match sc<-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]->(task) match 
             task<-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
              $date_range[1] . " return task.uuid, task.description, task.completionDate, task.status, user.username");
@@ -703,6 +724,7 @@ class DashboardController extends AppController {
         return $stockAvailabilityStats;
     }
     function avail_nzinc_ors_avail_export(){
+        $time1 = time();
         // Get filters
         @$classification = $_GET['nOrsAvailClassification'];
         @$period = $_GET['nZincPercent'];
@@ -710,7 +732,7 @@ class DashboardController extends AppController {
         $date_range = $this->getTimeRange($classification, $period);
 
         $tasks = $this->runNeoQuery("MATCH (task:`DetailerTask`) where task.completionDate > ". $date_range[0] .
-            " AND task.completionDate < " . $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]->(stock) 
+            " AND task.completionDate < " . $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]->(stock:`DetailerStock`) 
             match task<-[:`COMPLETED_TASK`]-(user) match (user)-[:`USER_TERRITORY`]->(t)
             where stock.category = \"zinc\" match (t)<-[:`SC_IN_TERRITORY`]-(sc) match (ds)-[:`HAS_SUB_COUNTY`]->(sc) 
             match (rg)-[:`HAS_DISTRICT`]->(ds) RETURN distinct task.uuid, task.description, task.completionDate, user.username, 
@@ -743,10 +765,12 @@ class DashboardController extends AppController {
                 $stockAvailabilityStats[$username][$month] = $this->calculate_positive_percentage($res[$username][$month]);
             }
         }
-
+        $time2 = time();
+        $this->timeLog["avail_nzinc_ors_avail_export"] = $time2 - $time1;
         return array("lines"=>$stockAvailabilityStats, "title"=>"Region ");
     }
     function avail_nzinc_ors_avail(){
+        $time1 = time();
         // Get filters
         @$classification = $_GET['nOrsAvailClassification'];
         @$period = $_GET['nZincPercent'];
@@ -754,10 +778,10 @@ class DashboardController extends AppController {
         $date_range = $this->getTimeRange($classification, $period);
 
         $tasks = $this->runNeoQuery("MATCH (task:`DetailerTask`) where task.completionDate > ". $date_range[0] .
-            " AND task.completionDate < " . $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]->(stock) 
-            match task<-[:`COMPLETED_TASK`]-(user) match (user)-[:`USER_TERRITORY`]->(t)
-            where stock.category = \"zinc\" match (t)<-[:`SC_IN_TERRITORY`]-(sc) match (ds)-[:`HAS_SUB_COUNTY`]->(sc) 
-            match (rg)-[:`HAS_DISTRICT`]->(ds) RETURN distinct task.uuid, task.description, task.completionDate, user.username, 
+            " AND task.completionDate < " . $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]->(stock:`DetailerStock`) 
+            match task<-[:`COMPLETED_TASK`]-(user:`User`) match (user)-[:`USER_TERRITORY`]->(t:`Territory`)
+            where stock.category = \"zinc\" match (t)<-[:`SC_IN_TERRITORY`]-(sc:`SubCounty`) match (ds:`District`)-[:`HAS_SUB_COUNTY`]->(sc) 
+            match (rg:`Region`)-[:`HAS_DISTRICT`]->(ds) RETURN distinct task.uuid, task.description, task.completionDate, user.username, 
             stock.uuid, stock.category, stock.stockLevel, t.name, rg.name");
 
         $res = array();
@@ -796,6 +820,9 @@ class DashboardController extends AppController {
                 $stockAvailabilityStats[$username][$month] = $this->calculate_positive_percentage($res[$username][$month]);
             }
         }
+        $time2 = time();
+        $this->timeLog["avail_nzinc_ors_avail"] = $time2 - $time1;
+
         return $stockAvailabilityStats;
     }
     function avail_rzinc_ors_avail_export(){
@@ -805,10 +832,10 @@ class DashboardController extends AppController {
 
         $date_range = $this->getTimeRange($classification, $period);
 
-        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]->(t) match 
+        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]->(t:`Territory`) match 
             t<-[:`SC_IN_TERRITORY`]-(sc) match sc<-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]->(task) match 
             task<-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
-             $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]->(stock) where stock.category = 
+             $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]->(stock:`DetailerStock`) where stock.category = 
             \"ors\" return task.uuid, task.description, task.completionDate, user.username, stock.uuid, stock.category, 
             stock.stockLevel");
         
@@ -844,16 +871,17 @@ class DashboardController extends AppController {
         return array("lines"=>$stockAvailabilityStats, "title"=>"Detailer");
     }
     function avail_rzinc_ors_avail(){
+        $time1 = time();
         // Get filters
         @$classification = $_GET['rOrsAvailClassification'];
         @$period = $_GET['rZincPercent'];
 
         $date_range = $this->getTimeRange($classification, $period);
 
-        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]->(t) match 
+        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]->(t:`Territory`) match 
             t<-[:`SC_IN_TERRITORY`]-(sc) match sc<-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]->(task) match 
             task<-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
-             $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]->(stock) where stock.category = 
+             $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]->(stock:`DetailerStock`) where stock.category = 
             \"ors\" return task.uuid, task.description, task.completionDate, user.username, stock.uuid, stock.category, 
             stock.stockLevel");
         
@@ -894,6 +922,9 @@ class DashboardController extends AppController {
                 $stockAvailabilityStats[$username][$month] = $this->calculate_positive_percentage($res[$username][$month]);
             }
         }
+
+        $time2 = time();
+        $this->timeLog["avail_rzinc_ors_avail"] = $time2 - $time1;
         return $stockAvailabilityStats;
     }
 
@@ -904,10 +935,10 @@ class DashboardController extends AppController {
 
         $date_range = $this->getTimeRange($classification, $period);
 
-        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t) match 
+        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t:`Territory`) match 
             t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
             task-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
-             $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]-(stock) where stock.category = 
+             $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]-(stock:`DetailerStock`) where stock.category = 
             \"zinc\" match (t)<-[:`SC_IN_TERRITORY`]-(sc) match (ds)-[:`HAS_SUB_COUNTY`]->(sc) 
             match (rg)-[:`HAS_DISTRICT`]->(ds) return task.uuid, task.description, task.completionDate, user.username, user.name, id(user) as user_id,
             stock.uuid, stock.category, stock.stockLevel, rg.name ");
@@ -952,10 +983,10 @@ class DashboardController extends AppController {
 
 		$date_range = $this->getTimeRange($classification, $period);
 
-        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t) match 
+        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t:`Territory`) match 
             t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
             task-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
-             $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]-(stock) where stock.category = 
+             $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]-(stock:`DetailerStock`) where stock.category = 
             \"zinc\" return task.uuid, task.description, task.completionDate, user.username, stock.uuid, stock.category,
             stock.stockLevel ");
         
@@ -1025,12 +1056,12 @@ class DashboardController extends AppController {
 
         $qs = "";
         if ($type == "diarrhoea") {
-            $qs = "start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t) match 
+            $qs = "start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t:`Territory`) match 
             t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task:`DetailerTask`) match 
             (task)-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
              $date_range[1] . " return distinct task.uuid, task.description, task.completionDate, user.username";
         } else {
-            $qs = "start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t) match 
+            $qs = "start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t:`Territory`) match 
             t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
             task-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
              $date_range[1] . " return distinct task.uuid, task.description, task.completionDate, user.username";
@@ -1108,15 +1139,15 @@ class DashboardController extends AppController {
         $qs = "";
         if ($type == "diarrhoea") {
             $qs = "MATCH (task:`DetailerTask`) where task.completionDate > ". $date_range[0] .
-            " AND task.completionDate < " . $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]->(stock) 
-            match task<-[:`COMPLETED_TASK`]-(user) match (user)-[:`USER_TERRITORY`]->(t)
+            " AND task.completionDate < " . $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]->(stock:`DetailerStock`) 
+            match task<-[:`COMPLETED_TASK`]-(user) match (user)-[:`USER_TERRITORY`]->(t:`Territory`)
             where stock.category = \"zinc\" match (t)<-[:`SC_IN_TERRITORY`]-(sc) match (ds)-[:`HAS_SUB_COUNTY`]->(sc) 
             match (rg)-[:`HAS_DISTRICT`]->(ds) RETURN distinct task.uuid, task.description, task.completionDate, id(user) as user_id,
             user.name, user.username, t.name, rg.name";
         } else {
             $qs = "MATCH (task:`Task`) where task.completionDate > ". $date_range[0] .
-            " AND task.completionDate < " . $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]->(stock) 
-            match task<-[:`COMPLETED_TASK`]-(user) match (user)-[:`USER_TERRITORY`]->(t)
+            " AND task.completionDate < " . $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]->(stock:`DetailerStock`) 
+            match task<-[:`COMPLETED_TASK`]-(user) match (user)-[:`USER_TERRITORY`]->(t:`Territory`)
             where stock.category = \"zinc\" match (t)<-[:`SC_IN_TERRITORY`]-(sc) match (ds)-[:`HAS_SUB_COUNTY`]->(sc) 
             match (rg)-[:`HAS_DISTRICT`]->(ds) RETURN distinct task.uuid, task.description, task.completionDate, id(user) as user_id,
             user.name, user.username, t.name, rg.name";
@@ -1176,8 +1207,8 @@ class DashboardController extends AppController {
         
 
         $tasks = $this->runNeoQuery("MATCH (task:`DetailerTask`) where task.completionDate > ". $date_range[0] .
-            " AND task.completionDate < " . $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]->(stock) 
-            match task<-[:`COMPLETED_TASK`]-(user) match (user)-[:`USER_TERRITORY`]->(t)
+            " AND task.completionDate < " . $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]->(stock:`DetailerStock`) 
+            match task<-[:`COMPLETED_TASK`]-(user) match (user)-[:`USER_TERRITORY`]->(t:`Territory`)
             where stock.category = \"zinc\" match (t)<-[:`SC_IN_TERRITORY`]-(sc) match (ds)-[:`HAS_SUB_COUNTY`]->(sc) 
             match (rg)-[:`HAS_DISTRICT`]->(ds) RETURN distinct task.uuid, task.description, task.completionDate, user.username, 
             stock.uuid, stock.category, stock.stockLevel, stock.sellingPrice, t.name, rg.name");
@@ -1223,8 +1254,8 @@ class DashboardController extends AppController {
         
 
         $tasks = $this->runNeoQuery("MATCH (task:`DetailerTask`) where task.completionDate > ". $date_range[0] .
-            " AND task.completionDate < " . $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]->(stock) 
-            match task<-[:`COMPLETED_TASK`]-(user) match (user)-[:`USER_TERRITORY`]->(t)
+            " AND task.completionDate < " . $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]->(stock:`DetailerStock`) 
+            match task<-[:`COMPLETED_TASK`]-(user) match (user)-[:`USER_TERRITORY`]->(t:`Territory`)
             where stock.category = \"zinc\" match (t)<-[:`SC_IN_TERRITORY`]-(sc) match (ds)-[:`HAS_SUB_COUNTY`]->(sc) 
             match (rg)-[:`HAS_DISTRICT`]->(ds) RETURN distinct task.uuid, task.description, task.completionDate, user.username, 
             stock.uuid, stock.category, stock.stockLevel, stock.sellingPrice, t.name, rg.name");
@@ -1280,8 +1311,8 @@ class DashboardController extends AppController {
 
         $date_range = $this->getTimeRange($classification, $period);
         $tasks = $this->runNeoQuery("MATCH (task:`DetailerTask`) where task.completionDate > ". $date_range[0] .
-            " AND task.completionDate < " . $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]->(stock) 
-            match task<-[:`COMPLETED_TASK`]-(user) match (user)-[:`USER_TERRITORY`]->(t)
+            " AND task.completionDate < " . $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]->(stock:`DetailerStock`) 
+            match task<-[:`COMPLETED_TASK`]-(user) match (user)-[:`USER_TERRITORY`]->(t:`Territory`)
             where stock.category = \"ors\" match (t)<-[:`SC_IN_TERRITORY`]-(sc) match (ds)-[:`HAS_SUB_COUNTY`]->(sc) 
             match (rg)-[:`HAS_DISTRICT`]->(ds) RETURN distinct task.uuid, task.description, task.completionDate, user.username, 
             stock.uuid, stock.category, stock.stockLevel, stock.sellingPrice, t.name, rg.name");
@@ -1325,8 +1356,8 @@ class DashboardController extends AppController {
 
         $date_range = $this->getTimeRange($classification, $period);
         $tasks = $this->runNeoQuery("MATCH (task:`DetailerTask`) where task.completionDate > ". $date_range[0] .
-            " AND task.completionDate < " . $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]->(stock) 
-            match task<-[:`COMPLETED_TASK`]-(user) match (user)-[:`USER_TERRITORY`]->(t)
+            " AND task.completionDate < " . $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]->(stock:`DetailerStock`) 
+            match task<-[:`COMPLETED_TASK`]-(user) match (user)-[:`USER_TERRITORY`]->(t:`Territory`)
             where stock.category = \"ors\" match (t)<-[:`SC_IN_TERRITORY`]-(sc) match (ds)-[:`HAS_SUB_COUNTY`]->(sc) 
             match (rg)-[:`HAS_DISTRICT`]->(ds) RETURN distinct task.uuid, task.description, task.completionDate, user.username, 
             stock.uuid, stock.category, stock.stockLevel, stock.sellingPrice, t.name, rg.name");
@@ -1380,11 +1411,11 @@ class DashboardController extends AppController {
         @$period = $_GET['zincPrice'];
 
         $date_range = $this->getTimeRange($classification, $period);
-        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t) match 
+        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t:`Territory`) match 
             t-[:`SC_IN_TERRITORY`]-(sc) match (ds)-[:`HAS_SUB_COUNTY`]->(sc) 
             match (rg)-[:`HAS_DISTRICT`]->(ds) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
             task-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
-             $date_range[1] . " optional match task-[:`HAS_DETAILER_STOCK`]-(stock) where stock.category = 
+             $date_range[1] . " optional match task-[:`HAS_DETAILER_STOCK`]-(stock:`DetailerStock`) where stock.category = 
             \"zinc\"  return task.uuid, task.description, task.completionDate, user.username, id(user) as user_id,
              user.name, stock.uuid, stock.category, stock.stockLevel, stock.sellingPrice, rg.name");
         $res[] = array();
@@ -1427,10 +1458,10 @@ class DashboardController extends AppController {
         @$period = $_GET['zincPrice'];
 
         $date_range = $this->getTimeRange($classification, $period);
-        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t) match 
+        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t:`Territory`) match 
             t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
             task-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
-             $date_range[1] . " optional match task-[:`HAS_DETAILER_STOCK`]-(stock) where stock.category = 
+             $date_range[1] . " optional match task-[:`HAS_DETAILER_STOCK`]-(stock:`DetailerStock`) where stock.category = 
             \"zinc\" return task.uuid, task.description, task.completionDate, user.username, stock.uuid, stock.category,
             stock.stockLevel, stock.sellingPrice");
         $res[] = array();
@@ -1484,10 +1515,10 @@ class DashboardController extends AppController {
 
         $date_range = $this->getTimeRange($classification, $period);
 
-		$tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t) match 
+		$tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t:`Territory`) match 
             t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
             task-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
-             $date_range[1] . " optional match task-[:`HAS_DETAILER_STOCK`]-(stock) where stock.category = 
+             $date_range[1] . " optional match task-[:`HAS_DETAILER_STOCK`]-(stock:`DetailerStock`) where stock.category = 
             \"ors\" return task.uuid, task.description, task.completionDate, user.username, stock.uuid, stock.category, stock.stockLevel
             , stock.sellingPrice");
 
@@ -1546,11 +1577,11 @@ class DashboardController extends AppController {
 
         $date_range = $this->getTimeRange($classification, $period);
 
-        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t) match 
+        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t:`Territory`) match 
             t-[:`SC_IN_TERRITORY`]-(sc) match (ds)-[:`HAS_SUB_COUNTY`]->(sc) 
             match (rg)-[:`HAS_DISTRICT`]->(ds) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
             task-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
-             $date_range[1] . " optional match task-[:`HAS_DETAILER_STOCK`]-(stock) where stock.category = 
+             $date_range[1] . " optional match task-[:`HAS_DETAILER_STOCK`]-(stock:`DetailerStock`) where stock.category = 
             \"ors\" return task.uuid, task.description, task.completionDate, user.username, user.name, id(user) as user_id,
              stock.uuid, stock.category, stock.stockLevel, stock.sellingPrice, rg.name");
 
