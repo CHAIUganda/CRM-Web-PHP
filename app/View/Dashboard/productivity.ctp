@@ -204,7 +204,6 @@ function select_detname($detId){
               </div>
             </div>
             <div style="text-align: right; padding-right: 10px; padding-top: 5px; padding-bottom: 5px">
-              <button id="jpeg2" class="btn btn-primary" type="button">JPEG</button>
               <a href="?<?php echo exportLink("pweekly_visits"); ?>"><button class="btn btn-primary" type="button">Excel</button></a>
             </div>
         </div>
@@ -251,7 +250,6 @@ function select_detname($detId){
               </div>
             </div>
             <div style="text-align: right; padding-right: 10px; padding-top: 5px; padding-bottom: 5px">
-              <button id="jpeg2" class="btn btn-primary" type="button">JPEG</button>
               <a href="?<?php echo exportLink("prtask_completion"); ?>"><button class="btn btn-primary" type="button">Excel</button></a>
             </div>
         </div>
@@ -300,7 +298,6 @@ function select_detname($detId){
               </div>
             </div>
             <div style="text-align: right; padding-right: 10px; padding-top: 5px; padding-bottom: 5px">
-              <button id="jpeg2" class="btn btn-primary" type="button">JPEG</button>
               <a href="?<?php echo exportLink("paverage_visits"); ?>"><button class="btn btn-primary" type="button">Excel</button></a>
             </div>
         </div>
@@ -348,7 +345,6 @@ function select_detname($detId){
               </div>
             </div>
             <div style="text-align: right; padding-right: 10px; padding-top: 5px; padding-bottom: 5px">
-              <button id="jpeg2" class="btn btn-primary" type="button">JPEG</button>
               <a href="?<?php echo exportLink("ptask_completion"); ?>"><button class="btn btn-primary" type="button">Excel</button></a>
             </div>
         </div>

@@ -191,7 +191,6 @@ function printChart($datasource, $chartDiv, $line = null){
               </div>
             </div>
             <div style="text-align: right; padding-right: 10px; padding-top: 5px; padding-bottom: 5px">
-              <button id="jpeg2" class="btn btn-primary" type="button">JPEG</button>
               <a href="?<?php echo exportLink("rzinc_price"); ?>"><button class="btn btn-primary" type="button">Excel</button></a>
             </div>
         </div>
@@ -238,7 +237,6 @@ function printChart($datasource, $chartDiv, $line = null){
               </div>
             </div>
             <div style="text-align: right; padding-right: 10px; padding-top: 5px; padding-bottom: 5px">
-              <button id="jpeg2" class="btn btn-primary" type="button">JPEG</button>
               <a href="?<?php echo exportLink("rors_price"); ?>"><button class="btn btn-primary" type="button">Excel</button></a>
             </div>
         </div>
@@ -287,7 +285,6 @@ function printChart($datasource, $chartDiv, $line = null){
               </div>
             </div>
             <div style="text-align: right; padding-right: 10px; padding-top: 5px; padding-bottom: 5px">
-              <button id="jpeg2" class="btn btn-primary" type="button">JPEG</button>
               <a href="?<?php echo exportLink("dzinc_price"); ?>"><button class="btn btn-primary" type="button">Excel</button></a>
             </div>
         </div>
@@ -335,7 +332,6 @@ function printChart($datasource, $chartDiv, $line = null){
               </div>
             </div>
             <div style="text-align: right; padding-right: 10px; padding-top: 5px; padding-bottom: 5px">
-              <button id="jpeg2" class="btn btn-primary" type="button">JPEG</button>
               <a href="?<?php echo exportLink("zors_price"); ?>"><button class="btn btn-primary" type="button">Excel</button></a>
             </div>
         </div>
