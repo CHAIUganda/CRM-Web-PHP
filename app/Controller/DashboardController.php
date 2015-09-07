@@ -142,10 +142,10 @@ class DashboardController extends AppController {
     }
 
     public function priceFormat($data){
-        $csv = Writer::createFromFileObject(new SplTempFileObject());
+        $lines = array();
         
         $title = array("Date", $data["title"], "Region");
-        $csv->insertOne($title);
+        $lines[] = $title;
 
         foreach ($data["lines"] as $detailerName => $detailerData) {
             foreach ($detailerData as $date => $value) {
@@ -154,18 +154,16 @@ class DashboardController extends AppController {
                 $line[] = $value;
                 $line[] = $detailerName;
 
-                $csv->insertOne($line);
+                $lines[] = $line;
             }
         }
-        $csv->output('report.csv');
-        die;
+        $this->exportCSV($lines);
     }
 
     public function availFormat($data){
-        $csv = Writer::createFromFileObject(new SplTempFileObject());
-        
+        $lines = array();
         $title = array("Date", $data["title"], "Zinc & ORS Availability");
-        $csv->insertOne($title);
+        $lines[] = $title;
 
         foreach ($data["lines"] as $detailerName => $detailerData) {
             foreach ($detailerData as $date => $value) {
@@ -174,20 +172,19 @@ class DashboardController extends AppController {
                 $line[] = $detailerName;
                 $line[] = $value;
 
-                $csv->insertOne($line);
+                $lines[] = $line;
             }
         }
-        $csv->output('report.csv');
-        die;
+        
+        $this->exportCSV($lines);
     }
     public function formatExport($data){
-        $csv = Writer::createFromFileObject(new SplTempFileObject());
-        
         $detailer_task = $data["detailer_task"];
         //pr($detailer_task);
 
+        $lines = array();
         $title = array("Date", $data["title"], "Detailer Name", "Detailer ID", "Region");
-        $csv->insertOne($title);
+        $lines[] = $title;
 
         foreach ($data["lines"] as $detailerName => $detailerData) {
             foreach ($detailerData as $date => $value) {
@@ -203,16 +200,38 @@ class DashboardController extends AppController {
                 $line[] = $detailer_task[$detailerName]["user_id"];
                 $line[] = $detailer_task[$detailerName]["rg.name"];
 
-                $csv->insertOne($line);
+                $lines[] = $line;
             }
         }
-        $csv->output('report.csv');
-        die;
+
+        $this->exportCSV($lines);
+    }
+
+    function date_sorter($a, $b){
+        $date1 = 0;
+        $date2 = 0;
+
+        if (count(explode(" ", $a[0])) == 3) {
+            $date1 = DateTime::createFromFormat('M. j, Y', $a[0]);
+            $date2 = DateTime::createFromFormat('M. j, Y', $b[0]);
+        } else {
+            $date1 = DateTime::createFromFormat('F Y', $a[0]);
+            $date2 = DateTime::createFromFormat('F Y', $b[0]);
+        }
+
+        return ($date1 < $date2) ? -1 : 1;
     }
     public function exportCSV($lines){
         $csv = Writer::createFromFileObject(new SplTempFileObject());
+        $csv->insertOne($lines[0]);
 
-        foreach ($lines as $line) {
+        $sorted_lines = array();
+        if (count($lines) > 1) {
+            $sorted_lines = array_slice($lines, 1);
+            usort($sorted_lines, array($this, "date_sorter"));
+        }
+        
+        foreach ($sorted_lines as $line) {
             $csv->insertOne($line);
         }
         
