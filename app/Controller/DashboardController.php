@@ -219,7 +219,7 @@ class DashboardController extends AppController {
             $date2 = DateTime::createFromFormat('F Y', $b[0]);
         }
 
-        return ($date1 < $date2) ? -1 : 1;
+        return ($date1 > $date2) ? -1 : 1;
     }
     public function exportCSV($lines){
         $csv = Writer::createFromFileObject(new SplTempFileObject());
