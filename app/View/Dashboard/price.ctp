@@ -21,9 +21,9 @@ function targetPrice($product){
 function selectedProduct($type, $product){
   $getValue = "";
   if($type == 1){
-    $getValue = $_GET["rproduct"];
+    $getValue = @$_GET["rproduct"];
   } else {
-    $getValue = $_GET["dproduct"];
+    $getValue = @$_GET["dproduct"];
   }
 
   if($getValue == $product){
