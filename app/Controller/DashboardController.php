@@ -64,7 +64,7 @@ class DashboardController extends AppController {
         if(empty($detailer_product)){
             $detailer_product = "zinc";
         }
-        
+
         $this->set("zinc_price_change", $this->percentagePriceChange("zinc"));
         $this->set("ors_price_change", $this->percentagePriceChange("ors"));
 
@@ -1291,7 +1291,7 @@ class DashboardController extends AppController {
         $date_range = $this->getTimeRange($classification, $period);
         
 
-        $tasks = $this->runNeoQuery("MATCH (task:`DetailerTask`) where task.completionDate > ". $date_range[0] .
+        $tasks = $this->runNeoQuery("MATCH (task:`Task`) where task.completionDate > ". $date_range[0] .
             " AND task.completionDate < " . $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]->(stock:`DetailerStock`) 
             match task<-[:`COMPLETED_TASK`]-(user) match (user)-[:`USER_TERRITORY`]->(t:`Territory`)
             where stock.category = \"$product_name\" match (t)<-[:`SC_IN_TERRITORY`]-(sc) match (ds)-[:`HAS_SUB_COUNTY`]->(sc) 
@@ -1559,7 +1559,7 @@ class DashboardController extends AppController {
         $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t:`Territory`) match 
             t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
             task-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
-             $date_range[1] . " optional match task-[:`HAS_DETAILER_STOCK`]-(stock:`DetailerStock`) where stock.category = 
+             $date_range[1] . " optional match task-[:`HAS_DETAILER_STOCK`]-(stock) where stock.category = 
             \"$product_name\" return task.uuid, task.description, task.completionDate, user.username, stock.uuid, stock.category, stock.stockLevel
             , stock.sellingPrice");
 

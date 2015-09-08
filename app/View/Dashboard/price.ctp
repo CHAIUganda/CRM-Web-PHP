@@ -1,5 +1,23 @@
 <?php
-
+function targetPrice($product){
+  switch ($product) {
+    case 'zinc':
+      return 900;
+      break;
+    case 'ors':
+      return 300;
+      break;
+    case 'act':
+      return 2000;
+      break;
+    case 'rdt':
+      return 2500;
+      break;
+    default:
+      return 900;
+      break;
+  }
+}
 function selectedProduct($type, $product){
   $getValue = "";
   if($type == 1){
@@ -212,6 +230,8 @@ function printChart($datasource, $chartDiv, $line = null){
                             <select name="rproduct">
                               <option value="zinc" <?php echo selectedProduct(1, "zinc"); ?>>Zinc</option>
                               <option value="ors" <?php echo selectedProduct(1, "ors"); ?>>ORS</option>
+                              <option value="act" <?php echo selectedProduct(1, "act"); ?>>ACT</option>
+                              <option value="rdt" <?php echo selectedProduct(1, "rdt"); ?>>RDT</option>
                             </select>
                             <select name="visitClassification" onchange="updateOptions(event, 'dailyVisits')">
                             <option value="2" <?php echo isSelected(1, 2, 1);?>>Quarter</option>
@@ -263,6 +283,8 @@ function printChart($datasource, $chartDiv, $line = null){
                             <select name="dproduct">
                               <option value="zinc" <?php echo selectedProduct(2, "zinc"); ?>>Zinc</option>
                               <option value="ors" <?php echo selectedProduct(2, "ors"); ?>>ORS</option>
+                              <option value="act" <?php echo selectedProduct(2, "act"); ?>>ACT</option>
+                              <option value="rdt" <?php echo selectedProduct(2, "rct"); ?>>RDT</option>
                             </select>
                             <select name="orsClassification" onchange="updateOptions(event, 'ORSPrice')">
                                 <option value="2" <?php echo isSelected(1, 2, 4);?>>Quarter</option>
@@ -354,9 +376,9 @@ function printChart($datasource, $chartDiv, $line = null){
     }
 
   <?php
-  printChart($regional_zinc_price, "detailer_visits", 900);
+  printChart($regional_zinc_price, "detailer_visits", targetPrice($_GET["rproduct"]));
   //printChart($regional_ors_price, "zinc_availability", 300);
   //printChart($zinc_price, "zinc_price", 900);
-  printChart($ors_price, "ors_price", 300);
+  printChart($ors_price, "ors_price", targetPrice($_GET["dproduct"]));
   ?>
 </script>

@@ -218,7 +218,11 @@
         </footer>
     </div>
     <div style="width: 100%; height: 40px">
-        <?php pr($time); ?>
+        <?php
+            if (@$_GET['dev']) {
+                pr($time);
+            }
+        ?>
     </div>
     <!-- Included Javascript files and other resources -->
     <script src="/js/jquery.sticky.js" type="text/javascript"></script>
