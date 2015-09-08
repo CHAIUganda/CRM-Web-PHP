@@ -54,6 +54,8 @@ function printChart($datasource, $chartDiv, $line = null){
   if (<?=$chartDiv?>.length > 0) {
     $("#chartEmpty-<?=$chartDiv?>").css("display", "none");
   };
+  //Define emty array to store series objects
+  var mySeriesObject<?php echo $chartDiv ?> = [];
   $("#<?php echo $chartDiv ?>").dxChart({
     dataSource: <?=$chartDiv?>,
     commonSeriesSettings: {
@@ -63,7 +65,7 @@ function printChart($datasource, $chartDiv, $line = null){
         hoverMode: "allArgumentPoints",
         selectionMode: "allArgumentPoints",
         label: {
-            visible: false,
+            visible: true,
             format: "fixedPoint",
             precision: 0
         }
@@ -109,6 +111,44 @@ function printChart($datasource, $chartDiv, $line = null){
         $.each(shownPoints, function(index, point) {
            point.getLabel().show();
         });        
+    },
+    seriesClick: function (clickedSeries) {
+        clickedSeries.select();
+    },
+    seriesSelected: function (selectedSeries) {
+        //define series labels objects
+        var mySeriesLabels = $('#<?php echo $chartDiv ?> .dxc-series-labels');
+        
+        //define series labels group
+        var mySeriesLabelsGroup = $('#<?php echo $chartDiv ?> .dxc-labels-group');
+        
+        //check if series labels objects are stored in mySeriesObject Array
+        if (mySeriesObject<?php echo $chartDiv ?>.length == 0)   {
+            for(i = 0; i < mySeriesLabels.length; i++ ){
+                mySeriesObject<?php echo $chartDiv ?>[i] = mySeriesLabels[i];
+            }
+        }
+        
+        //clear all labels
+        mySeriesLabels.remove();
+        
+        //append selected series label
+        mySeriesLabelsGroup.append(mySeriesObject<?php echo $chartDiv ?>[selectedSeries.index]);
+        
+    },
+    done: function() {
+        //define series labels objects
+        var mySeriesLabels = $('#<?php echo $chartDiv ?> .dxc-series-labels');
+        
+        //check if series labels objects are stored in mySeriesObject Array
+        if (mySeriesObject<?php echo $chartDiv ?>.length == 0)   {
+            for(i = 0; i < mySeriesLabels.length; i++ ){
+                mySeriesObject<?php echo $chartDiv ?>[i] = mySeriesLabels[i];
+            }
+        }
+        
+        //clear all labels
+        mySeriesLabels.remove();
     }
   });
 
