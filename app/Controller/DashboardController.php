@@ -55,8 +55,8 @@ class DashboardController extends AppController {
             $this->export($_GET["export"]);
             exit();
         }
-        $regional_product = $_GET["rproduct"];
-        $detailer_product = $_GET["dproduct"];
+        $regional_product = @$_GET["rproduct"];
+        $detailer_product = @$_GET["dproduct"];
         if (empty($regional_product)) {
             $regional_product = "zinc";
         }
