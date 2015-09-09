@@ -58,11 +58,11 @@ class DashboardController extends AppController {
         $regional_product = @$_GET["rproduct"];
         $detailer_product = @$_GET["dproduct"];
         if (empty($regional_product)) {
-            $regional_product = "zinc";
+            $regional_product = "ors";
         }
 
         if(empty($detailer_product)){
-            $detailer_product = "zinc";
+            $detailer_product = "ors";
         }
 
         $this->set("zinc_price_change", $this->percentagePriceChange("zinc"));

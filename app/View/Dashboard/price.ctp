@@ -14,7 +14,7 @@ function targetPrice($product){
       return 2500;
       break;
     default:
-      return 900;
+      return 300;
       break;
   }
 }
@@ -228,9 +228,8 @@ function printChart($datasource, $chartDiv, $line = null){
                 <div class="pull-right">
                         <div class="btn-group">
                             <select name="rproduct">
-                              <option value="zinc" <?php echo selectedProduct(1, "zinc"); ?>>Zinc</option>
                               <option value="ors" <?php echo selectedProduct(1, "ors"); ?>>ORS</option>
-                              <option value="act" <?php echo selectedProduct(1, "act"); ?>>ACT</option>
+                              <option value="zinc" <?php echo selectedProduct(1, "zinc"); ?>>Zinc</option>
                               <option value="rdt" <?php echo selectedProduct(1, "rdt"); ?>>RDT</option>
                             </select>
                             <select name="visitClassification" onchange="updateOptions(event, 'dailyVisits')">
@@ -281,10 +280,9 @@ function printChart($datasource, $chartDiv, $line = null){
                 <div class="pull-right">
                         <div class="btn-group">
                             <select name="dproduct">
-                              <option value="zinc" <?php echo selectedProduct(2, "zinc"); ?>>Zinc</option>
                               <option value="ors" <?php echo selectedProduct(2, "ors"); ?>>ORS</option>
-                              <option value="act" <?php echo selectedProduct(2, "act"); ?>>ACT</option>
-                              <option value="rdt" <?php echo selectedProduct(2, "rct"); ?>>RDT</option>
+                              <option value="zinc" <?php echo selectedProduct(2, "zinc"); ?>>Zinc</option>
+                              <option value="rdt" <?php echo selectedProduct(2, "rdt"); ?>>RDT</option>
                             </select>
                             <select name="orsClassification" onchange="updateOptions(event, 'ORSPrice')">
                                 <option value="2" <?php echo isSelected(1, 2, 4);?>>Quarter</option>
