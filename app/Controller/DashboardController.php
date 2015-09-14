@@ -105,6 +105,17 @@ class DashboardController extends AppController {
     }
 
     public function export($export){
+        $regional_product = @$_GET["rproduct"];
+        $detailer_product = @$_GET["dproduct"];
+
+        if (empty($regional_product)) {
+            $regional_product = "ors";
+        }
+
+        if(empty($detailer_product)){
+            $detailer_product = "ors";
+        }
+
         switch ($export) {
             case 'average_daily':
                 $this->exportCSV($this->average_visits_by_detailers_export("all"));
@@ -124,11 +135,11 @@ class DashboardController extends AppController {
             case 'rzinc_avail':
                 $this->availFormat($this->avail_rzinc_ors_avail_export());
                 break;
-            case 'rzinc_price':
-                $this->priceFormat($this->average_regional_zinc_price_export());
+            case 'rprice':
+                $this->priceFormat($this->average_regional_product_price_export($regional_product));
                 break;
-            case 'rors_price':
-                $this->priceFormat($this->average_regional_ors_price_export());
+            case 'dprice':
+                $this->priceFormat($this->average_detailer_product_price_export($detailer_product));
                 break;
             case 'dzinc_price':
                 $this->formatExport($this->median_zinc_price_export());
@@ -1237,7 +1248,7 @@ class DashboardController extends AppController {
         return $lines;
     }
 
-    function average_regional_zinc_price_export(){
+    function average_regional_product_price_export($product_name){
         @$classification = $_GET['visitClassification'];
         @$period = $_GET['dailyVisitsPeriod'];
 
@@ -1247,7 +1258,7 @@ class DashboardController extends AppController {
         $tasks = $this->runNeoQuery("MATCH (task:`DetailerTask`) where task.completionDate > ". $date_range[0] .
             " AND task.completionDate < " . $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]->(stock:`DetailerStock`) 
             match task<-[:`COMPLETED_TASK`]-(user) match (user)-[:`USER_TERRITORY`]->(t:`Territory`)
-            where stock.category = \"zinc\" match (t)<-[:`SC_IN_TERRITORY`]-(sc) match (ds)-[:`HAS_SUB_COUNTY`]->(sc) 
+            where stock.category = \"$product_name\" match (t)<-[:`SC_IN_TERRITORY`]-(sc) match (ds)-[:`HAS_SUB_COUNTY`]->(sc) 
             match (rg)-[:`HAS_DISTRICT`]->(ds) RETURN distinct task.uuid, task.description, task.completionDate, user.username, 
             stock.uuid, stock.category, stock.stockLevel, stock.sellingPrice, t.name, rg.name");
 
@@ -1281,7 +1292,7 @@ class DashboardController extends AppController {
         }
         unset($stats[0]);
         
-        return array("lines"=>$stats, "title"=>"Average Zinc Price") ;
+        return array("lines"=>$stats, "title"=>"Average $product_name Price") ;
     }
 
     function average_regional_product_price($product_name){
@@ -1343,34 +1354,36 @@ class DashboardController extends AppController {
         return $stats;
     }
 
-    function average_regional_ors_price_export(){
-        @$classification = $_GET['orsAvailClassification'];
-        @$period = $_GET['zincPercent'];
+    function average_detailer_product_price_export($product_name){
+        @$classification = $_GET['orsClassification'];
+        @$period = $_GET['ORSPrice'];
 
         $date_range = $this->getTimeRange($classification, $period);
-        $tasks = $this->runNeoQuery("MATCH (task:`DetailerTask`) where task.completionDate > ". $date_range[0] .
-            " AND task.completionDate < " . $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]->(stock:`DetailerStock`) 
-            match task<-[:`COMPLETED_TASK`]-(user) match (user)-[:`USER_TERRITORY`]->(t:`Territory`)
-            where stock.category = \"ors\" match (t)<-[:`SC_IN_TERRITORY`]-(sc) match (ds)-[:`HAS_SUB_COUNTY`]->(sc) 
-            match (rg)-[:`HAS_DISTRICT`]->(ds) RETURN distinct task.uuid, task.description, task.completionDate, user.username, 
-            stock.uuid, stock.category, stock.stockLevel, stock.sellingPrice, t.name, rg.name");
-
+        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t:`Territory`) match 
+            t-[:`SC_IN_TERRITORY`]-(sc) match (ds)-[:`HAS_SUB_COUNTY`]->(sc) 
+            match (rg)-[:`HAS_DISTRICT`]->(ds) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
+            task-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
+             $date_range[1] . " optional match task-[:`HAS_DETAILER_STOCK`]-(stock:`DetailerStock`) where stock.category = 
+            \"$product_name\"  return task.uuid, task.description, task.completionDate, user.username, id(user) as user_id,
+             user.name, stock.uuid, stock.category, stock.stockLevel, stock.sellingPrice, rg.name");
         $res[] = array();
+        $detailer_task = array();
         foreach ($tasks as $task) {
             $epoch = floor($task["task.completionDate"]/1000);
             $dt = new DateTime("@$epoch");
             $task["day"] = $dt->format("M. j, Y");
 
-            if (!isset($res[$task["rg.name"]])) {
-                $res[$task["rg.name"]] = array();
+            if (!isset($res[$task["user.username"]])) {
+                $res[$task["user.username"]] = array();
             }
 
-            if(!isset($res[$task["rg.name"]][$task["day"]])){
-                $res[$task["rg.name"]][$task["day"]] = array();
+            if(!isset($res[$task["user.username"]][$task["day"]])){
+                $res[$task["user.username"]][$task["day"]] = array();
             }
             if (!empty($task["stock.sellingPrice"])) {
-                $res[$task["rg.name"]][$task["day"]][] = $task["stock.sellingPrice"];
+                $res[$task["user.username"]][$task["day"]][] = $task["stock.sellingPrice"];
             }
+            $detailer_task[$task["user.username"]] = $task;
         }
         
         $stats = array();
@@ -1384,8 +1397,8 @@ class DashboardController extends AppController {
             }
         }
         unset($stats[0]);
-        
-        return array("lines"=>$stats, "title"=>"Average ORS Price") ;;
+
+        return array("lines"=>$stats, "detailer_task"=>$detailer_task, "title"=>"Average $product_name Price");
     }
 
     function average_regional_ors_price(){

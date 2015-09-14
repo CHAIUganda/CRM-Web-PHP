@@ -268,7 +268,7 @@ function printChart($datasource, $chartDiv, $line = null){
               </div>
             </div>
             <div style="text-align: right; padding-right: 10px; padding-top: 5px; padding-bottom: 5px">
-              <a href="?<?php echo exportLink("rzinc_price"); ?>"><button class="btn btn-primary" type="button">Excel</button></a>
+              <a href="?<?php echo exportLink("rprice"); ?>"><button class="btn btn-primary" type="button">Excel</button></a>
             </div>
         </div>
     </div>
@@ -320,7 +320,7 @@ function printChart($datasource, $chartDiv, $line = null){
               </div>
             </div>
             <div style="text-align: right; padding-right: 10px; padding-top: 5px; padding-bottom: 5px">
-              <a href="?<?php echo exportLink("zors_price"); ?>"><button class="btn btn-primary" type="button">Excel</button></a>
+              <a href="?<?php echo exportLink("dprice"); ?>"><button class="btn btn-primary" type="button">Excel</button></a>
             </div>
         </div>
     </div>
