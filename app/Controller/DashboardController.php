@@ -40,8 +40,11 @@ class DashboardController extends AppController {
             exit();
         }
 
-        $this->set("nZincStats", $this->avail_nzinc_ors_avail());
-        $this->set("rZincStats", $this->avail_rzinc_ors_avail());
+        $data = $this->availability_data();
+        $availabilityData = $data["data"];
+
+        $this->set("availabilityData", $availabilityData);
+        $this->set("detailers", array_keys($data["detailers"]));
 
         $time2 = time();
         $this->timeLog["total"] = $time2 - $time1;
@@ -811,6 +814,7 @@ class DashboardController extends AppController {
         $this->timeLog["avail_nzinc_ors_avail_export"] = $time2 - $time1;
         return array("lines"=>$stockAvailabilityStats, "title"=>"Region ");
     }
+
     function avail_nzinc_ors_avail(){
         $time1 = time();
         // Get filters
@@ -866,6 +870,55 @@ class DashboardController extends AppController {
         $this->timeLog["avail_nzinc_ors_avail"] = $time2 - $time1;
 
         return $stockAvailabilityStats;
+    }
+
+    function availability_data(){
+        set_time_limit(0);
+        $time1 = time();
+        // Get filters
+
+        $date_range = $this->getYearRange();
+
+        $stockFilter = "";
+
+        if(false){
+            $stockFilter = "where stock.category = \"zinc\"";
+        }
+
+        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t:`Territory`) match 
+            t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
+            task-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
+             $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]-(stock:`DetailerStock`) $stockFilter return task.uuid, task.description, task.completionDate, user.username, stock.uuid, stock.category,
+            stock.stockLevel");
+        
+        $res = $this->getMonthsOfYear();
+        $detailers = array();
+        foreach ($tasks as $task) {
+            $epoch = floor($task["task.completionDate"]/1000);
+            $dt = new DateTime("@$epoch");
+            $task["month"] = $dt->format("F");
+            $task["week"] = $this->getWeekOfMonth($dt->format("j"));
+            $detailers[$task["user.username"]] = 0;
+
+            if (!isset($res[$task["month"]][$task["user.username"]])) {
+                $res[$task["month"]][$task["user.username"]] = array();
+            }
+            $res[$task["month"]][$task["user.username"]][$task["stock.uuid"]] = 0;
+
+            if ($task["stock.stockLevel"] > 0) {
+                $res[$task["month"]][$task["user.username"]][$task["stock.uuid"]] = 1;
+            }
+        }
+
+        $stockAvailabilityStats = $this->getMonthsOfYear($detailers);
+        foreach ($res as $month => $monthData) {
+            foreach($monthData as $username => $data){
+                $stockAvailabilityStats[$month][$username] = $this->calculate_positive_percentage($res[$month][$username]);
+            }
+        }
+        $time2 = time();
+        $this->timeLog["zinc_percentage_availability"] = $time2 - $time1;
+        return array("data" => $stockAvailabilityStats, "detailers" => $detailers);
     }
     function avail_rzinc_ors_avail_export(){
         // Get filters
@@ -1906,6 +1959,17 @@ class DashboardController extends AppController {
         return $date_range;
     }
 
+    function getYearRange(){
+        $firstMonth = $this->getTimesForMonth(1);
+        $lastMonth = $this->getTimesForMonth(12);
+
+        $results = array();
+        $results[0] = $firstMonth[0];
+        $results[1] = $lastMonth[1];
+
+        return $results;
+    }
+
     function getWeekOfMonth($day){
         $week = "W1";
         if ($day > 0 && $day < 8) {
@@ -1922,5 +1986,13 @@ class DashboardController extends AppController {
 
     function getWeeks(){
         return array("W1"=>0, "W2"=>0, "W3"=>0, "W4"=>0);
+    }
+    function getMonthsOfYear($data = ""){
+        if (!empty($data)) {
+            return array("January"=>$data, "February"=>$data, "March"=>$data, "April"=>$data, "May"=>$data, "June"=>$data,
+         "July"=>$data, "August"=>$data, "September"=>$data, "October"=>$data, "November"=>$data, "December"=>$data);
+        }
+        return array("January"=>array(), "February"=>array(), "March"=>array(), "April"=>array(), "May"=>array(), "June"=>array(),
+         "July"=>array(), "August"=>array(), "September"=>array(), "October"=>array(), "November"=>array(), "December"=>array());
     }
 }
