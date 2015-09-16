@@ -1,10 +1,29 @@
 <?php
+function targetPrice($product){
+  switch ($product) {
+    case 'zinc':
+      return 900;
+      break;
+    case 'ors':
+      return 300;
+      break;
+    case 'act':
+      return 2000;
+      break;
+    case 'rdt':
+      return 2500;
+      break;
+    default:
+      return 300;
+      break;
+  }
+}
 
 function isSelected($type, $val, $chart){
   $data = array();
   $data[1] = array(1 => "visitClassification", 2 => "dailyVisitsPeriod");
   $data[2] = array(1 => "orsAvailClassification", 2 => "zincPercent");
-  $data[3] = array(1 => "zincClassification", 2 => "zincPrice");
+  $data[3] = array(1 => "productClassification", 2 => "productPrice");
   $data[4] = array(1 => "orsClassification", 2 => "ORSPrice");
 
   $fieldName = $data[$chart][$type];
@@ -17,6 +36,16 @@ function isSelected($type, $val, $chart){
   } else {
     return "";
   }
+}
+
+function selectedProduct($type, $product){
+  $getValue = "";
+  $getValue = @$_GET["dproduct"];
+
+  if($getValue == $product){
+    return "selected=\"selected\"";
+  }
+  return "";
 }
 
 function exportLink($chart_type){
@@ -257,15 +286,20 @@ function printChart($datasource, $chartDiv, $line = null){
   <div class="col-md-6">
       <div class="panel panel-default">
             <div class="panel-heading">
-              Zinc Price by Detailer (UGX)
+              Product Price by Detailer (UGX)
                 <div class="pull-right">
                         <div class="btn-group">
-                            <select name="zincClassification" onchange="updateOptions(event, 'zincPrice')">
+                            <select name="dproduct">
+                              <option value="ors" <?php echo selectedProduct(1, "ors"); ?>>ORS</option>
+                              <option value="zinc" <?php echo selectedProduct(1, "zinc"); ?>>Zinc</option>
+                              <option value="rdt" <?php echo selectedProduct(1, "rdt"); ?>>RDT</option>
+                            </select>
+                            <select name="productClassification" onchange="updateOptions(event, 'productPrice')">
                                 <option value="2" <?php echo isSelected(1, 2, 3);?>>Quarter</option>
                                 <option value="1" <?php echo isSelected(1, 1, 3);?>>Month</option>
                             </select>
-                            <select name="zincPrice" id="zincPrice">
-                              <?php if(@$_GET['zincClassification'] == 1){ ?>
+                            <select name="productPrice" id="productPrice">
+                              <?php if(@$_GET['productClassification'] == 1){ ?>
                                 <option value="1" <?php echo isSelected(2, 1, 3);?>>Jan '15</option>
                                 <option value="2" <?php echo isSelected(2, 2, 3);?>>Feb '15</option>
                                 <option value="3" <?php echo isSelected(2, 3, 3);?>>Mar '15</option>
@@ -295,7 +329,7 @@ function printChart($datasource, $chartDiv, $line = null){
               </div>
             </div>
             <div style="text-align: right; padding-right: 10px; padding-top: 5px; padding-bottom: 5px">
-              <a href="?<?php echo exportLink("zinc_price"); ?>"><button class="btn btn-primary" type="button">Excel</button></a>
+              <a href="?<?php echo exportLink("dprice"); ?>"><button class="btn btn-primary" type="button">Excel</button></a>
             </div>
         </div>
     </div>
@@ -303,7 +337,7 @@ function printChart($datasource, $chartDiv, $line = null){
     <div class="col-md-6">
       <div class="panel panel-default">
             <div class="panel-heading">
-                ORS Price by Detailer (UGX)
+                Task Summary
                 <div class="pull-right">
                         <div class="btn-group">
                             <select name="orsClassification" onchange="updateOptions(event, 'ORSPrice')">
@@ -399,47 +433,7 @@ function printChart($datasource, $chartDiv, $line = null){
   <?php
   printChart($detailer_visits, "detailer_visits");
   printChart($zinc_stats, "zinc_availability");
-  printChart($zinc_price, "zinc_price", 900);
-  printChart($ors_price, "ors_price", 300);
+  printChart($zinc_price, "zinc_price", targetPrice(@$_GET["dproduct"]));
+  //printChart($ors_price, "ors_price", 300);
   ?>
-  
-  var removeElements = function(text, selector) {
-    var wrapped = $("<div>" + text + "</div>");
-    wrapped.find(selector).remove();
-    return wrapped.html();
-  }
-
-  var chart1 = $('#detailer_visits').dxChart('instance');
-  var chart2 = $('#zinc_availability').dxChart('instance');
-  var chart3 = $('#zinc_price').dxChart('instance');
-  var chart4 = $('#ors_price').dxChart('instance');
-
-  function downloadSvg(chart_id){
-    var svg = chart_id.svg();
-    svg = removeElements(svg, "span");
-
-    var canvas = document.getElementById("canvas");
-    canvg(canvas, svg.trim());
-    var canvasdata = canvas.toDataURL("image/png");
-    var a = document.createElement("a");
-    a.download = "report.png";
-    a.href = canvasdata;
-    a.click();
-  }
-
-  $("#jpeg1").click(function(){
-    downloadSvg(chart1);
-  });
-
-  $("#jpeg2").click(function(){
-    downloadSvg(chart2);
-  });
-
-  $("#jpeg3").click(function(){
-    downloadSvg(chart3);
-  });
-
-  $("#jpeg4").click(function(){
-    downloadSvg(chart4);
-  });
 </script>

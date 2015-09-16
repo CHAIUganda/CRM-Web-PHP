@@ -23,9 +23,15 @@ class DashboardController extends AppController {
             exit();
         }
 
+        $detailer_product = @$_GET["dproduct"];
+
+        if(empty($detailer_product)){
+            $detailer_product = "ors";
+        }
+
         $this->set("detailer_visits", $this->average_visits_by_detailers("all"));
         $this->set("zinc_stats", $this->zinc_percentage_availability());
-        $this->set("zinc_price", $this->median_zinc_price());
+        $this->set("zinc_price", $this->average_product_detailer_price($detailer_product));
         $this->set("ors_price", $this->median_ors_price());
 
         $time2 = time();
@@ -1437,8 +1443,8 @@ class DashboardController extends AppController {
     }
 
     function average_detailer_product_price_export($product_name){
-        @$classification = $_GET['orsClassification'];
-        @$period = $_GET['ORSPrice'];
+        @$classification = $_GET['productClassification'];
+        @$period = $_GET['productPrice'];
 
         $date_range = $this->getTimeRange($classification, $period);
         $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t:`Territory`) match 
@@ -1646,8 +1652,8 @@ class DashboardController extends AppController {
 
     function average_product_detailer_price($product_name){
         $time1 = time();
-        @$classification = $_GET['orsClassification'];
-        @$period = $_GET['ORSPrice'];
+        @$classification = $_GET['productClassification'];
+        @$period = $_GET['productPrice'];
 
         $date_range = $this->getTimeRange($classification, $period);
 

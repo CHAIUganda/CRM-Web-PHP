@@ -284,12 +284,12 @@ function printChart($datasource, $chartDiv, $line = null){
                               <option value="zinc" <?php echo selectedProduct(2, "zinc"); ?>>Zinc</option>
                               <option value="rdt" <?php echo selectedProduct(2, "rdt"); ?>>RDT</option>
                             </select>
-                            <select name="orsClassification" onchange="updateOptions(event, 'ORSPrice')">
+                            <select name="productClassification" onchange="updateOptions(event, 'productPrice')">
                                 <option value="2" <?php echo isSelected(1, 2, 4);?>>Quarter</option>
                                 <option value="1" <?php echo isSelected(1, 1, 4);?>>Month</option>
                             </select>
-                            <select name="ORSPrice" id="ORSPrice">
-                              <?php if(@$_GET['orsClassification'] == 1){ ?>
+                            <select name="productPrice" id="productPrice">
+                              <?php if(@$_GET['productClassification'] == 1){ ?>
                                 <option value="1" <?php echo isSelected(2, 1, 4);?>>Jan '15</option>
                                 <option value="2" <?php echo isSelected(2, 2, 4);?>>Feb '15</option>
                                 <option value="3" <?php echo isSelected(2, 3, 4);?>>Mar '15</option>
@@ -377,6 +377,6 @@ function printChart($datasource, $chartDiv, $line = null){
   printChart($regional_zinc_price, "detailer_visits", targetPrice($_GET["rproduct"]));
   //printChart($regional_ors_price, "zinc_availability", 300);
   //printChart($zinc_price, "zinc_price", 900);
-  printChart($ors_price, "ors_price", targetPrice($_GET["dproduct"]));
+  printChart($ors_price, "zinc_price", targetPrice($_GET["dproduct"]));
   ?>
 </script>
