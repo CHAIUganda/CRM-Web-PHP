@@ -1,15 +1,14 @@
 <?php
 
-function isSelected($type, $val, $chart){
-  $data = array();
-  $data[1] = array(1 => "nOrsAvailClassification", 2 => "nZincPercent");
-  $data[2] = array(1 => "rOrsAvailClassification", 2 => "rZincPercent");
+function isSelected($type, $val){
+  $data = array("district", "detailer", "stock");
 
-  $fieldName = $data[$chart][$type];
+  $fieldName = $data[$type];
 
-  if (empty($_GET[$fieldName]) && $type == 2 && $val == ceil(date("n")/3)) {
+  if (empty($_GET[$fieldName]) && $type == 2 && $val == "All") {
     return "selected=\"selected\"";
   }
+
   if (@$_GET[$fieldName] == $val) {
     return "selected=\"selected\"";
   } else {
@@ -164,18 +163,18 @@ function printChart($datasource, $chartDiv, $line = null){
                 <div class="pull-right">
                         <div class="btn-group">
                             <select name="district" onchange="updateOptions(event, 'dailyVisits')">
-                              <option value="1" <?php echo isSelected(1, 1, 1);?>>All</option>
+                              <option value="1" <?php echo isSelected(0, 1);?>>All</option>
                             </select>
                             <select name="detailer" id="dailyVisits">
+                              <option value="All" <?php echo isSelected(1, "All");?>>All</option>
                               <?php foreach ($detailers as $detailer): ?>
-                                <option value="<?=$detailer?>"><?=$detailer?></option>
+                                <option value="<?=$detailer?>" <?php echo isSelected(1, $detailer);?>><?=$detailer?></option>
                               <?php endforeach ?>
                             </select>
-                            <select name="product" id="dailyVisits">
-                              <option value="1" <?php echo isSelected(2, 1, 1);?>>All</option>
-                              <option value="1" <?php echo isSelected(2, 1, 1);?>>ORS</option>
-                              <option value="1" <?php echo isSelected(2, 1, 1);?>>Zinc</option>
-                              <option value="1" <?php echo isSelected(2, 1, 1);?>>RDT</option>
+                            <select name="stock" id="dailyVisits">
+                              <option value="ors" <?php echo isSelected(2, "ors");?>>ORS</option>
+                              <option value="zinc" <?php echo isSelected(2, "zinc");?>>Zinc</option>
+                              <option value="rdt" <?php echo isSelected(2, "rdt");?>>RDT</option>
                             </select>
                         </div>
                         <button type="submit" class="btn btn-default btn-sm btn-circle">GO</button>

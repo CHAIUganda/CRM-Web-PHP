@@ -44,7 +44,7 @@ class DashboardController extends AppController {
         $availabilityData = $data["data"];
 
         $this->set("availabilityData", $availabilityData);
-        $this->set("detailers", array_keys($data["detailers"]));
+        $this->set("detailers", $this->getSupervisorDetailers());
 
         $time2 = time();
         $this->timeLog["total"] = $time2 - $time1;
@@ -871,28 +871,57 @@ class DashboardController extends AppController {
 
         return $stockAvailabilityStats;
     }
-
+    function getSupervisorDetailers(){
+        $date_range = $this->getYearRange();
+        $users = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t:`Territory`)
+         match t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
+            task-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
+             $date_range[1] . " return user.username");
+        $u = array();
+        foreach ($users as $user) {
+            $u[] = $user["user.username"];
+        }
+        return array_unique($u);
+    }
     function availability_data(){
         set_time_limit(0);
         $time1 = time();
         // Get filters
 
+        $detailer = empty($_GET["detailer"]) ? "" : $_GET["detailer"];
+        $stock = empty($_GET["stock"]) ? "ors" : $_GET["stock"];
+        $district = empty($_GET["district"]) ? "" : $_GET["district"];
+
         $date_range = $this->getYearRange();
-
         $stockFilter = "";
+        $districtFilter = "";
+        $detailerFilter = "";
 
-        if(false){
-            $stockFilter = "where stock.category = \"zinc\"";
+        // Stock filter
+        if(!empty($stock) ){
+            $stockFilter = "where stock.category = \"$stock\"";
         }
 
-        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t:`Territory`) match 
-            t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
+        // Detailer filter
+        if(!empty($detailer) && $detailer != "All"){
+            $detailerFilter = "and user.username = \"$detailer\"";
+        }
+
+        // District filter
+        if($district){
+            $districtFilter = "where stock.category = \"$district\"";
+        }
+
+        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t:`Territory`)
+
+         match t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
             task-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
-             $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]-(stock:`DetailerStock`) $stockFilter return task.uuid, task.description, task.completionDate, user.username, stock.uuid, stock.category,
+             $date_range[1] . " $detailerFilter match task-[:`HAS_DETAILER_STOCK`]-(stock:`DetailerStock`) $stockFilter return task.uuid, task.description, task.completionDate, user.username, stock.uuid, stock.category,
             stock.stockLevel");
         
         $res = $this->getMonthsOfYear();
         $detailers = array();
+
         foreach ($tasks as $task) {
             $epoch = floor($task["task.completionDate"]/1000);
             $dt = new DateTime("@$epoch");
