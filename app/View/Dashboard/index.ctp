@@ -40,7 +40,12 @@ function isSelected($type, $val, $chart){
 
 function selectedProduct($type, $product){
   $getValue = "";
-  $getValue = @$_GET["dproduct"];
+  if($type == 1){
+    $getValue = @$_GET["dproduct"];
+  } else {
+    $getValue = @$_GET["productAvailability"];
+  }
+  
 
   if($getValue == $product){
     return "selected=\"selected\"";
@@ -238,9 +243,13 @@ function printChart($datasource, $chartDiv, $line = null){
     <div class="col-md-6">
       <div class="panel panel-default">
             <div class="panel-heading">
-            Zinc/ORS Availability by Detailer (%)
+            Product Availability by Detailer (%)
                 <div class="pull-right">
                         <div class="btn-group">
+                            <select name="productAvailability">
+                              <option value="ors" <?php echo selectedProduct(2, "ors"); ?>>ORS</option>
+                              <option value="zinc" <?php echo selectedProduct(2, "zinc"); ?>>Zinc</option>
+                            </select>
                             <select name="orsAvailClassification" onchange="updateOptions(event, 'zincPercent')">
                                 <option value="2" <?php echo isSelected(1, 2, 2);?>>Quarter</option>
                                 <option value="1" <?php echo isSelected(1, 1, 2);?>>Month</option>

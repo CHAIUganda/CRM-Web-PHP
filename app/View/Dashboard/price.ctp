@@ -34,10 +34,10 @@ function selectedProduct($type, $product){
 function isSelected($type, $val, $chart){
   $data = array();
   $data[1] = array(1 => "visitClassification", 2 => "dailyVisitsPeriod");
-  $data[2] = array(1 => "orsAvailClassification", 2 => "zincPercent");
+  $data[2] = array(1 => "zincClassification", 2 => "zincPrice");
   $data[3] = array(1 => "zincClassification", 2 => "zincPrice");
-  $data[4] = array(1 => "orsClassification", 2 => "ORSPrice");
-
+  $data[4] = array(1 => "productClassification", 2 => "productPrice");
+  
   $fieldName = $data[$chart][$type];
 
   if (empty($_GET[$fieldName]) && $type == 2 && $val == ceil(date("n")/3)) {
@@ -351,6 +351,7 @@ function printChart($datasource, $chartDiv, $line = null){
             "3": "Q3 \'15",
             "4": "Q4 \'15"
         };
+
         var mode = event.srcElement.value;
         var newOptions;
         if (mode === "1") {
@@ -377,6 +378,6 @@ function printChart($datasource, $chartDiv, $line = null){
   printChart($regional_zinc_price, "detailer_visits", targetPrice($_GET["rproduct"]));
   //printChart($regional_ors_price, "zinc_availability", 300);
   //printChart($zinc_price, "zinc_price", 900);
-  printChart($ors_price, "zinc_price", targetPrice($_GET["dproduct"]));
+  printChart($ors_price, "ors_price", targetPrice($_GET["dproduct"]));
   ?>
 </script>

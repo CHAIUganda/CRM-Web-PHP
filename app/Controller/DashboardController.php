@@ -24,15 +24,20 @@ class DashboardController extends AppController {
         }
 
         $detailer_product = @$_GET["dproduct"];
-
         if(empty($detailer_product)){
             $detailer_product = "ors";
         }
 
+        $availability_product = @$_GET["productAvailability"];
+        if (empty($availability_product)) {
+            $availability_product = "ors";
+        }
+
+
         $this->set("detailer_visits", $this->average_visits_by_detailers("all"));
-        $this->set("zinc_stats", $this->zinc_percentage_availability());
+        $this->set("zinc_stats", $this->zinc_percentage_availability($availability_product));
         $this->set("zinc_price", $this->average_product_detailer_price($detailer_product));
-        $this->set("ors_price", $this->median_ors_price());
+        //$this->set("ors_price", $this->median_ors_price());
 
         $time2 = time();
         $this->timeLog["total"] = $time2 - $time1;
@@ -116,6 +121,7 @@ class DashboardController extends AppController {
     public function export($export){
         $regional_product = @$_GET["rproduct"];
         $detailer_product = @$_GET["dproduct"];
+        $availability_product = @$_GET["productAvailability"];
 
         if (empty($regional_product)) {
             $regional_product = "ors";
@@ -125,12 +131,16 @@ class DashboardController extends AppController {
             $detailer_product = "ors";
         }
 
+        if(empty($availability_product)){
+            $availability_product = "ors";
+        }
+
         switch ($export) {
             case 'average_daily':
                 $this->exportCSV($this->average_visits_by_detailers_export("all"));
                 break;
             case 'zinc_availability':
-                $this->formatExport($this->zinc_percentage_availability_export());
+                $this->formatExport($this->zinc_percentage_availability_export($availability_product));
                 break;
             case 'zinc_price':
                 $this->formatExport($this->median_zinc_price_export());
@@ -1058,7 +1068,7 @@ class DashboardController extends AppController {
         return $stockAvailabilityStats;
     }
 
-    function zinc_percentage_availability_export(){
+    function zinc_percentage_availability_export($product){
         // Get filters
         @$classification = $_GET['orsAvailClassification'];
         @$period = $_GET['zincPercent'];
@@ -1069,7 +1079,7 @@ class DashboardController extends AppController {
             t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
             task-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
              $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]-(stock:`DetailerStock`) where stock.category = 
-            \"zinc\" match (t)<-[:`SC_IN_TERRITORY`]-(sc) match (ds)-[:`HAS_SUB_COUNTY`]->(sc) 
+            \"$product\" match (t)<-[:`SC_IN_TERRITORY`]-(sc) match (ds)-[:`HAS_SUB_COUNTY`]->(sc) 
             match (rg)-[:`HAS_DISTRICT`]->(ds) return task.uuid, task.description, task.completionDate, user.username, user.name, id(user) as user_id,
             stock.uuid, stock.category, stock.stockLevel, rg.name ");
 
@@ -1104,9 +1114,9 @@ class DashboardController extends AppController {
             }
         }
 
-        return array("lines"=>$stockAvailabilityStats, "detailer_task"=>$detailer_task, "title"=>"Zinc Availability");
+        return array("lines"=>$stockAvailabilityStats, "detailer_task"=>$detailer_task, "title"=>"$product Availability");
     }
-	function zinc_percentage_availability(){
+	function zinc_percentage_availability($product){
         $time1 = time();
         // Get filters
         @$classification = $_GET['orsAvailClassification'];
@@ -1118,7 +1128,7 @@ class DashboardController extends AppController {
             t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
             task-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
              $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]-(stock:`DetailerStock`) where stock.category = 
-            \"zinc\" return task.uuid, task.description, task.completionDate, user.username, stock.uuid, stock.category,
+            \"$product\" return task.uuid, task.description, task.completionDate, user.username, stock.uuid, stock.category,
             stock.stockLevel ");
         
         $res = array();
