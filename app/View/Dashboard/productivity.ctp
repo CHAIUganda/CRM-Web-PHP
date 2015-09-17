@@ -1,11 +1,11 @@
 <?php
-
 function isSelected($type, $val, $chart){
   $data = array();
   $data[1] = array(1 => "weeklyVisitClassification", 2 => "weeklyDailyVisitsPeriod");
   $data[2] = array(1 => "orsAvailClassification", 2 => "zincPercent");
   $data[3] = array(1 => "visitClassification", 2 => "dailyVisitsPeriod");
   $data[4] = array(1 => "orsClassification", 2 => "ORSPrice");
+  $data[5] = array(1 => "taskDetailer", 2 => "taskWeek");
 
   $fieldName = $data[$chart][$type];
 
@@ -209,7 +209,7 @@ function select_detname($detId){
                             </select>
 
                             <select name="weeklyVisitClassification" onchange="updateOptions(event, 'dailyVisits')">
-                            <option value="2" <?php echo isSelected(1, 2, 1);?>>Quarter</option>
+                                <option value="2" <?php echo isSelected(1, 2, 1);?>>Quarter</option>
                                 <option value="1" <?php echo isSelected(1, 1, 1);?>>Month</option>
                             </select>
                             <select name="weeklyDailyVisitsPeriod" id="dailyVisits">
@@ -391,6 +391,43 @@ function select_detname($detId){
     </div>
 </div>
 
+<div class="row">
+  <div class="col-md-6">
+      <div class="panel panel-default">
+            <div class="panel-heading">
+              Task Summary
+                <div class="pull-right">
+                        <div class="btn-group">
+                            <select name="taskDetailer">
+                              <?php
+                              foreach ($detailers as $detailer): ?>
+                                <option value="<?=$detailer["user_id"]; ?>" <?php echo isSelected(1, $detailer["user_id"], 5);?>><?=$detailer["username"]; ?></option>
+                              <?php endforeach ?>
+                            </select>
+                            <select name="taskWeek" id="zincPrice">
+                            <?php foreach ($weekDates as $week): ?>
+                              <option value="<?=$week["number"]?>" <?php echo isSelected(2, $week["number"], 5);?>><?=$week["start"];?></option>
+                            <?php endforeach ?>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-default btn-sm btn-circle">GO</button>
+                </div>
+            </div>
+            <div class="panel-body">
+              <div id="task_summary" style="height:250px;">
+                <span id="chartEmpty-task_summary" style="position:absolute;top:150px;left:100px;color: #5f8b95; font-size: 20px;">No There is no data for the selected time period.</span>
+              </div>
+            </div>
+            <div style="text-align: right; padding-right: 10px; padding-top: 5px; padding-bottom: 5px">
+              <a href="?<?php echo exportLink("task_summary"); ?>"><button class="btn btn-primary" type="button">Excel</button></a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+    </div>
+</div>
+
 </form>
 <script type="text/javascript">
     /* Dropdown adjustment */
@@ -443,5 +480,6 @@ function select_detname($detId){
   printChart($rtask_completion, "rtask_completion", null, "stackedBar");
   printChart($detailer_visits, "dv");
   printChart($dtask_completion, "dtask_completion", null, "stackedBar");
+  printChart($task_summary, "task_summary",null, "stackedBar");
   ?>
 </script>

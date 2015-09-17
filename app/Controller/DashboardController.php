@@ -111,7 +111,11 @@ class DashboardController extends AppController {
         $this->set("rtask_completion", $this->rtask_completion());
         $this->set("detailer_visits", $this->average_visits_by_detailers("diarrhoea"));
         $this->set("dtask_completion", $this->dtask_completion());
+        $this->set("task_summary", $this->task_summary());
+        
         $this->set("detailers", $this->detailers());
+        $this->set("weekDates", $this->getWeekDates());
+        
 
         $time2 = time();
         $this->timeLog["total"] = $time2 - $time1;
@@ -327,6 +331,73 @@ class DashboardController extends AppController {
         }
 
         return $res;
+    }
+    public function task_summary(){
+        // Get filters
+        $taskDetailer = $_GET['taskDetailer'];
+        $taskWeek = $_GET['taskWeek'];
+
+        @$classification = $_GET['weeklyVisitClassification'];
+        @$period = $_GET['weeklyDailyVisitsPeriod'];
+        @$detId = $_GET['detId'];
+        $date_range = $this->getTimeRange($classification, $period);
+        
+        $det_filter = "";
+        if (!empty($detId) || $detId != 0) {
+            $det_filter = "id(user) = " . $detId . " and ";
+        }
+
+        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t:`Territory`) match 
+            t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match cust-[:`IN_SEGMENT`]->seg
+            match task-[:`COMPLETED_TASK`]-(user) where $det_filter task.completionDate > " . $date_range[0] . " and task.completionDate < ".
+             $date_range[1] . " return task.uuid, task.description, task.completionDate, user.username, seg.name, task.status");
+        
+        $res = array();
+
+        foreach ($tasks as $task) {
+            $epoch = floor($task["task.completionDate"]/1000);
+            $dt = new DateTime("@$epoch");
+            $task["month"] = $dt->format("F");
+            $task["week"] = $this->getWeekOfMonth($dt->format("j"));
+            $task["day_of_week"] = $dt->format("l");
+
+            if (!isset($res[$task["day_of_week"]])) {
+                $res[$task["day_of_week"]] = array();
+            }
+            if(empty($res[$task["day_of_week"]][$task["task.status"]])){
+                $res[$task["day_of_week"]][$task["task.status"]] = array();
+            }
+            
+            $res[$task["day_of_week"]][$task["task.status"]][$task["task.uuid"]] = 1;
+        }
+
+        $segments = array("complete"=>0,"new"=>0,"cancelled"=>0);
+        $stockAvailabilityStats = array("Monday"=>$segments, "Tuesday"=>$segments, "Wednesday"=>$segments,
+         "Thursday"=>$segments, "Friday"=>$segments, "Saturday"=>$segments, "Sunday"=>$segments);
+        foreach ($res as $username => $monthData) {
+            if(!isset($stockAvailabilityStats[$username])){
+                $stockAvailabilityStats[$username] = array("A"=>0,"B"=>0,"C"=>0,"D"=>0);
+            }
+
+            foreach($monthData as $month => $data){
+                $stockAvailabilityStats[$username][$month] = count($res[$username][$month]);
+            }
+        }
+
+        return $stockAvailabilityStats;
+    }
+
+    function getWeekDates(){
+        $year = date("Y");
+        $weeks = array();
+        
+        for ($i = 1; $i < 53; $i++) {
+            $week = sprintf("%02s", $i);
+            $from = date("Y-m-d", strtotime("{$year}-W{$week}-1")); //Returns the date of monday in week
+            $weeks[] = array("start"=>$from, "number"=>$i);
+        }
+        
+        return $weeks;
     }
 
     public function average_task_completion(){
