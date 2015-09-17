@@ -186,7 +186,7 @@ function printChart($datasource, $chartDiv, $line = null){
               </div>
             </div>
             <div style="text-align: right; padding-right: 10px; padding-top: 5px; padding-bottom: 5px">
-              <a href="?<?php echo exportLink("nzinc_avail"); ?>"><button class="btn btn-primary" type="button">Excel</button></a>
+              <a href="?<?php echo exportLink("product_avail"); ?>"><button class="btn btn-primary" type="button">Excel</button></a>
             </div>
         </div>
     </div>

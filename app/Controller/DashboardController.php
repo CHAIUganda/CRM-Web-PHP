@@ -148,8 +148,8 @@ class DashboardController extends AppController {
             case 'ors_price':
                 $this->formatExport($this->median_ors_price_export());
                 break;
-            case 'nzinc_avail':
-                $this->availFormat($this->avail_nzinc_ors_avail_export());
+            case 'product_avail':
+                $this->exportCSV($this->product_avail_export());
                 break;
             case 'rzinc_avail':
                 $this->availFormat($this->avail_rzinc_ors_avail_export());
@@ -784,51 +784,83 @@ class DashboardController extends AppController {
 
         return $stockAvailabilityStats;
     }
-    function avail_nzinc_ors_avail_export(){
+    function product_avail_export(){
+        set_time_limit(0);
         $time1 = time();
-        // Get filters
-        @$classification = $_GET['nOrsAvailClassification'];
-        @$period = $_GET['nZincPercent'];
 
-        $date_range = $this->getTimeRange($classification, $period);
+        $detailer = empty($_GET["detailer"]) ? "" : $_GET["detailer"];
+        $stock = empty($_GET["stock"]) ? "ors" : $_GET["stock"];
+        $district = empty($_GET["district"]) ? "" : $_GET["district"];
 
-        $tasks = $this->runNeoQuery("MATCH (task:`DetailerTask`) where task.completionDate > ". $date_range[0] .
-            " AND task.completionDate < " . $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]->(stock:`DetailerStock`) 
-            match task<-[:`COMPLETED_TASK`]-(user) match (user)-[:`USER_TERRITORY`]->(t)
-            where stock.category = \"zinc\" match (t)<-[:`SC_IN_TERRITORY`]-(sc) match (ds)-[:`HAS_SUB_COUNTY`]->(sc) 
-            match (rg)-[:`HAS_DISTRICT`]->(ds) RETURN distinct task.uuid, task.description, task.completionDate, user.username, 
-            stock.uuid, stock.category, stock.stockLevel, t.name, rg.name");
+        $date_range = $this->getYearRange();
+        $stockFilter = "";
+        $districtFilter = "";
+        $detailerFilter = "";
 
+        // Stock filter
+        if(!empty($stock) ){
+            $stockFilter = "where stock.category = \"$stock\"";
+        }
+
+        // Detailer filter
+        if(!empty($detailer) && $detailer != "All"){
+            $detailerFilter = "and user.username = \"$detailer\"";
+        }
+
+        // District filter
+        if($district){
+            $districtFilter = "where stock.category = \"$district\"";
+        }
+
+        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t:`Territory`)
+
+         match t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
+            task-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
+             $date_range[1] . " $detailerFilter match task-[:`HAS_DETAILER_STOCK`]-(stock:`DetailerStock`) $stockFilter return task.uuid, task.description, task.completionDate, user.username, stock.uuid, stock.category,
+            stock.stockLevel");
+        
         $res = array();
-        //pr($tasks);
+        $detailers = array();
+
         foreach ($tasks as $task) {
             $epoch = floor($task["task.completionDate"]/1000);
             $dt = new DateTime("@$epoch");
-            $task["day"] = $dt->format("M. j, Y");
+            $task["month"] = $dt->format("M. j, Y");
+            $task["week"] = $this->getWeekOfMonth($dt->format("j"));
+            $detailers[$task["user.username"]] = 0;
 
-            if (!isset($res[$task["rg.name"]])) {
-                $res[$task["rg.name"]] = array();
+            if (!isset($res[$task["month"]][$task["user.username"]])) {
+                $res[$task["month"]][$task["user.username"]] = array();
             }
+            $res[$task["month"]][$task["user.username"]][$task["stock.uuid"]] = 0;
 
-            $res[$task["rg.name"]][$task["day"]][$task["task.uuid"]] = 0;
             if ($task["stock.stockLevel"] > 0) {
-                $res[$task["rg.name"]][$task["day"]][$task["task.uuid"]] = 1;
+                $res[$task["month"]][$task["user.username"]][$task["stock.uuid"]] = 1;
             }
         }
 
         $stockAvailabilityStats = array();
-        foreach ($res as $username => $monthData) {
-            if(!isset($stockAvailabilityStats[$username])){
-                $stockAvailabilityStats[$username] = array();
-            }
-
-            foreach($monthData as $month => $data){
-                $stockAvailabilityStats[$username][$month] = $this->calculate_positive_percentage($res[$username][$month]);
+        foreach ($res as $month => $monthData) {
+            foreach($monthData as $username => $data){
+                $stockAvailabilityStats[$month][$username] = $this->calculate_positive_percentage($res[$month][$username]);
             }
         }
+        
+        $lines = array();
+        $lines[] = array("Date", "Detailer", "Availability");
+        foreach ($stockAvailabilityStats as $date => $stats) {
+            foreach ($stats as $det => $value) {
+                $line = array();
+                $line[] = $date;
+                $line[] = $det;
+                $line[] = $value;
+                $lines[] = $line;
+            }
+        }
+
         $time2 = time();
-        $this->timeLog["avail_nzinc_ors_avail_export"] = $time2 - $time1;
-        return array("lines"=>$stockAvailabilityStats, "title"=>"Region ");
+        $this->timeLog["product_availability"] = $time2 - $time1;
+        return $lines;
     }
 
     function avail_nzinc_ors_avail(){
