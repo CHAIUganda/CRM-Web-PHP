@@ -399,6 +399,7 @@ function select_detname($detId){
                 <div class="pull-right">
                         <div class="btn-group">
                             <select name="taskDetailer">
+                              <option value="0" <?php echo isSelected(1, 0, 5);?>>All</option>
                               <?php
                               foreach ($detailers as $detailer): ?>
                                 <option value="<?=$detailer["user_id"]; ?>" <?php echo isSelected(1, $detailer["user_id"], 5);?>><?=$detailer["username"]; ?></option>
@@ -406,7 +407,7 @@ function select_detname($detId){
                             </select>
                             <select name="taskWeek" id="zincPrice">
                             <?php foreach ($weekDates as $week): ?>
-                              <option value="<?=$week["number"]?>" <?php echo isSelected(2, $week["number"], 5);?>><?=$week["start"];?></option>
+                              <option value="<?=$week["number"]?>" <?php echo isSelected(2, $week["number"], 5);?>>Week of <?=$week["start"];?></option>
                             <?php endforeach ?>
                             </select>
                         </div>

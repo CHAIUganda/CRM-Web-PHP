@@ -1,5 +1,4 @@
 <?php
-
 function isSelected($type, $val){
   $data = array("district", "detailer", "stock");
 
@@ -163,10 +162,18 @@ function printChart($datasource, $chartDiv, $line = null){
                 <div class="pull-right">
                         <div class="btn-group">
                             <select name="district" onchange="updateOptions(event, 'dailyVisits')">
-                              <option value="1" <?php echo isSelected(0, 1);?>>All</option>
+                              <option value="All" <?php echo isSelected(0, "All");?>>All</option>
+                              <?php foreach (array_keys($districts) as $district): ?>
+                                <option value="<?=$district?>" <?php echo isSelected(0, $district);?>><?=$district?></option>
+                              <?php endforeach ?>
+                              
                             </select>
                             <select name="detailer" id="dailyVisits">
                               <option value="All" <?php echo isSelected(1, "All");?>>All</option>
+                              <?php if (!empty($_GET["district"]) && $_GET["district"] != "All"){
+                                $detailers = $districts[$_GET["district"]];
+                              }
+                              ?>
                               <?php foreach ($detailers as $detailer): ?>
                                 <option value="<?=$detailer?>" <?php echo isSelected(1, $detailer);?>><?=$detailer?></option>
                               <?php endforeach ?>
@@ -196,47 +203,18 @@ function printChart($datasource, $chartDiv, $line = null){
 <script type="text/javascript">
     /* Dropdown adjustment */
     function updateOptions(event, destSelect){
-        var months = {
-            "1": "Jan \'15",
-            "2": "Feb \'15",
-            "3": "Mar \'15",
-            "4": "Apr \'15",
-            "5": "May \'15",
-            "6": "Jun \'15",
-            "7": "Jul \'15",
-            "8": "Aug \'15",
-            "9": "Sep \'15",
-            "10": "Oct \'15",
-            "11": "Nov \'15",
-            "12": "Dec \'15",
-        };
+      var districts = <?=json_encode($districts)?>;
+      districts["All"] = <?=json_encode($detailers)?>;
+      var mode = event.srcElement.value;
+      var newOptions = districts[mode];
+      
+      var $el = $("#" + destSelect);
+      $el.empty(); // remove old options
 
-        var quarters = {
-            "1": "Q1 \'15",
-            "2": "Q2 \'15",
-            "3": "Q3 \'15",
-            "4": "Q4 \'15"
-        };
-        var mode = event.srcElement.value;
-        var newOptions;
-        if (mode === "1") {
-            newOptions = months;
-        } else {
-            newOptions = quarters;
-        }
-        var $el = $("#" + destSelect);
-        $el.empty(); // remove old options
-        var d = new Date();
-
-        $.each(newOptions, function(value,key) {
-          if ((d.getMonth() + 1) == value) {
-            $el.append($("<option selected=\"selected\"></option>")
-             .attr("value", value).text(key));
-          } else {
-            $el.append($("<option></option>")
-             .attr("value", value).text(key));
-          }
-        });
+      $.each(newOptions, function(value,key) {
+        $el.append($("<option></option>")
+         .attr("value", key).text(key));
+      });
     }
 
   <?php

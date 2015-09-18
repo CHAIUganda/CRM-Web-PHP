@@ -344,50 +344,7 @@ function printChart($datasource, $chartDiv, $line = null){
     </div>
     
     <div class="col-md-6">
-      <div class="panel panel-default">
-            <div class="panel-heading">
-                Task Summary
-                <div class="pull-right">
-                        <div class="btn-group">
-                            <select name="orsClassification" onchange="updateOptions(event, 'ORSPrice')">
-                                <option value="2" <?php echo isSelected(1, 2, 4);?>>Quarter</option>
-                                <option value="1" <?php echo isSelected(1, 1, 4);?>>Month</option>
-                            </select>
-                            <select name="ORSPrice" id="ORSPrice">
-                              <?php if(@$_GET['orsClassification'] == 1){ ?>
-                                <option value="1" <?php echo isSelected(2, 1, 4);?>>Jan '15</option>
-                                <option value="2" <?php echo isSelected(2, 2, 4);?>>Feb '15</option>
-                                <option value="3" <?php echo isSelected(2, 3, 4);?>>Mar '15</option>
-                                <option value="4" <?php echo isSelected(2, 4, 4);?>>Apr '15</option>
-                                <option value="5" <?php echo isSelected(2, 5, 4);?>>May '15</option>
-                                <option value="6" <?php echo isSelected(2, 6, 4);?>>Jun '15</option>
-                                <option value="7" <?php echo isSelected(2, 7, 4);?>>Jul '15</option>
-                                <option value="8" <?php echo isSelected(2, 8, 4);?>>Aug '15</option>
-                                <option value="9" <?php echo isSelected(2, 9, 4);?>>Sep '15</option>
-                                <option value="10" <?php echo isSelected(2, 10, 4);?>>Oct '15</option>
-                                <option value="11" <?php echo isSelected(2, 11, 4);?>>Nov '15</option>
-                                <option value="12" <?php echo isSelected(2, 12, 4);?>>Dec '15</option>
-                              <?php } else { ?>
-                                <option value="1" <?php echo isSelected(2, 1, 4);?>>Q1 '15</option>
-                                <option value="2"<?php echo isSelected(2, 2, 4);?>>Q2 '15</option>
-                                <option value="3"<?php echo isSelected(2, 3, 4);?>>Q3 '15</option>
-                                <option value="4"<?php echo isSelected(2, 4, 4);?>>Q4 '15</option>
-                              <?php } ?>
-                            </select>
-                        </div>
-                        <button type="submit" class="btn btn-default btn-sm btn-circle">GO</button>
-                    
-                </div>
-            </div>
-            <div class="panel-body">
-              <div id="ors_price" style="height:250px;">
-                <span id="chartEmpty-ors_price" style="position:absolute;top:150px;left:100px;color: #5f8b95; font-size: 20px;">No There is no data for the selected time period.</span>
-              </div>
-            </div>
-            <div style="text-align: right; padding-right: 10px; padding-top: 5px; padding-bottom: 5px">
-              <a href="?<?php echo exportLink("ors_price"); ?>"><button class="btn btn-primary" type="button">Excel</button></a>
-            </div>
-        </div>
+      
     </div>
 </div>
 </form>

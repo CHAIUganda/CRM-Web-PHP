@@ -50,12 +50,13 @@ class DashboardController extends AppController {
             $this->export($_GET["export"]);
             exit();
         }
-
+        
         $data = $this->availability_data();
         $availabilityData = $data["data"];
 
         $this->set("availabilityData", $availabilityData);
         $this->set("detailers", $this->getSupervisorDetailers());
+        $this->set("districts", $this->getDistrictsAndDetailers());
 
         $time2 = time();
         $this->timeLog["total"] = $time2 - $time1;
@@ -334,17 +335,17 @@ class DashboardController extends AppController {
     }
     public function task_summary(){
         // Get filters
-        $taskDetailer = $_GET['taskDetailer'];
-        $taskWeek = $_GET['taskWeek'];
+        @$taskDetailer = $_GET['taskDetailer'];
+        @$taskWeek = $_GET['taskWeek'];
+        if (empty($taskWeek)) {
+            $taskWeek = date("W");
+        }
 
-        @$classification = $_GET['weeklyVisitClassification'];
-        @$period = $_GET['weeklyDailyVisitsPeriod'];
-        @$detId = $_GET['detId'];
-        $date_range = $this->getTimeRange($classification, $period);
+        $date_range = $this->getTimeRange(3, $taskWeek);
         
         $det_filter = "";
-        if (!empty($detId) || $detId != 0) {
-            $det_filter = "id(user) = " . $detId . " and ";
+        if (!empty($taskDetailer) || $taskDetailer != 0) {
+            $det_filter = "id(user) = " . $taskDetailer . " and ";
         }
 
         $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t:`Territory`) match 
@@ -990,6 +991,7 @@ class DashboardController extends AppController {
 
         return $stockAvailabilityStats;
     }
+
     function getSupervisorDetailers(){
         $date_range = $this->getYearRange();
         $users = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t:`Territory`)
@@ -1002,6 +1004,7 @@ class DashboardController extends AppController {
         }
         return array_unique($u);
     }
+
     function availability_data(){
         set_time_limit(0);
         $time1 = time();
@@ -1013,7 +1016,6 @@ class DashboardController extends AppController {
 
         $date_range = $this->getYearRange();
         $stockFilter = "";
-        $districtFilter = "";
         $detailerFilter = "";
 
         // Stock filter
@@ -1026,17 +1028,20 @@ class DashboardController extends AppController {
             $detailerFilter = "and user.username = \"$detailer\"";
         }
 
-        // District filter
-        if($district){
-            $districtFilter = "where stock.category = \"$district\"";
-        }
-
-        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t:`Territory`)
-
+        $query = "";
+        if (!empty($district && $district != "All")) {
+            $query = "MATCH (n:`District`) where n.name = \"$district\" MATCH (n)-[:`HAS_SUB_COUNTY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
+            task-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
+             $date_range[1] . " $detailerFilter match task-[:`HAS_DETAILER_STOCK`]-(stock:`DetailerStock`) $stockFilter return task.uuid, task.description, task.completionDate, user.username, stock.uuid, stock.category,
+            stock.stockLevel";
+        } else {
+            $query = "start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t:`Territory`)
          match t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
             task-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
              $date_range[1] . " $detailerFilter match task-[:`HAS_DETAILER_STOCK`]-(stock:`DetailerStock`) $stockFilter return task.uuid, task.description, task.completionDate, user.username, stock.uuid, stock.category,
-            stock.stockLevel");
+            stock.stockLevel";
+        }
+        $tasks = $this->runNeoQuery($query);
         
         $res = $this->getMonthsOfYear();
         $detailers = array();
@@ -1067,6 +1072,29 @@ class DashboardController extends AppController {
         $time2 = time();
         $this->timeLog["zinc_percentage_availability"] = $time2 - $time1;
         return array("data" => $stockAvailabilityStats, "detailers" => $detailers);
+    }
+
+    function getDistrictsAndDetailers(){
+        $users = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") MATCH (n)-[:`SUPERVISES_TERRITORY`]->(territory) 
+            MATCH (detailer)-[:`USER_TERRITORY`]-(territory)  MATCH (sc)-[:`SC_IN_TERRITORY`]-(territory) MATCH (ds)-[:`HAS_SUB_COUNTY`]-(sc) 
+            RETURN n.username,territory.name, detailer.username, sc.name, ds.name;");
+    
+        $districts = array();
+        foreach ($users as $user) {
+            if($user["detailer.username"] == $this->_user['User']['username']){
+                continue;
+            }
+            if (!isset($districts[$user["ds.name"]])) {
+                $districts[$user["ds.name"]] = array();
+            }
+            $districts[$user["ds.name"]][] = ($user["detailer.username"]);
+        }
+
+        foreach ($districts as $district => $data) {
+            $districts[$district] = array_unique($data);
+        }
+        
+        return $districts;
     }
     function avail_rzinc_ors_avail_export(){
         // Get filters
@@ -2022,6 +2050,18 @@ class DashboardController extends AppController {
         return $times;
     }
 
+    function getTimesForWeek($weekNo){
+        $week = sprintf("%02s", $weekNo);
+        $year = date("Y");
+        
+        $first_minute = mktime(0, 0, 0, date("n", strtotime("$year-W$week-1")), date("j", strtotime("$year-W$week-1")));
+
+        $last_minute = mktime(23, 59, 0, date("n", strtotime('+6 days', strtotime("$year-W$week-1"))),
+         date("j", strtotime('+6 days', strtotime("$year-W$week-1"))));
+
+         return array($first_minute*1000, $last_minute*1000);
+    }
+
     function getTimesForQuarter($quarter){
         $results = array();
         switch ($quarter) {
@@ -2087,7 +2127,7 @@ class DashboardController extends AppController {
     }
 
     function getTimeRange($classification, $period){
-        if(!in_array($classification, array(1,2))){
+        if(!in_array($classification, array(1,2,3))){
             $classification = 2;
         }
 
@@ -2101,6 +2141,8 @@ class DashboardController extends AppController {
             $date_range = $this->getTimesForMonth($period);
         } else if ($classification == 2) {
             $date_range = $this->getTimesForQuarter($period);
+        } else if ($classification == 3){
+            $date_range = $this->getTimesForWeek($period);
         }
         $date_range["classification"] = $classification;
 
