@@ -35,10 +35,13 @@ class DashboardController extends AppController {
 
 
         $this->set("detailer_visits", $this->average_visits_by_detailers("all"));
+        $this->set("weekly_visits", $this->dweekly_visits());
         $this->set("zinc_stats", $this->zinc_percentage_availability($availability_product));
         $this->set("zinc_price", $this->average_product_detailer_price($detailer_product));
         //$this->set("ors_price", $this->median_ors_price());
 
+        $this->set("detailers", $this->detailers());
+        
         $time2 = time();
         $this->timeLog["total"] = $time2 - $time1;
         $this->set("time", $this->timeLog);
@@ -158,6 +161,9 @@ class DashboardController extends AppController {
                 break;
             case 'rzinc_avail':
                 $this->availFormat($this->avail_rzinc_ors_avail_export());
+                break;
+            case 'task_summary':
+                $this->exportCSV($this->task_summary_export());
                 break;
             case 'rprice':
                 $this->priceFormat($this->average_regional_product_price_export($regional_product));
@@ -333,6 +339,63 @@ class DashboardController extends AppController {
 
         return $res;
     }
+
+    public function task_summary_export(){
+        // Get filters
+        @$taskDetailer = $_GET['taskDetailer'];
+        @$taskWeek = $_GET['taskWeek'];
+        if (empty($taskWeek)) {
+            $taskWeek = date("W");
+        }
+
+        $date_range = $this->getTimeRange(3, $taskWeek);
+        
+        $det_filter = "";
+        if (!empty($taskDetailer) || $taskDetailer != 0) {
+            $det_filter = "id(user) = " . $taskDetailer . " and ";
+        }
+
+        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t:`Territory`) match 
+            t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match cust-[:`IN_SEGMENT`]->seg
+            match task-[:`COMPLETED_TASK`]-(user) where $det_filter task.completionDate > " . $date_range[0] . " and task.completionDate < ".
+             $date_range[1] . " return task.uuid, task.description, task.completionDate, user.username, seg.name, task.status");
+        
+        $res = array();
+
+        foreach ($tasks as $task) {
+            $epoch = floor($task["task.completionDate"]/1000);
+            $dt = new DateTime("@$epoch");
+            $task["month"] = $dt->format("F");
+            $task["week"] = $this->getWeekOfMonth($dt->format("j"));
+            $task["day_of_week"] = $dt->format("l");
+
+            if (!isset($res[$task["day_of_week"]])) {
+                $res[$task["day_of_week"]] = array();
+            }
+            if(empty($res[$task["day_of_week"]][$task["task.status"]])){
+                $res[$task["day_of_week"]][$task["task.status"]] = array();
+            }
+            
+            $res[$task["day_of_week"]][$task["task.status"]][$task["task.uuid"]] = 1;
+        }
+
+        $segments = array("complete"=>0,"new"=>0,"cancelled"=>0);
+        $stockAvailabilityStats = array("Monday"=>$segments, "Tuesday"=>$segments, "Wednesday"=>$segments,
+         "Thursday"=>$segments, "Friday"=>$segments, "Saturday"=>$segments, "Sunday"=>$segments);
+        foreach ($res as $username => $monthData) {
+            if(!isset($stockAvailabilityStats[$username])){
+                $stockAvailabilityStats[$username] = array("A"=>0,"B"=>0,"C"=>0,"D"=>0);
+            }
+
+            foreach($monthData as $month => $data){
+                $stockAvailabilityStats[$username][$month] = count($res[$username][$month]);
+            }
+        }
+        pr($stockAvailabilityStats);
+        exit();
+        return $stockAvailabilityStats;
+    }
+
     public function task_summary(){
         // Get filters
         @$taskDetailer = $_GET['taskDetailer'];

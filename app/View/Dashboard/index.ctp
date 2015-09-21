@@ -62,7 +62,8 @@ function exportLink($chart_type){
   return $new_query_string;
 }
 
-function printChart($datasource, $chartDiv, $line = null){
+function printChart($datasource, $chartDiv, $line = null, $type = "bar"){
+  //$colors = array("#4E77BD", "#767A87", "#68C701");
   $colors = array(" #243C63", "#4E77BD", "#788fb5", "#acb9ce");
   ?>
   var <?=$chartDiv?> = [
@@ -89,14 +90,14 @@ function printChart($datasource, $chartDiv, $line = null){
   if (<?=$chartDiv?>.length > 0) {
     $("#chartEmpty-<?=$chartDiv?>").css("display", "none");
   };
-    //Define emty array to store series objects
-    var mySeriesObject<?php echo $chartDiv ?> = [];
+  //Define emty array to store series objects
+  var mySeriesObject<?php echo $chartDiv ?> = [];
   $("#<?php echo $chartDiv ?>").dxChart({
     dataSource: <?=$chartDiv?>,
     commonSeriesSettings: {
         argumentField: "det",
         valueField: "visits",
-        type: "bar",
+        type: "<?=$type?>",
         hoverMode: "allArgumentPoints",
         selectionMode: "allArgumentPoints",
         label: {
@@ -107,7 +108,7 @@ function printChart($datasource, $chartDiv, $line = null){
     },
     
     legend: {
-        visible: true
+        visible: false
     },
   valueAxis:{
     grid:{
@@ -186,7 +187,14 @@ function printChart($datasource, $chartDiv, $line = null){
         mySeriesLabels.remove();
     }
   });
+
 <?php
+}
+
+function select_detname($detId){
+  if ($detId == @$_GET['detId']) {
+    return "selected=\"selected\"";
+  }
 }
 ?>
 
@@ -243,49 +251,53 @@ function printChart($datasource, $chartDiv, $line = null){
     <div class="col-md-6">
       <div class="panel panel-default">
             <div class="panel-heading">
-            Product Availability by Detailer (%)
+                Total Weekly Visits
                 <div class="pull-right">
                         <div class="btn-group">
-                            <select name="productAvailability">
-                              <option value="ors" <?php echo selectedProduct(2, "ors"); ?>>ORS</option>
-                              <option value="zinc" <?php echo selectedProduct(2, "zinc"); ?>>Zinc</option>
+                            <select name="detId">
+                              <option value="0" <?php echo select_detname(0); ?>>All</option>
+                            <?php foreach ($detailers as $detailer) { ?>
+                              <option value="<?=$detailer["user_id"];?>" <?php echo select_detname($detailer["user_id"]); ?>><?=$detailer["username"];?></option>
+                            <?php }?>
                             </select>
-                            <select name="orsAvailClassification" onchange="updateOptions(event, 'zincPercent')">
-                                <option value="2" <?php echo isSelected(1, 2, 2);?>>Quarter</option>
-                                <option value="1" <?php echo isSelected(1, 1, 2);?>>Month</option>
+
+                            <select name="weeklyVisitClassification" onchange="updateOptions(event, 'dailyVisits')">
+                                <option value="2" <?php echo isSelected(1, 2, 1);?>>Quarter</option>
+                                <option value="1" <?php echo isSelected(1, 1, 1);?>>Month</option>
                             </select>
-                            <select name="zincPercent" id="zincPercent">
-                              <?php if(@$_GET['orsAvailClassification'] == 1){ ?>
-                                <option value="1" <?php echo isSelected(2, 1, 2);?>>Jan '15</option>
-                                <option value="2" <?php echo isSelected(2, 2, 2);?>>Feb '15</option>
-                                <option value="3" <?php echo isSelected(2, 3, 2);?>>Mar '15</option>
-                                <option value="4" <?php echo isSelected(2, 4, 2);?>>Apr '15</option>
-                                <option value="5" <?php echo isSelected(2, 5, 2);?>>May '15</option>
-                                <option value="6" <?php echo isSelected(2, 6, 2);?>>Jun '15</option>
-                                <option value="7" <?php echo isSelected(2, 7, 2);?>>Jul '15</option>
-                                <option value="8" <?php echo isSelected(2, 8, 2);?>>Aug '15</option>
-                                <option value="9" <?php echo isSelected(2, 9, 2);?>>Sep '15</option>
-                                <option value="10" <?php echo isSelected(2, 10, 2);?>>Oct '15</option>
-                                <option value="11" <?php echo isSelected(2, 11, 2);?>>Nov '15</option>
-                                <option value="12" <?php echo isSelected(2, 12, 2);?>>Dec '15</option>
+                            <select name="weeklyDailyVisitsPeriod" id="dailyVisits">
+                              <?php if(@$_GET['weeklyVisitClassification'] == 1){ ?>
+                                <option value="1" <?php echo isSelected(2, 1, 1);?>>Jan '15</option>
+                                <option value="2" <?php echo isSelected(2, 2, 1);?>>Feb '15</option>
+                                <option value="3" <?php echo isSelected(2, 3, 1);?>>Mar '15</option>
+                                <option value="4" <?php echo isSelected(2, 4, 1);?>>Apr '15</option>
+                                <option value="5" <?php echo isSelected(2, 5, 1);?>>May '15</option>
+                                <option value="6" <?php echo isSelected(2, 6, 1);?>>Jun '15</option>
+                                <option value="7" <?php echo isSelected(2, 7, 1);?>>Jul '15</option>
+                                <option value="8" <?php echo isSelected(2, 8, 1);?>>Aug '15</option>
+                                <option value="9" <?php echo isSelected(2, 9, 1);?>>Sep '15</option>
+                                <option value="10" <?php echo isSelected(2, 10, 1);?>>Oct '15</option>
+                                <option value="11" <?php echo isSelected(2, 11, 1);?>>Nov '15</option>
+                                <option value="12" <?php echo isSelected(2, 12, 1);?>>Dec '15</option>
                               <?php } else { ?>
-                                <option value="1" <?php echo isSelected(2, 1, 2);?>>Q1 '15</option>
-                                <option value="2"<?php echo isSelected(2, 2, 2);?>>Q2 '15</option>
-                                <option value="3"<?php echo isSelected(2, 3, 2);?>>Q3 '15</option>
-                                <option value="4"<?php echo isSelected(2, 4, 2);?>>Q4 '15</option>
+                                <option value="1" <?php echo isSelected(2, 1, 1);?>>Q1 '15</option>
+                                <option value="2"<?php echo isSelected(2, 2, 1);?>>Q2 '15</option>
+                                <option value="3"<?php echo isSelected(2, 3, 1);?>>Q3 '15</option>
+                                <option value="4"<?php echo isSelected(2, 4, 1);?>>Q4 '15</option>
                               <?php } ?>
+                                
                             </select>
                         </div>
                         <button type="submit" class="btn btn-default btn-sm btn-circle">GO</button>
                 </div>
             </div>
             <div class="panel-body">
-              <div id="zinc_availability" style="height:250px;">
-                <span id="chartEmpty-zinc_availability" style="position:absolute;top:150px;left:100px;color: #5f8b95; font-size: 20px;">There is no data for the selected time period.</span>
+              <div id="weekly_detailer_visits" style="height:250px;">
+                       <span id="chartEmpty-weekly_detailer_visits" style="position:absolute;top:150px;left:100px;color: #5f8b95; font-size: 20px;">There is no data for the selected time period.</span>
               </div>
             </div>
             <div style="text-align: right; padding-right: 10px; padding-top: 5px; padding-bottom: 5px">
-              <a href="?<?php echo exportLink("zinc_availability"); ?>"><button class="btn btn-primary" type="button">Excel</button></a>
+              <a href="?<?php echo exportLink("pweekly_visits"); ?>"><button class="btn btn-primary" type="button">Excel</button></a>
             </div>
         </div>
     </div>
@@ -344,7 +356,53 @@ function printChart($datasource, $chartDiv, $line = null){
     </div>
     
     <div class="col-md-6">
-      
+      <div class="panel panel-default">
+            <div class="panel-heading">
+            Product Availability by Detailer (%)
+                <div class="pull-right">
+                        <div class="btn-group">
+                            <select name="productAvailability">
+                              <option value="ors" <?php echo selectedProduct(2, "ors"); ?>>ORS</option>
+                              <option value="zinc" <?php echo selectedProduct(2, "zinc"); ?>>Zinc</option>
+                            </select>
+                            <select name="orsAvailClassification" onchange="updateOptions(event, 'zincPercent')">
+                                <option value="2" <?php echo isSelected(1, 2, 2);?>>Quarter</option>
+                                <option value="1" <?php echo isSelected(1, 1, 2);?>>Month</option>
+                            </select>
+                            <select name="zincPercent" id="zincPercent">
+                              <?php if(@$_GET['orsAvailClassification'] == 1){ ?>
+                                <option value="1" <?php echo isSelected(2, 1, 2);?>>Jan '15</option>
+                                <option value="2" <?php echo isSelected(2, 2, 2);?>>Feb '15</option>
+                                <option value="3" <?php echo isSelected(2, 3, 2);?>>Mar '15</option>
+                                <option value="4" <?php echo isSelected(2, 4, 2);?>>Apr '15</option>
+                                <option value="5" <?php echo isSelected(2, 5, 2);?>>May '15</option>
+                                <option value="6" <?php echo isSelected(2, 6, 2);?>>Jun '15</option>
+                                <option value="7" <?php echo isSelected(2, 7, 2);?>>Jul '15</option>
+                                <option value="8" <?php echo isSelected(2, 8, 2);?>>Aug '15</option>
+                                <option value="9" <?php echo isSelected(2, 9, 2);?>>Sep '15</option>
+                                <option value="10" <?php echo isSelected(2, 10, 2);?>>Oct '15</option>
+                                <option value="11" <?php echo isSelected(2, 11, 2);?>>Nov '15</option>
+                                <option value="12" <?php echo isSelected(2, 12, 2);?>>Dec '15</option>
+                              <?php } else { ?>
+                                <option value="1" <?php echo isSelected(2, 1, 2);?>>Q1 '15</option>
+                                <option value="2"<?php echo isSelected(2, 2, 2);?>>Q2 '15</option>
+                                <option value="3"<?php echo isSelected(2, 3, 2);?>>Q3 '15</option>
+                                <option value="4"<?php echo isSelected(2, 4, 2);?>>Q4 '15</option>
+                              <?php } ?>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-default btn-sm btn-circle">GO</button>
+                </div>
+            </div>
+            <div class="panel-body">
+              <div id="zinc_availability" style="height:250px;">
+                <span id="chartEmpty-zinc_availability" style="position:absolute;top:150px;left:100px;color: #5f8b95; font-size: 20px;">There is no data for the selected time period.</span>
+              </div>
+            </div>
+            <div style="text-align: right; padding-right: 10px; padding-top: 5px; padding-bottom: 5px">
+              <a href="?<?php echo exportLink("zinc_availability"); ?>"><button class="btn btn-primary" type="button">Excel</button></a>
+            </div>
+        </div>
     </div>
 </div>
 </form>
@@ -398,6 +456,7 @@ function printChart($datasource, $chartDiv, $line = null){
 
   <?php
   printChart($detailer_visits, "detailer_visits");
+  printChart($weekly_visits, "weekly_detailer_visits", null, "stackedBar");
   printChart($zinc_stats, "zinc_availability");
   printChart($zinc_price, "zinc_price", targetPrice(@$_GET["dproduct"]));
   //printChart($ors_price, "ors_price", 300);
