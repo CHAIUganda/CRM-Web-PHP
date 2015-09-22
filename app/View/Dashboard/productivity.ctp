@@ -213,7 +213,7 @@ function select_detname($detId){
                                 <option value="<?=$detailer["user_id"]; ?>" <?php echo isSelected(1, $detailer["user_id"], 5);?>><?=$detailer["username"]; ?></option>
                               <?php endforeach ?>
                             </select>
-                            <select name="taskWeek" id="zincPrice">
+                            <select name="taskWeek" id="taskWeek">
                             <?php foreach ($weekDates as $week): ?>
                               <option value="<?=$week["number"]?>" <?php echo isSelected(2, $week["number"], 5);?>>Week of <?=$week["start"];?></option>
                             <?php endforeach ?>

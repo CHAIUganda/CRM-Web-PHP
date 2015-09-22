@@ -41,7 +41,7 @@ class DashboardController extends AppController {
         //$this->set("ors_price", $this->median_ors_price());
 
         $this->set("detailers", $this->detailers());
-        
+
         $time2 = time();
         $this->timeLog["total"] = $time2 - $time1;
         $this->set("time", $this->timeLog);
@@ -367,7 +367,7 @@ class DashboardController extends AppController {
             $dt = new DateTime("@$epoch");
             $task["month"] = $dt->format("F");
             $task["week"] = $this->getWeekOfMonth($dt->format("j"));
-            $task["day_of_week"] = $dt->format("l");
+            $task["day_of_week"] = $dt->format("M. j, Y");
 
             if (!isset($res[$task["day_of_week"]])) {
                 $res[$task["day_of_week"]] = array();
@@ -379,21 +379,28 @@ class DashboardController extends AppController {
             $res[$task["day_of_week"]][$task["task.status"]][$task["task.uuid"]] = 1;
         }
 
-        $segments = array("complete"=>0,"new"=>0,"cancelled"=>0);
-        $stockAvailabilityStats = array("Monday"=>$segments, "Tuesday"=>$segments, "Wednesday"=>$segments,
-         "Thursday"=>$segments, "Friday"=>$segments, "Saturday"=>$segments, "Sunday"=>$segments);
+        $stockAvailabilityStats = array();
         foreach ($res as $username => $monthData) {
             if(!isset($stockAvailabilityStats[$username])){
-                $stockAvailabilityStats[$username] = array("A"=>0,"B"=>0,"C"=>0,"D"=>0);
+                $stockAvailabilityStats[$username] = array("complete"=>0,"new"=>0,"cancelled"=>0);
             }
 
             foreach($monthData as $month => $data){
                 $stockAvailabilityStats[$username][$month] = count($res[$username][$month]);
             }
         }
-        pr($stockAvailabilityStats);
-        exit();
-        return $stockAvailabilityStats;
+        $lines = array();
+        $lines[] = array("date", "complete", "new", "cancelled");
+        foreach ($stockAvailabilityStats as $date => $data) {
+            $line = array();
+            $line[] = $date;
+            $line[] = $data["complete"];
+            $line[] = $data["new"];
+            $line[] = $data["cancelled"];
+            $lines[] = $line;
+        }
+        
+        return $lines;
     }
 
     public function task_summary(){
