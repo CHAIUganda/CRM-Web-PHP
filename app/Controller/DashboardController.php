@@ -577,11 +577,20 @@ class DashboardController extends AppController {
         if (!empty($detId) || $detId != 0) {
             $det_filter = "id(user) = " . $detId . " and ";
         }
-
-        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t:`Territory`) match 
+        $q = "";
+        if($this->isAdmin()){
+            $q = "match user-[:`SUPERVISES_TERRITORY`]-(t:`Territory`) match 
+            t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match cust-[:`IN_SEGMENT`]->seg
+             where $det_filter task.completionDate > " . $date_range[0] . " and task.completionDate < ".
+             $date_range[1] . " return task.uuid, task.description, task.completionDate, user.username, seg.name";
+        } else {
+            $q = "start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t:`Territory`) match 
             t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match cust-[:`IN_SEGMENT`]->seg
             match task-[:`COMPLETED_TASK`]-(user) where $det_filter task.completionDate > " . $date_range[0] . " and task.completionDate < ".
-             $date_range[1] . " return task.uuid, task.description, task.completionDate, user.username, seg.name");
+             $date_range[1] . " return task.uuid, task.description, task.completionDate, user.username, seg.name";
+        }
+
+        $tasks = $this->runNeoQuery();
         
         $res = array();
 
@@ -1285,13 +1294,25 @@ class DashboardController extends AppController {
 
         $date_range = $this->getTimeRange($classification, $period);
 
-        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t:`Territory`) match 
+        $q = "";
+        if($this->isAdmin()){
+            $q = "match user-[:`SUPERVISES_TERRITORY`]-(t:`Territory`) match 
+            t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) 
+             where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
+             $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]-(stock:`DetailerStock`) where stock.category = 
+            \"$product\" match (t)<-[:`SC_IN_TERRITORY`]-(sc) match (ds)-[:`HAS_SUB_COUNTY`]->(sc) 
+            match (rg)-[:`HAS_DISTRICT`]->(ds) return task.uuid, task.description, task.completionDate, user.username, user.name, id(user) as user_id,
+            stock.uuid, stock.category, stock.stockLevel, rg.name";
+        } else {
+            $q = "start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t:`Territory`) match 
             t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
             task-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
              $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]-(stock:`DetailerStock`) where stock.category = 
             \"$product\" match (t)<-[:`SC_IN_TERRITORY`]-(sc) match (ds)-[:`HAS_SUB_COUNTY`]->(sc) 
             match (rg)-[:`HAS_DISTRICT`]->(ds) return task.uuid, task.description, task.completionDate, user.username, user.name, id(user) as user_id,
-            stock.uuid, stock.category, stock.stockLevel, rg.name ");
+            stock.uuid, stock.category, stock.stockLevel, rg.name";
+        }
+        $tasks = $this->runNeoQuery($q);
 
         $res = array();
         $detailer_task = array();
@@ -1525,6 +1546,7 @@ class DashboardController extends AppController {
             where stock.category = \"zinc\" match (t)<-[:`SC_IN_TERRITORY`]-(sc) match (ds)-[:`HAS_SUB_COUNTY`]->(sc) 
             match (rg)-[:`HAS_DISTRICT`]->(ds) RETURN distinct task.uuid, task.description, task.completionDate, id(user) as user_id,
             user.name, user.username, t.name, rg.name";
+
         } else {
             $qs = "MATCH (task:`Task`) where task.completionDate > ". $date_range[0] .
             " AND task.completionDate < " . $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]->(stock:`DetailerStock`) 
