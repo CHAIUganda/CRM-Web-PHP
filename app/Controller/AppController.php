@@ -45,20 +45,25 @@ class AppController extends Controller {
     function getNeo4jUser($uuid){
             $this->client = new Everyman\Neo4j\Client();
             $this->client->getTransport()->setAuth("neo4j", "neo4j");
+            $query = new Everyman\Neo4j\Cypher\Query($this->client, "MATCH (n:`User`) where n.uuid = \"$uuid\" match (n)-[:`HAS_ROLE`]-(role) RETURN n.username as username, n.password as password, id(n) as node_id, role.authority");
 
-            $query = new Everyman\Neo4j\Cypher\Query($this->client, "MATCH (n:`User`) where n.uuid = \"$uuid\" RETURN n.username as username, n.password as password, id(n) as node_id");
             $results = $query->getResultSet();
             if (empty($results)) {
                 return array();
             } else {
                 $user = array();
+                $roles = array();
                 foreach ($results as $result) {
                     $columns = $result->columns();
                     foreach ($columns as $column) {
+                        if ($column == "role.authority") {
+                            $roles[] = $result[$column];
+                            continue;
+                        }
                         $user[$column] = $result[$column];
                     }
-                    break;
                 }
+                $user["roles"] = $roles;
                 return $user;
             }
     }
@@ -75,6 +80,7 @@ class AppController extends Controller {
             $authUser = $this->User->read(null, $this->Auth->user("id"));
             $neo_user = $this->getNeo4jUser($authUser['User']['uuid']);
             $authUser['User']['neo_id'] = $neo_user['node_id'];
+            $authUser['User']['roles'] = $neo_user['roles'];
             $this->_user = $authUser;
             $this->set("user", $authUser);
         } else {
@@ -87,6 +93,9 @@ class AppController extends Controller {
         }
     }
 
+    function isAdmin(){
+        return in_array("ROLE_SUPER_ADMIN", $this->_user["User"]["roles"]);
+    }
     private function allowAccess() {
         if(in_array($this->name, array("Users"))) {
             $this->Auth->allow('*');
