@@ -1082,9 +1082,9 @@ class DashboardController extends AppController {
 
     function getSupervisorDetailers(){
         $date_range = $this->getYearRange();
-        $users = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t:`Territory`)
-         match t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
-            task-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
+        $users = $this->runNeoQuery("match user-[:`SUPERVISES_TERRITORY`]-(t:`Territory`)
+         match t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task)
+          where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
              $date_range[1] . " return user.username");
         $u = array();
         foreach ($users as $user) {
@@ -1118,17 +1118,34 @@ class DashboardController extends AppController {
 
         $query = "";
         if (!empty($district && $district != "All")) {
-            $query = "MATCH (n:`District`) where n.name = \"$district\" MATCH (n)-[:`HAS_SUB_COUNTY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
-            task-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
-             $date_range[1] . " $detailerFilter match task-[:`HAS_DETAILER_STOCK`]-(stock:`DetailerStock`) $stockFilter return task.uuid, task.description, task.completionDate, user.username, stock.uuid, stock.category,
-            stock.stockLevel";
+            if ($this->isAdmin()) {
+                $query = "MATCH (n:`District`) where n.name = \"$district\" MATCH (n)-[:`HAS_SUB_COUNTY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) 
+                match t-[:`SC_IN_TERRITORY`]-(sc) match user-[:`SUPERVISES_TERRITORY`]-(t) match cust-[:`CUST_TASK`]-(task) 
+                where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
+                 $date_range[1] . " $detailerFilter match task-[:`HAS_DETAILER_STOCK`]-(stock:`DetailerStock`) $stockFilter return task.uuid, task.description, task.completionDate, user.username, stock.uuid, stock.category,
+                stock.stockLevel";
+            } else {
+                $query = "MATCH (n:`District`) where n.name = \"$district\" MATCH (n)-[:`HAS_SUB_COUNTY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
+                task-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
+                 $date_range[1] . " $detailerFilter match task-[:`HAS_DETAILER_STOCK`]-(stock:`DetailerStock`) $stockFilter return task.uuid, task.description, task.completionDate, user.username, stock.uuid, stock.category,
+                stock.stockLevel";
+            }
         } else {
-            $query = "start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t:`Territory`)
-         match t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
-            task-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
-             $date_range[1] . " $detailerFilter match task-[:`HAS_DETAILER_STOCK`]-(stock:`DetailerStock`) $stockFilter return task.uuid, task.description, task.completionDate, user.username, stock.uuid, stock.category,
-            stock.stockLevel";
+            if($this->isAdmin()){
+                $query = "match user-[:`SUPERVISES_TERRITORY`]-(t:`Territory`)
+                match t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task)
+                 where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
+                 $date_range[1] . " $detailerFilter match task-[:`HAS_DETAILER_STOCK`]-(stock:`DetailerStock`) $stockFilter return task.uuid, task.description, task.completionDate, user.username, stock.uuid, stock.category,
+                stock.stockLevel";
+            } else {
+                $query = "start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t:`Territory`)
+                match t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
+                task-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
+                 $date_range[1] . " $detailerFilter match task-[:`HAS_DETAILER_STOCK`]-(stock:`DetailerStock`) $stockFilter return task.uuid, task.description, task.completionDate, user.username, stock.uuid, stock.category,
+                stock.stockLevel";
+            }
         }
+        
         $tasks = $this->runNeoQuery($query);
         
         $res = $this->getMonthsOfYear();
@@ -1163,9 +1180,17 @@ class DashboardController extends AppController {
     }
 
     function getDistrictsAndDetailers(){
-        $users = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") MATCH (n)-[:`SUPERVISES_TERRITORY`]->(territory) 
+        $q = "";
+        if ($this->isAdmin()) {
+            $q = "MATCH (detailer)-[:`SUPERVISES_TERRITORY`]->(territory) 
+             MATCH (sc)-[:`SC_IN_TERRITORY`]-(territory) MATCH (ds)-[:`HAS_SUB_COUNTY`]-(sc) 
+            RETURN territory.name, detailer.username, sc.name, ds.name;";
+        } else {
+            $q = "start n = node(". $this->_user['User']['neo_id'] .") MATCH (n)-[:`SUPERVISES_TERRITORY`]->(territory) 
             MATCH (detailer)-[:`USER_TERRITORY`]-(territory)  MATCH (sc)-[:`SC_IN_TERRITORY`]-(territory) MATCH (ds)-[:`HAS_SUB_COUNTY`]-(sc) 
-            RETURN n.username,territory.name, detailer.username, sc.name, ds.name;");
+            RETURN n.username,territory.name, detailer.username, sc.name, ds.name;";
+        }
+        $users = $this->runNeoQuery($q);
     
         $districts = array();
         foreach ($users as $user) {
@@ -1181,7 +1206,7 @@ class DashboardController extends AppController {
         foreach ($districts as $district => $data) {
             $districts[$district] = array_unique($data);
         }
-        
+
         return $districts;
     }
     function avail_rzinc_ors_avail_export(){
