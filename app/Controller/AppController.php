@@ -96,6 +96,7 @@ class AppController extends Controller {
     function isAdmin(){
         return in_array("ROLE_SUPER_ADMIN", $this->_user["User"]["roles"]);
     }
+
     private function allowAccess() {
         if(in_array($this->name, array("Users"))) {
             $this->Auth->allow('*');
