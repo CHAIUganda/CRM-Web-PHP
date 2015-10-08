@@ -224,7 +224,7 @@ function printChart($datasource, $chartDiv, $line = null){
   <div class="col-md-6">
       <div class="panel panel-default">
             <div class="panel-heading">
-                Product Price by Region (UGX) 10 Tablets
+                Product Price by Region (UGX)
                 <div class="pull-right">
                         <div class="btn-group">
                             <select name="rproduct">

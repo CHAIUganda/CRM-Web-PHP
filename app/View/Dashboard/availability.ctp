@@ -74,8 +74,10 @@ function printChart($datasource, $chartDiv, $line = null){
   valueAxis:{
     grid:{
       color: '#9D9EA5',
+      format: "fixedPoint",
       width: 0.1
-      }
+      },
+    max: 100
   },
     pointClick: function (point) {
         this.select();
