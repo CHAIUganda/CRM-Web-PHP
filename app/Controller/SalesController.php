@@ -7,7 +7,7 @@ App::uses('AppController', 'Controller');
  *
  * @property Dashboard $Dashboard
  */
-class DashboardController extends AppController {
+class SalesController extends AppController {
 
 	var $client;
     var $timeLog = array();
@@ -35,19 +35,22 @@ class DashboardController extends AppController {
         }
 
 
-        $this->set("detailer_visits", $this->average_visits_by_detailers("all"));
-        $this->set("weekly_visits", $this->dweekly_visits());
-        $this->set("zinc_stats", $this->zinc_percentage_availability($availability_product));
-        $this->set("zinc_price", $this->average_product_detailer_price($detailer_product));
+        $this->set("rate_of_sale", $this->rate_of_sale("all"));
+        //$this->set("weekly_visits", $this->dweekly_visits());
+        //$this->set("zinc_stats", $this->zinc_percentage_availability($availability_product));
+        //$this->set("zinc_price", $this->average_product_detailer_price($detailer_product));
         //$this->set("ors_price", $this->median_ors_price());
 
-        $this->set("detailers", $this->detailers());
+        //$this->set("detailers", $this->detailers());
 
         $time2 = time();
         $this->timeLog["total"] = $time2 - $time1;
         $this->set("time", $this->timeLog);
 	}
 
+    public function rate_of_sale($product){
+        return array();
+    }
 
     public function export($export){
         $regional_product = @$_GET["rproduct"];
