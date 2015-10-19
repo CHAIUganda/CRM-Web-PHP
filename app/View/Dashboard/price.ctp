@@ -18,6 +18,27 @@ function targetPrice($product){
       break;
   }
 }
+
+function getTitle($graph, $drug){
+  $title = "";
+  switch ($_GET[""]) {
+    case 'rdt':
+      $title = "Tests";
+      break;
+    case 'zinc':
+      $title = "Tests";
+      break;
+    case 'ors':
+      $title = "Sachets";
+      break;
+    default:
+      $title = "Sachets";
+      break;
+  }
+
+  return $title;
+}
+
 function selectedProduct($type, $product){
   $getValue = "";
   if($type == 1){

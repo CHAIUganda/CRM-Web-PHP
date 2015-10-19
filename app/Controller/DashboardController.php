@@ -2178,8 +2178,14 @@ class DashboardController extends AppController {
 	    return $median;
 	}
 
-	function calculate_average($arr) {
-	    $count = count($arr);
+	function calculate_average($arr, $num = 0) {
+        $count = 0;
+        if ($num > 0) {
+            $count = count($arr);
+        } else {
+            $count = count($arr);
+        }
+	    
 	    $total = 0;
 	    foreach ($arr as $value) {
 	        $total += $value;
