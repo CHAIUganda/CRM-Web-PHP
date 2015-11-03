@@ -198,7 +198,11 @@ class DashboardController extends AppController {
     public function priceFormat($data){
         $lines = array();
         
-        $title = array("Date", $data["title"], "Region");
+        $title2 = "Region";
+        if (!empty($data["title2"])) {
+            $title2 = $data["title2"];
+        }
+        $title = array("Date", $data["title"], $title2);
         $lines[] = $title;
 
         foreach ($data["lines"] as $detailerName => $detailerData) {
@@ -1874,7 +1878,7 @@ class DashboardController extends AppController {
         }
         unset($stats[0]);
 
-        return array("lines"=>$stats, "detailer_task"=>$detailer_task, "title"=>"Average $product_name Price");
+        return array("lines"=>$stats, "detailer_task"=>$detailer_task, "title"=>"Average $product_name Price", "title2"=>"Detailer");
     }
 
     function average_regional_ors_price(){
