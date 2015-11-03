@@ -207,30 +207,14 @@ function select_detname($detId){
                 <div class="pull-right">
                         <div class="btn-group">
                             <select name="visitClassification" onchange="updateOptions(event, 'dailyVisits')">
-                            <option value="2" <?php echo isSelected(1, 2, 1);?>>Quarter</option>
-                                <option value="1" <?php echo isSelected(1, 1, 1);?>>Month</option>
+                                <option value="1" <?php echo isSelected(1, 1, 1);?>>District</option>
+                            </select>
+                            <select name="visitClassification" onchange="updateOptions(event, 'dailyVisits')">
+                                <option value="1" <?php echo isSelected(1, 2, 1);?>>Detailer</option>
                             </select>
                             <select name="dailyVisitsPeriod" id="dailyVisits">
-                              <?php if(@$_GET['visitClassification'] == 1){ ?>
-                                <option value="1" <?php echo isSelected(2, 1, 1);?>>Jan '15</option>
-                                <option value="2" <?php echo isSelected(2, 2, 1);?>>Feb '15</option>
-                                <option value="3" <?php echo isSelected(2, 3, 1);?>>Mar '15</option>
-                                <option value="4" <?php echo isSelected(2, 4, 1);?>>Apr '15</option>
-                                <option value="5" <?php echo isSelected(2, 5, 1);?>>May '15</option>
-                                <option value="6" <?php echo isSelected(2, 6, 1);?>>Jun '15</option>
-                                <option value="7" <?php echo isSelected(2, 7, 1);?>>Jul '15</option>
-                                <option value="8" <?php echo isSelected(2, 8, 1);?>>Aug '15</option>
-                                <option value="9" <?php echo isSelected(2, 9, 1);?>>Sep '15</option>
-                                <option value="10" <?php echo isSelected(2, 10, 1);?>>Oct '15</option>
-                                <option value="11" <?php echo isSelected(2, 11, 1);?>>Nov '15</option>
-                                <option value="12" <?php echo isSelected(2, 12, 1);?>>Dec '15</option>
-                              <?php } else { ?>
-                                <option value="1" <?php echo isSelected(2, 1, 1);?>>Q1 '15</option>
-                                <option value="2"<?php echo isSelected(2, 2, 1);?>>Q2 '15</option>
-                                <option value="3"<?php echo isSelected(2, 3, 1);?>>Q3 '15</option>
-                                <option value="4"<?php echo isSelected(2, 4, 1);?>>Q4 '15</option>
-                              <?php } ?>
-                                
+                                <option value="1" <?php echo isSelected(1, 2, 1);?>>Zinc</option>
+                                <option value="1" <?php echo isSelected(1, 2, 1);?>>ORS</option>
                             </select>
                         </div>
                         <button type="submit" class="btn btn-default btn-sm btn-circle">GO</button>
@@ -255,37 +239,15 @@ function select_detname($detId){
                 <div class="pull-right">
                         <div class="btn-group">
                             <select name="detId">
-                              <option value="0" <?php echo select_detname(0); ?>>All</option>
+                              <option value="0" <?php echo select_detname(0); ?>>Sales Rep</option>
                             <?php foreach ($detailers as $detailer) { ?>
                               <option value="<?=$detailer["user_id"];?>" <?php echo select_detname($detailer["user_id"]); ?>><?=$detailer["username"];?></option>
                             <?php }?>
                             </select>
 
                             <select name="weeklyVisitClassification" onchange="updateOptions(event, 'dailyVisits')">
-                                <option value="2" <?php echo isSelected(1, 2, 1);?>>Quarter</option>
-                                <option value="1" <?php echo isSelected(1, 1, 1);?>>Month</option>
-                            </select>
-                            <select name="weeklyDailyVisitsPeriod" id="dailyVisits">
-                              <?php if(@$_GET['weeklyVisitClassification'] == 1){ ?>
-                                <option value="1" <?php echo isSelected(2, 1, 1);?>>Jan '15</option>
-                                <option value="2" <?php echo isSelected(2, 2, 1);?>>Feb '15</option>
-                                <option value="3" <?php echo isSelected(2, 3, 1);?>>Mar '15</option>
-                                <option value="4" <?php echo isSelected(2, 4, 1);?>>Apr '15</option>
-                                <option value="5" <?php echo isSelected(2, 5, 1);?>>May '15</option>
-                                <option value="6" <?php echo isSelected(2, 6, 1);?>>Jun '15</option>
-                                <option value="7" <?php echo isSelected(2, 7, 1);?>>Jul '15</option>
-                                <option value="8" <?php echo isSelected(2, 8, 1);?>>Aug '15</option>
-                                <option value="9" <?php echo isSelected(2, 9, 1);?>>Sep '15</option>
-                                <option value="10" <?php echo isSelected(2, 10, 1);?>>Oct '15</option>
-                                <option value="11" <?php echo isSelected(2, 11, 1);?>>Nov '15</option>
-                                <option value="12" <?php echo isSelected(2, 12, 1);?>>Dec '15</option>
-                              <?php } else { ?>
-                                <option value="1" <?php echo isSelected(2, 1, 1);?>>Q1 '15</option>
-                                <option value="2"<?php echo isSelected(2, 2, 1);?>>Q2 '15</option>
-                                <option value="3"<?php echo isSelected(2, 3, 1);?>>Q3 '15</option>
-                                <option value="4"<?php echo isSelected(2, 4, 1);?>>Q4 '15</option>
-                              <?php } ?>
-                                
+                                <option value="2" <?php echo isSelected(1, 2, 1);?>>Zinc</option>
+                                <option value="1" <?php echo isSelected(1, 1, 1);?>>ORS</option>
                             </select>
                         </div>
                         <button type="submit" class="btn btn-default btn-sm btn-circle">GO</button>

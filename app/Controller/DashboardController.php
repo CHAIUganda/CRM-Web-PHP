@@ -356,10 +356,20 @@ class DashboardController extends AppController {
             $det_filter = "id(user) = " . $taskDetailer . " and ";
         }
 
-        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t:`Territory`) match 
+        $q = "";
+        if ($this->isAdmin()) {
+            $q = "match user-[:`SUPERVISES_TERRITORY`]-(t:`Territory`) match 
+            t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match cust-[:`IN_SEGMENT`]->seg
+             where $det_filter task.completionDate > " . $date_range[0] . " and task.completionDate < ".
+             $date_range[1] . " return task.uuid, task.description, task.completionDate, user.username, seg.name, task.status";
+        } else {
+            $q = "start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t:`Territory`) match 
             t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match cust-[:`IN_SEGMENT`]->seg
             match task-[:`COMPLETED_TASK`]-(user) where $det_filter task.completionDate > " . $date_range[0] . " and task.completionDate < ".
-             $date_range[1] . " return task.uuid, task.description, task.completionDate, user.username, seg.name, task.status");
+             $date_range[1] . " return task.uuid, task.description, task.completionDate, user.username, seg.name, task.status";
+        }
+
+        $tasks = $this->runNeoQuery($q);
         
         $res = array();
 
@@ -599,7 +609,7 @@ class DashboardController extends AppController {
              $date_range[1] . " return task.uuid, task.description, task.completionDate, user.username, seg.name";
         }
 
-        $tasks = $this->runNeoQuery();
+        $tasks = $this->runNeoQuery($q);
         
         $res = array();
 
@@ -999,12 +1009,37 @@ class DashboardController extends AppController {
             $districtFilter = "where stock.category = \"$district\"";
         }
 
-        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t:`Territory`)
+        $query = "";
+        if (!empty($district && $district != "All")) {
+            if ($this->isAdmin()) {
+                $query = "MATCH (n:`District`) where n.name = \"$district\" MATCH (n)-[:`HAS_SUB_COUNTY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) 
+                match t-[:`SC_IN_TERRITORY`]-(sc) match user-[:`SUPERVISES_TERRITORY`]-(t) match cust-[:`CUST_TASK`]-(task) 
+                where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
+                 $date_range[1] . " $detailerFilter match task-[:`HAS_DETAILER_STOCK`]-(stock:`DetailerStock`) $stockFilter return task.uuid, task.description, task.completionDate, user.username, stock.uuid, stock.category,
+                stock.stockLevel";
+            } else {
+                $query = "MATCH (n:`District`) where n.name = \"$district\" MATCH (n)-[:`HAS_SUB_COUNTY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
+                task-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
+                 $date_range[1] . " $detailerFilter match task-[:`HAS_DETAILER_STOCK`]-(stock:`DetailerStock`) $stockFilter return task.uuid, task.description, task.completionDate, user.username, stock.uuid, stock.category,
+                stock.stockLevel";
+            }
+        } else {
+            if($this->isAdmin()){
+                $query = "match user-[:`SUPERVISES_TERRITORY`]-(t:`Territory`)
+                match t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task)
+                 where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
+                 $date_range[1] . " $detailerFilter match task-[:`HAS_DETAILER_STOCK`]-(stock:`DetailerStock`) $stockFilter return task.uuid, task.description, task.completionDate, user.username, stock.uuid, stock.category,
+                stock.stockLevel";
+            } else {
+                $query = "start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t:`Territory`)
+                match t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
+                task-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
+                 $date_range[1] . " $detailerFilter match task-[:`HAS_DETAILER_STOCK`]-(stock:`DetailerStock`) $stockFilter return task.uuid, task.description, task.completionDate, user.username, stock.uuid, stock.category,
+                stock.stockLevel";
+            }
+        }
 
-         match t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
-            task-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
-             $date_range[1] . " $detailerFilter match task-[:`HAS_DETAILER_STOCK`]-(stock:`DetailerStock`) $stockFilter return task.uuid, task.description, task.completionDate, user.username, stock.uuid, stock.category,
-            stock.stockLevel");
+        $tasks = $this->runNeoQuery($query);
         
         $res = array();
         $detailers = array();
@@ -1585,6 +1620,7 @@ class DashboardController extends AppController {
 	}
 
     function average_visits_by_detailers_export($type){
+        ini_set('memory_limit','1600M');
         @$classification = $_GET['visitClassification'];
         @$period = $_GET['dailyVisitsPeriod'];
 
@@ -1592,22 +1628,41 @@ class DashboardController extends AppController {
         
         $qs = "";
         if ($type == "diarrhoea") {
-            $qs = "MATCH (task:`DetailerTask`) where task.completionDate > ". $date_range[0] .
-            " AND task.completionDate < " . $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]->(stock:`DetailerStock`) 
-            match task<-[:`COMPLETED_TASK`]-(user) match (user)-[:`USER_TERRITORY`]->(t:`Territory`)
-            where stock.category = \"zinc\" match (t)<-[:`SC_IN_TERRITORY`]-(sc) match (ds)-[:`HAS_SUB_COUNTY`]->(sc) 
-            match (rg)-[:`HAS_DISTRICT`]->(ds) RETURN distinct task.uuid, task.description, task.completionDate, id(user) as user_id,
-            user.name, user.username, t.name, rg.name";
-
+            if($this->isAdmin()){
+                $qs = "match user-[:`SUPERVISES_TERRITORY`]-(t:`Territory`) match 
+                t-[:`SC_IN_TERRITORY`]-(sc) match (ds)-[:`HAS_SUB_COUNTY`]->(sc) 
+                match (rg)-[:`HAS_DISTRICT`]->(ds) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task)
+                 where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
+                 $date_range[1] . "match task-[:`HAS_DETAILER_STOCK`]-(stock:`DetailerStock`) where stock.category = \"zinc\" 
+                 return distinct task.uuid, task.description, task.completionDate, id(user) as user_id, user.name, user.username, stock.uuid,
+                stock.category, stock.stockLevel, stock.sellingPrice, t.name, rg.name";
+            } else {
+                $qs = "MATCH (task:`DetailerTask`) where task.completionDate > ". $date_range[0] .
+                " AND task.completionDate < " . $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]->(stock:`DetailerStock`) 
+                match task<-[:`COMPLETED_TASK`]-(user) match (user)-[:`USER_TERRITORY`]->(t:`Territory`)
+                where stock.category = \"zinc\" match (t)<-[:`SC_IN_TERRITORY`]-(sc) match (ds)-[:`HAS_SUB_COUNTY`]->(sc) 
+                match (rg)-[:`HAS_DISTRICT`]->(ds) RETURN distinct task.uuid, task.description, task.completionDate, id(user) as user_id,
+                user.name, user.username, t.name, rg.name";
+            }
         } else {
-            $qs = "MATCH (task:`Task`) where task.completionDate > ". $date_range[0] .
-            " AND task.completionDate < " . $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]->(stock:`DetailerStock`) 
-            match task<-[:`COMPLETED_TASK`]-(user) match (user)-[:`USER_TERRITORY`]->(t:`Territory`)
-            where stock.category = \"zinc\" match (t)<-[:`SC_IN_TERRITORY`]-(sc) match (ds)-[:`HAS_SUB_COUNTY`]->(sc) 
-            match (rg)-[:`HAS_DISTRICT`]->(ds) RETURN distinct task.uuid, task.description, task.completionDate, id(user) as user_id,
-            user.name, user.username, t.name, rg.name";
+            if($this->isAdmin()){
+                $qs = "match user-[:`SUPERVISES_TERRITORY`]-(t:`Territory`) match 
+                t-[:`SC_IN_TERRITORY`]-(sc) match (ds)-[:`HAS_SUB_COUNTY`]->(sc) 
+                match (rg)-[:`HAS_DISTRICT`]->(ds) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task)
+                 where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
+                 $date_range[1] . "match task-[:`HAS_DETAILER_STOCK`]-(stock:`DetailerStock`)  
+                 return distinct task.uuid, task.description, task.completionDate, id(user) as user_id, user.name, user.username, stock.uuid,
+                stock.category, stock.stockLevel, stock.sellingPrice, t.name, rg.name";
+            } else {
+                $qs = "MATCH (task:`Task`) where task.completionDate > ". $date_range[0] .
+                " AND task.completionDate < " . $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]->(stock:`DetailerStock`) 
+                match task<-[:`COMPLETED_TASK`]-(user) match (user)-[:`USER_TERRITORY`]->(t:`Territory`)
+                 match (t)<-[:`SC_IN_TERRITORY`]-(sc) match (ds)-[:`HAS_SUB_COUNTY`]->(sc) 
+                match (rg)-[:`HAS_DISTRICT`]->(ds) RETURN distinct task.uuid, task.description, task.completionDate, id(user) as user_id,
+                user.name, user.username, t.name, rg.name";
+            }
         }
-
+        
         $tasks = $this->runNeoQuery($qs);
         //echo count($tasks);
         //pr($tasks);
@@ -1765,13 +1820,28 @@ class DashboardController extends AppController {
         @$period = $_GET['productPrice'];
 
         $date_range = $this->getTimeRange($classification, $period);
-        $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t:`Territory`) match 
+
+        $q = "";
+
+        if ($this->isAdmin()) {
+            $q = "match user-[:`SUPERVISES_TERRITORY`]-(t:`Territory`) match 
+            t-[:`SC_IN_TERRITORY`]-(sc) match (ds)-[:`HAS_SUB_COUNTY`]->(sc) 
+            match (rg)-[:`HAS_DISTRICT`]->(ds) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
+            task-[:`COMPLETED_TASK`]-(det) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
+             $date_range[1] . " optional match task-[:`HAS_DETAILER_STOCK`]-(stock:`DetailerStock`) where stock.category = 
+            \"$product_name\"  return task.uuid, task.description, task.completionDate, user.username, id(user) as user_id,
+             user.name, stock.uuid, stock.category, stock.stockLevel, stock.sellingPrice, rg.name";
+        } else {
+            $q = "start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t:`Territory`) match 
             t-[:`SC_IN_TERRITORY`]-(sc) match (ds)-[:`HAS_SUB_COUNTY`]->(sc) 
             match (rg)-[:`HAS_DISTRICT`]->(ds) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
             task-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
              $date_range[1] . " optional match task-[:`HAS_DETAILER_STOCK`]-(stock:`DetailerStock`) where stock.category = 
             \"$product_name\"  return task.uuid, task.description, task.completionDate, user.username, id(user) as user_id,
-             user.name, stock.uuid, stock.category, stock.stockLevel, stock.sellingPrice, rg.name");
+             user.name, stock.uuid, stock.category, stock.stockLevel, stock.sellingPrice, rg.name";
+        }
+
+        $tasks = $this->runNeoQuery($q);
         $res[] = array();
         $detailer_task = array();
         foreach ($tasks as $task) {

@@ -112,6 +112,7 @@
                             <ul role="menu" class="dropdown-menu multi-level" aria-labelledby="dropdownMenu">
                                 <li><a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>">Dashboard</a></li>
                                 <li><a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>/sales">Sales</a></li>
+                                <li><a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>/sales/finance">Finance</a></li>
                                 <li><a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>/dashboard/availability">Availability</a></li>
                                 <li><a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>/dashboard/price">Price</a></li>
                                 <li><a href="http://<?php echo "$_SERVER[HTTP_HOST]"; ?>/dashboard/productivity">Productivity</a></li>
