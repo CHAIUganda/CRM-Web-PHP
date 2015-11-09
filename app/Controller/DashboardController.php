@@ -34,7 +34,6 @@ class DashboardController extends AppController {
             $availability_product = "ors";
         }
 
-
         $this->set("detailer_visits", $this->average_visits_by_detailers("all"));
         $this->set("weekly_visits", $this->dweekly_visits());
         $this->set("zinc_stats", $this->zinc_percentage_availability($availability_product));

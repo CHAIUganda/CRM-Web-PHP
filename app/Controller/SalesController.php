@@ -34,8 +34,9 @@ class SalesController extends AppController {
             $availability_product = "ors";
         }
 
-
-        $this->set("price_per_dose", $this->price_per_dose("all"));
+        $this->set("sales", $this->sales());
+        $r = $this->revenue();
+        $this->set("revenue", $r);
         //$this->set("weekly_visits", $this->dweekly_visits());
         //$this->set("zinc_stats", $this->zinc_percentage_availability($availability_product));
         //$this->set("zinc_price", $this->average_product_detailer_price($detailer_product));
@@ -67,7 +68,8 @@ class SalesController extends AppController {
         }
 
 
-        $this->set("price_per_dose", $this->price_per_dose("all"));
+        //$this->set("price_per_dose", $this->price_per_dose("all"));
+        $this->set("sales", $this->sales("all"));
         //$this->set("weekly_visits", $this->dweekly_visits());
         //$this->set("zinc_stats", $this->zinc_percentage_availability($availability_product));
         //$this->set("zinc_price", $this->average_product_detailer_price($detailer_product));
@@ -139,6 +141,215 @@ class SalesController extends AppController {
         return $stockAvailabilityStats;
     }
 
+    public function sales(){
+        // Get filters
+        @$period = $_GET['sTimePeriod'];
+        $date_range = $this->getTimeRange(1, $period);
+        
+        $q = "match (sale)-[r:`HAS_PRODUCT`]->(item)
+        match (sale)<-[:`CUST_TASK`]-(cust)
+        match det-[`COMPLETED_TASK`]->sale
+        match sc<-[:`CUST_IN_SC`]-(cust)
+        match t<-[:`SC_IN_TERRITORY`]-(sc)
+        match u-[:`SUPERVISES_TERRITORY`]->(t)
+        where u.username = \"sups05\" and sale.completionDate > " . $date_range[0] . " and sale.completionDate < ".
+             $date_range[1] . " and det.username <> \"\"
+        return distinct id(sale),sale.uuid, sale.description, cust.outletName, u.username, r.unitPrice, r.quantity, item.name, det.username, sale.completionDate
+        ";
+        $tasks = $this->runNeoQuery($q);
+        
+        $res = array();
+        foreach ($tasks as $task) {
+            $epoch = floor($task["sale.completionDate"]/1000);
+            $dt = new DateTime("@$epoch");
+            $task["month"] = $dt->format("F");
+            $task["week"] = $this->getWeekOfMonth($dt->format("j"));
+            if (empty($task["det.username"])) {
+                $task["det.username"] = "anon";
+            }
+            if (!isset($res[$task["det.username"]])) {
+                $res[$task["det.username"]] = array();
+            }
+
+            $res[$task["det.username"]]["Sales"][$task["sale.uuid"]] = $task["r.quantity"];
+        }
+
+        $stockAvailabilityStats = array();
+        foreach ($res as $username => $monthData) {
+            if(!isset($stockAvailabilityStats[$username])){
+                $stockAvailabilityStats[$username] = array();
+            }
+
+            $total = 0;
+            foreach($monthData as $month => $data){
+                $total += count($res[$username][$month]);
+            }
+
+            foreach($monthData as $month => $data){
+                $stockAvailabilityStats[$username][$month] = $total;
+            }
+        }
+
+        return $stockAvailabilityStats;
+    }
+    public function sales_export(){
+        // Get filters
+        @$period = $_GET['sTimePeriod'];
+        $date_range = $this->getTimeRange(1, $period);
+        
+        $q = "match (sale:`Task`)-[r:`HAS_PRODUCT`]->(item)
+        match (sale)<-[:`CUST_TASK`]-(cust)
+        match det-[`COMPLETED_TASK`]->sale
+        match sc<-[:`CUST_IN_SC`]-(cust)
+        match t<-[:`SC_IN_TERRITORY`]-(sc)
+        match u-[:`SUPERVISES_TERRITORY`]->(t)
+        where u.username = \"sups05\" and sale.completionDate > " . $date_range[0] . " and sale.completionDate < ".
+             $date_range[1] . " and det.username <> \"\"
+        return distinct id(sale), sale.uuid, sale.description, cust.outletName, u.username, r.unitPrice, item.name, r.quantity, det.username, sale.completionDate
+        ";
+        $tasks = $this->runNeoQuery($q);
+        
+        $exportResults = array();
+        $exportResults[] = array("Date", "UUID", "Outlet Name", "Detailer Name", "Product", "Quantity", "Unit Price");
+        foreach ($tasks as $task) {
+            $epoch = floor($task["sale.completionDate"]/1000);
+            $dt = new DateTime("@$epoch");
+            $date = $dt->format("M. j, Y");
+
+            $exportResults[] = array($date, $task["sale.uuid"], $task["cust.outletName"], $task["det.username"], $task["item.name"], $task["r.quantity"], $task["r.unitPrice"]);
+        }
+
+        return $exportResults;
+    }
+
+    public function revenue(){
+        // Get filters
+        @$period = $_GET['rTimePeriod'];
+        $date_range = $this->getTimeRange(1, $period);
+        
+        $q = "match (sale)-[r:`HAS_PRODUCT`]->(item)
+        match (sale)<-[:`CUST_TASK`]-(cust)
+        match det-[`COMPLETED_TASK`]->sale
+        match sc<-[:`CUST_IN_SC`]-(cust)
+        match t<-[:`SC_IN_TERRITORY`]-(sc)
+        match u-[:`SUPERVISES_TERRITORY`]->(t)
+        where u.username = \"sups05\" and sale.completionDate > " . $date_range[0] . " and sale.completionDate < ".
+             $date_range[1] . " and det.username <> \"\"
+        return distinct id(sale), sale.description, cust.outletName, u.username, r.unitPrice, r.quantity, item.name, det.username, sale.completionDate
+        ";
+        $tasks = $this->runNeoQuery($q);
+        
+        $res = array();
+        foreach ($tasks as $task) {
+            $epoch = floor($task["sale.completionDate"]/1000);
+            $dt = new DateTime("@$epoch");
+            $task["month"] = $dt->format("F");
+            $task["week"] = $this->getWeekOfMonth($dt->format("j"));
+            if (empty($task["det.username"])) {
+                $task["det.username"] = "anon";
+            }
+            if (!isset($res[$task["det.username"]])) {
+                $res[$task["det.username"]] = array();
+            }
+
+            if(empty($res[$task["det.username"]]["Sales"][$task["id(sale)"]])){
+                $res[$task["det.username"]]["Sales"][$task["id(sale)"]] = 0;
+            }
+            $res[$task["det.username"]]["Sales"][$task["id(sale)"]] += $task["r.quantity"] * $task["r.unitPrice"];
+        }
+
+        $stockAvailabilityStats = array();
+        foreach ($res as $username => $monthData) {
+            if(!isset($stockAvailabilityStats[$username])){
+                $stockAvailabilityStats[$username] = array();
+            }
+
+            $total = 0;
+            foreach($monthData as $month => $data){
+                foreach ($data as $id => $cost) {
+                    $total += $cost;
+                }
+            }
+
+            foreach($monthData as $month => $data){
+                $stockAvailabilityStats[$username][$month] = $total;
+            }
+        }
+
+        return $stockAvailabilityStats;
+    }
+
+    public function revenue_export(){
+        // Get filters
+        @$period = $_GET['rTimePeriod'];
+        $date_range = $this->getTimeRange(1, $period);
+        
+        $q = "match (sale)-[r:`HAS_PRODUCT`]->(item)
+        match (sale)<-[:`CUST_TASK`]-(cust)
+        match det-[`COMPLETED_TASK`]->sale
+        match sc<-[:`CUST_IN_SC`]-(cust)
+        match t<-[:`SC_IN_TERRITORY`]-(sc)
+        match u-[:`SUPERVISES_TERRITORY`]->(t)
+        where u.username = \"sups05\" and sale.completionDate > " . $date_range[0] . " and sale.completionDate < ".
+             $date_range[1] . " and det.username <> \"\"
+        return distinct id(sale), sale.uuid, sale.description, cust.outletName, u.username, r.unitPrice, r.quantity, item.name, det.username, sale.completionDate
+        ";
+        $tasks = $this->runNeoQuery($q);
+        
+        $tasks = $this->runNeoQuery($q);
+        
+        $exportResults = array();
+        $exportResults[] = array("Date", "UUID", "Outlet Name", "Detailer Name", "Product", "Quantity", "Unit Price", "Total Cost");
+        foreach ($tasks as $task) {
+            $epoch = floor($task["sale.completionDate"]/1000);
+            $dt = new DateTime("@$epoch");
+            $date = $dt->format("M. j, Y");
+
+            $exportResults[] = array($date, $task["sale.uuid"], $task["cust.outletName"], $task["det.username"], $task["item.name"],
+             $task["r.quantity"], $task["r.unitPrice"], $task["r.unitPrice"]*$task["r.quantity"]);
+        }
+        
+        return $exportResults;
+
+        $res = array();
+        foreach ($tasks as $task) {
+            $epoch = floor($task["sale.completionDate"]/1000);
+            $dt = new DateTime("@$epoch");
+            $task["month"] = $dt->format("F");
+            $task["week"] = $this->getWeekOfMonth($dt->format("j"));
+            if (empty($task["det.username"])) {
+                $task["det.username"] = "anon";
+            }
+            if (!isset($res[$task["det.username"]])) {
+                $res[$task["det.username"]] = array();
+            }
+
+            if(empty($res[$task["det.username"]]["Sales"][$task["id(sale)"]])){
+                $res[$task["det.username"]]["Sales"][$task["id(sale)"]] = 0;
+            }
+            $res[$task["det.username"]]["Sales"][$task["id(sale)"]] += $task["r.quantity"] * $task["r.unitPrice"];
+        }
+
+        $stockAvailabilityStats = array();
+        foreach ($res as $username => $monthData) {
+            if(!isset($stockAvailabilityStats[$username])){
+                $stockAvailabilityStats[$username] = array();
+            }
+
+            $total = 0;
+            foreach($monthData as $month => $data){
+                foreach ($data as $id => $cost) {
+                    $total += $cost;
+                }
+            }
+
+            foreach($monthData as $month => $data){
+                $stockAvailabilityStats[$username][$month] = $total;
+            }
+        }
+
+        return $stockAvailabilityStats;
+    }
     public function export($export){
         $regional_product = @$_GET["rproduct"];
         $detailer_product = @$_GET["dproduct"];
@@ -157,50 +368,11 @@ class SalesController extends AppController {
         }
 
         switch ($export) {
-            case 'average_daily':
-                $this->exportCSV($this->average_visits_by_detailers_export("all"));
+            case 'sales_export':
+                $this->exportCSV($this->sales_export());
                 break;
-            case 'zinc_availability':
-                $this->formatExport($this->zinc_percentage_availability_export($availability_product));
-                break;
-            case 'zinc_price':
-                $this->formatExport($this->median_zinc_price_export());
-                break;
-            case 'ors_price':
-                $this->formatExport($this->median_ors_price_export());
-                break;
-            case 'product_avail':
-                $this->exportCSV($this->product_avail_export());
-                break;
-            case 'rzinc_avail':
-                $this->availFormat($this->avail_rzinc_ors_avail_export());
-                break;
-            case 'task_summary':
-                $this->exportCSV($this->task_summary_export());
-                break;
-            case 'rprice':
-                $this->priceFormat($this->average_regional_product_price_export($regional_product));
-                break;
-            case 'dprice':
-                $this->priceFormat($this->average_detailer_product_price_export($detailer_product));
-                break;
-            case 'dzinc_price':
-                $this->formatExport($this->median_zinc_price_export());
-                break;
-            case 'dors_price':
-                $this->formatExport($this->median_ors_price_export());
-                break;
-            case 'pweekly_visits':
-                $this->exportCSV($this->dweekly_visits_export());
-                break;
-            case 'prtask_completion':
-                $this->exportCSV($this->rtask_completion_export());
-                break;
-            case 'paverage_visits':
-                $this->exportCSV($this->average_visits_by_detailers_export("diarrhoea"));
-                break;
-            case 'ptask_completion':
-                $this->exportCSV($this->dtask_completion_export());
+            case 'revenue_export':
+                $this->exportCSV($this->revenue_export());
                 break;
             default:
                 break;
