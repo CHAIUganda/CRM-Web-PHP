@@ -152,7 +152,7 @@ class SalesController extends AppController {
         match sc<-[:`CUST_IN_SC`]-(cust)
         match t<-[:`SC_IN_TERRITORY`]-(sc)
         match u-[:`SUPERVISES_TERRITORY`]->(t)
-        where u.username = \"sups05\" and sale.completionDate > " . $date_range[0] . " and sale.completionDate < ".
+        where u.username = \"". $this->_user['User']['username'] ."\" and sale.completionDate > " . $date_range[0] . " and sale.completionDate < ".
              $date_range[1] . " and det.username <> \"\"
         return distinct id(sale),sale.uuid, sale.description, cust.outletName, u.username, r.unitPrice, r.quantity, item.name, det.username, sale.completionDate
         ";
@@ -203,7 +203,7 @@ class SalesController extends AppController {
         match sc<-[:`CUST_IN_SC`]-(cust)
         match t<-[:`SC_IN_TERRITORY`]-(sc)
         match u-[:`SUPERVISES_TERRITORY`]->(t)
-        where u.username = \"sups05\" and sale.completionDate > " . $date_range[0] . " and sale.completionDate < ".
+        where u.username = \"". $this->_user['User']['username'] ."\" and sale.completionDate > " . $date_range[0] . " and sale.completionDate < ".
              $date_range[1] . " and det.username <> \"\"
         return distinct id(sale), sale.uuid, sale.description, cust.outletName, u.username, r.unitPrice, item.name, r.quantity, det.username, sale.completionDate
         ";
@@ -233,7 +233,7 @@ class SalesController extends AppController {
         match sc<-[:`CUST_IN_SC`]-(cust)
         match t<-[:`SC_IN_TERRITORY`]-(sc)
         match u-[:`SUPERVISES_TERRITORY`]->(t)
-        where u.username = \"sups05\" and sale.completionDate > " . $date_range[0] . " and sale.completionDate < ".
+        where u.username = \"". $this->_user['User']['username'] ."\" and sale.completionDate > " . $date_range[0] . " and sale.completionDate < ".
              $date_range[1] . " and det.username <> \"\"
         return distinct id(sale), sale.description, cust.outletName, u.username, r.unitPrice, r.quantity, item.name, det.username, sale.completionDate
         ";
@@ -290,7 +290,7 @@ class SalesController extends AppController {
         match sc<-[:`CUST_IN_SC`]-(cust)
         match t<-[:`SC_IN_TERRITORY`]-(sc)
         match u-[:`SUPERVISES_TERRITORY`]->(t)
-        where u.username = \"sups05\" and sale.completionDate > " . $date_range[0] . " and sale.completionDate < ".
+        where u.username = \"". $this->_user['User']['username'] ."\" and sale.completionDate > " . $date_range[0] . " and sale.completionDate < ".
              $date_range[1] . " and det.username <> \"\"
         return distinct id(sale), sale.uuid, sale.description, cust.outletName, u.username, r.unitPrice, r.quantity, item.name, det.username, sale.completionDate
         ";
