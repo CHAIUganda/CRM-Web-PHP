@@ -210,13 +210,15 @@ class SalesController extends AppController {
         $tasks = $this->runNeoQuery($q);
         
         $exportResults = array();
-        $exportResults[] = array("Date", "UUID", "Outlet Name", "Detailer Name", "Product", "Quantity", "Unit Price");
+        $exportResults[] = array("Date", "UUID", "Customer Name", "Product", "Quantity Sold", "Price", "Sales Rep");
+
         foreach ($tasks as $task) {
             $epoch = floor($task["sale.completionDate"]/1000);
             $dt = new DateTime("@$epoch");
             $date = $dt->format("M. j, Y");
 
-            $exportResults[] = array($date, $task["sale.uuid"], $task["cust.outletName"], $task["det.username"], $task["item.name"], $task["r.quantity"], $task["r.unitPrice"]);
+            $exportResults[] = array($date, $task["sale.uuid"], $task["cust.outletName"], $task["item.name"], $task["r.quantity"],
+                $task["r.unitPrice"], $task["det.username"]);
         }
 
         return $exportResults;
@@ -299,14 +301,14 @@ class SalesController extends AppController {
         $tasks = $this->runNeoQuery($q);
         
         $exportResults = array();
-        $exportResults[] = array("Date", "UUID", "Outlet Name", "Detailer Name", "Product", "Quantity", "Unit Price", "Total Cost");
+        $exportResults[] = array("Date", "UUID", "Customer Name", "Product", "Quantity Sold", "Price", "Sales Rep", "Total Cost");
         foreach ($tasks as $task) {
             $epoch = floor($task["sale.completionDate"]/1000);
             $dt = new DateTime("@$epoch");
             $date = $dt->format("M. j, Y");
 
-            $exportResults[] = array($date, $task["sale.uuid"], $task["cust.outletName"], $task["det.username"], $task["item.name"],
-             $task["r.quantity"], $task["r.unitPrice"], $task["r.unitPrice"]*$task["r.quantity"]);
+            $exportResults[] = array($date, $task["sale.uuid"], $task["cust.outletName"],  $task["item.name"],
+             $task["r.quantity"], $task["r.unitPrice"], $task["det.username"], $task["r.unitPrice"]*$task["r.quantity"]);
         }
         
         return $exportResults;
