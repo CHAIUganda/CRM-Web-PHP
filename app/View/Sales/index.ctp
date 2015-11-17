@@ -3,7 +3,7 @@ function isSelected($type, $val, $chart){
   $data = array();
   $data[1] = array(1 => "sTimePeriod", 2 => "dailyVisitsPeriod");
   $data[2] = array(1 => "rTimePeriod", 2 => "zincPercent");
-
+  $data[3] = array(1 => "tvwDetailer", 2 => "twvMonth", 3=>"twvWeek");
   $fieldName = $data[$chart][$type];
 
   if (empty($_GET[$fieldName]) && $type == 2 && $val == ceil(date("n")/3)) {
@@ -234,6 +234,55 @@ function select_detname($detId){
         </div>
     </div>
 </div>
+<div class="row">
+  <div class="col-md-6">
+      <div class="panel panel-default">
+            <div class="panel-heading">
+                Total Weekly Visits
+                <div class="pull-right">
+                        <div class="btn-group">
+                            <select name="tvwDetailer" id="tvwDetailer">
+                                <option value="1" <?php echo isSelected(1, 1, 3);?>>All</option>
+                              <?php foreach ($detailers as $detailer) { ?>
+                                <option value="<?=$detailer["username"]?>" <?php echo isSelected(1, $detailer["username"], 3);?>><?=$detailer["username"];?></option>
+                              <?php } ?>
+                            </select>
+                            <select name="twvMonth" id="twvMonth">
+                                <option value="1" <?php echo isSelected(2, 1, 3);?>>Jan '15</option>
+                                <option value="2" <?php echo isSelected(2, 2, 3);?>>Feb '15</option>
+                                <option value="3" <?php echo isSelected(2, 3, 3);?>>Mar '15</option>
+                                <option value="4" <?php echo isSelected(2, 4, 3);?>>Apr '15</option>
+                                <option value="5" <?php echo isSelected(2, 5, 3);?>>May '15</option>
+                                <option value="6" <?php echo isSelected(2, 6, 3);?>>Jun '15</option>
+                                <option value="7" <?php echo isSelected(2, 7, 3);?>>Jul '15</option>
+                                <option value="8" <?php echo isSelected(2, 8, 3);?>>Aug '15</option>
+                                <option value="9" <?php echo isSelected(2, 9, 3);?>>Sep '15</option>
+                                <option value="10" <?php echo isSelected(2, 10, 3);?>>Oct '15</option>
+                                <option value="11" <?php echo isSelected(2, 11, 3);?>>Nov '15</option>
+                                <option value="12" <?php echo isSelected(2, 12, 3);?>>Dec '15</option>
+                            </select>
+                            <select name="twvWeek" id="twvWeek">
+                                <option value="1" <?php echo isSelected(3, 1, 3);?>>W1</option>
+                                <option value="2" <?php echo isSelected(3, 2, 3);?>>W2</option>
+                                <option value="3" <?php echo isSelected(3, 3, 3);?>>W3</option>
+                                <option value="4" <?php echo isSelected(3, 4, 3);?>>W4</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-default btn-sm btn-circle">GO</button>
+                </div>
+            </div>
+            <div class="panel-body">
+              <div id="twv" style="height:250px;">
+                <span id="chartEmpty-twv" style="position:absolute;top:150px;left:100px;color: #5f8b95; font-size: 20px;">There is no data for the selected time period.</span>
+              </div>
+            </div>
+            <div style="text-align: right; padding-right: 10px; padding-top: 5px; padding-bottom: 5px">
+              <a href="?<?php echo exportLink("twv_export"); ?>"><button class="btn btn-primary" type="button">Excel</button></a>
+            </div>
+            
+        </div>
+    </div>
+</div>
 </form>
 <canvas id="canvas"></canvas>
 
@@ -241,5 +290,6 @@ function select_detname($detId){
   <?php
   printChart($sales, "sales");
   printChart($revenue, "revenue");
+  printChart($total_weekly_visits["stock"], "twv", null, "stackedBar");
   ?>
 </script>

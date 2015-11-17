@@ -35,9 +35,9 @@ class SalesController extends AppController {
         }
 
         $this->set("sales", $this->sales());
-        $r = $this->revenue();
-        $this->set("revenue", $r);
-        //$this->set("weekly_visits", $this->dweekly_visits());
+        $this->set("revenue", $this->revenue());
+        $this->set("total_weekly_visits", $this->total_weekly_visits());
+        $this->set("detailers", $this->detailers());
         //$this->set("zinc_stats", $this->zinc_percentage_availability($availability_product));
         //$this->set("zinc_price", $this->average_product_detailer_price($detailer_product));
         //$this->set("ors_price", $this->median_ors_price());
@@ -298,8 +298,6 @@ class SalesController extends AppController {
         ";
         $tasks = $this->runNeoQuery($q);
         
-        $tasks = $this->runNeoQuery($q);
-        
         $exportResults = array();
         $exportResults[] = array("Date", "UUID", "Customer Name", "Product", "Quantity Sold", "Price", "Sales Rep", "Total Cost");
         foreach ($tasks as $task) {
@@ -312,46 +310,135 @@ class SalesController extends AppController {
         }
         
         return $exportResults;
+    }
 
+    public function total_weekly_visits(){
+        // Get filters
+        @$month = $_GET['twvMonth'];
+        @$week = $_GET['twvWeek'];
+        @$detailer = $_GET['tvwDetailer'];
+
+        $date_range = $this->getTimeRange(1, $month);
+        $dates = $this->getDays($month, $week);
+
+        $detFilter = "";
+        if (!empty($detailer) && $detailer != 1) {
+            $detFilter = " where det.username = \"$detailer\"";
+        }
+
+        $q = "match (sale)-[r:`HAS_PRODUCT`]->(item)
+        match (sale)<-[:`CUST_TASK`]-(cust)
+        match (cust)-[:`IN_SEGMENT`]->(seg)
+        match det-[`COMPLETED_TASK`]->sale " .
+        $detFilter
+        . " match sc<-[:`CUST_IN_SC`]-(cust)
+        match t<-[:`SC_IN_TERRITORY`]-(sc)
+        match u-[:`SUPERVISES_TERRITORY`]->(t)
+        where u.username = \"". $this->_user['User']['username'] ."\" and sale.completionDate > " . $date_range[0] . " and sale.completionDate < ".
+             $date_range[1] . " and det.username <> \"\"
+        return distinct id(sale),sale.uuid, sale.description, cust.outletName, u.username, r.unitPrice, r.quantity, item.name, det.username,
+         sale.completionDate, seg.name";
+
+        $tasks = $this->runNeoQuery($q);
+        
         $res = array();
+        $detailers = array();
         foreach ($tasks as $task) {
             $epoch = floor($task["sale.completionDate"]/1000);
             $dt = new DateTime("@$epoch");
             $task["month"] = $dt->format("F");
             $task["week"] = $this->getWeekOfMonth($dt->format("j"));
-            if (empty($task["det.username"])) {
-                $task["det.username"] = "anon";
-            }
-            if (!isset($res[$task["det.username"]])) {
-                $res[$task["det.username"]] = array();
+            $task["day_of_week"] = $dt->format("j");
+            if (!in_array($task["day_of_week"], $dates)) {
+                continue;
             }
 
-            if(empty($res[$task["det.username"]]["Sales"][$task["id(sale)"]])){
-                $res[$task["det.username"]]["Sales"][$task["id(sale)"]] = 0;
+            $detailerUsername = $task["det.username"];
+            $segment = $task["seg.name"];
+            $day_of_week = $task["day_of_week"];
+
+            $detailers[] = $detailerUsername;
+            if (empty($detailerUsername)) {
+                $detailerUsername = "anon";
             }
-            $res[$task["det.username"]]["Sales"][$task["id(sale)"]] += $task["r.quantity"] * $task["r.unitPrice"];
+
+            if (!isset($res[$day_of_week])) {
+                $res[$day_of_week] = array();
+            }
+
+            $res[$day_of_week][$segment][$task["sale.uuid"]] = $task["r.quantity"];
         }
+
+        $segments = array("A"=>0,"B"=>0,"C"=>0,"D"=>0);
 
         $stockAvailabilityStats = array();
+
+        foreach ($dates as $date) {
+            $stockAvailabilityStats[$date] = $segments;
+        }
         foreach ($res as $username => $monthData) {
             if(!isset($stockAvailabilityStats[$username])){
-                $stockAvailabilityStats[$username] = array();
-            }
-
-            $total = 0;
-            foreach($monthData as $month => $data){
-                foreach ($data as $id => $cost) {
-                    $total += $cost;
-                }
+                $stockAvailabilityStats[$username] = array("A"=>0,"B"=>0,"C"=>0,"D"=>0);
             }
 
             foreach($monthData as $month => $data){
-                $stockAvailabilityStats[$username][$month] = $total;
+                $stockAvailabilityStats[$username][$month] = count($res[$username][$month]);
             }
         }
 
-        return $stockAvailabilityStats;
+        $detailers = array_unique($detailers);
+        sort($detailers);
+        return array("stock"=>$stockAvailabilityStats, "detailers"=> $detailers);
     }
+
+    public function total_weekly_visits_export(){
+        // Get filters
+        @$month = $_GET['twvMonth'];
+        @$week = $_GET['twvWeek'];
+        @$detailer = $_GET['tvwDetailer'];
+
+        $date_range = $this->getTimeRange(1, $month);
+        $dates = $this->getDays($month, $week);
+
+        $detFilter = "";
+        if (!empty($detailer) && $detailer != 1) {
+            $detFilter = " where det.username = \"$detailer\"";
+        }
+
+        $q = "match (sale)-[r:`HAS_PRODUCT`]->(item)
+        match (sale)<-[:`CUST_TASK`]-(cust)
+        match (cust)-[:`IN_SEGMENT`]->(seg)
+        match det-[`COMPLETED_TASK`]->sale " .
+        $detFilter
+        . " match sc<-[:`CUST_IN_SC`]-(cust)
+        match t<-[:`SC_IN_TERRITORY`]-(sc)
+        match u-[:`SUPERVISES_TERRITORY`]->(t)
+        where u.username = \"". $this->_user['User']['username'] ."\" and sale.completionDate > " . $date_range[0] . " and sale.completionDate < ".
+             $date_range[1] . " and det.username <> \"\"
+        return distinct id(sale),sale.uuid, sale.description, cust.outletName, u.username, r.unitPrice, r.quantity, item.name, det.username,
+         sale.completionDate, seg.name";
+
+        $tasks = $this->runNeoQuery($q);
+        
+        $exportResults = array();
+        $exportResults[] = array("Date", "UUID", "Customer Name", "Product", "Quantity Sold", "Price", "Sales Rep", "Total Cost");
+        foreach ($tasks as $task) {
+            $epoch = floor($task["sale.completionDate"]/1000);
+            $dt = new DateTime("@$epoch");
+            $date = $dt->format("M. j, Y");
+            $task["day_of_week"] = $dt->format("j");
+
+            if (!in_array($task["day_of_week"], $dates)) {
+                continue;
+            }
+
+            $exportResults[] = array($date, $task["sale.uuid"], $task["cust.outletName"],  $task["item.name"],
+             $task["r.quantity"], $task["r.unitPrice"], $task["det.username"], $task["r.unitPrice"]*$task["r.quantity"]);
+        }
+        
+        return $exportResults;
+    }
+
     public function export($export){
         $regional_product = @$_GET["rproduct"];
         $detailer_product = @$_GET["dproduct"];
@@ -375,6 +462,9 @@ class SalesController extends AppController {
                 break;
             case 'revenue_export':
                 $this->exportCSV($this->revenue_export());
+                break;
+            case 'twv_export':
+                $this->exportCSV($this->total_weekly_visits_export());
                 break;
             default:
                 break;
@@ -461,6 +551,7 @@ class SalesController extends AppController {
 
         return ($date1 > $date2) ? -1 : 1;
     }
+    
     public function exportCSV($lines){
         $csv = Writer::createFromFileObject(new SplTempFileObject());
         $csv->insertOne($lines[0]);
@@ -477,6 +568,35 @@ class SalesController extends AppController {
         
         $csv->output('report.csv');
         die;
+    }
+
+    function getDays($month, $week){
+        if (!in_array($week, array(1,2,3,4))) {
+            $week = 1;
+        }
+        if(!in_array($month, range(1, 12))){
+            $month = date("m");
+        }
+
+        $noOfDays = cal_days_in_month(CAL_GREGORIAN, $month, date("Y"));
+        switch ($week) {
+            case 1:
+                return range(1,7);
+                break;
+            case 2:
+                return range(8,14);
+                break;
+            case 3:
+                return range(15,21);
+                break;
+            case 4:
+                return range(22, $noOfDays);
+                break;
+            default:
+                return range(1,7);
+                break;
+        }
+        return range(1,7);
     }
 
     function getWeekDates(){
@@ -543,7 +663,11 @@ class SalesController extends AppController {
     }
     public function detailers(){
         $tasks = $this->runNeoQuery("start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t:`Territory`) match (t)<-[:`USER_TERRITORY`]-(user:`User`)
-            match (user)-[:`HAS_ROLE`]->(role:`Role`) where role.authority = \"ROLE_DETAILER\" return  user.username as username, id(user) as user_id limit 1000");
+            match (user)-[:`HAS_ROLE`]->(role:`Role`) where role.authority = \"ROLE_SALES\" return  user.username as username, id(user) as user_id limit 1000");
+
+        usort($tasks, function($a, $b){
+            return strcmp($a["username"], $b["username"]);
+        });
 
         return $tasks;
     }
@@ -885,7 +1009,6 @@ class SalesController extends AppController {
         }
         return $week;
     }
-
     function getWeeks(){
         return array("W1"=>0, "W2"=>0, "W3"=>0, "W4"=>0);
     }
@@ -897,4 +1020,5 @@ class SalesController extends AppController {
         return array("January"=>array(), "February"=>array(), "March"=>array(), "April"=>array(), "May"=>array(), "June"=>array(),
          "July"=>array(), "August"=>array(), "September"=>array(), "October"=>array(), "November"=>array(), "December"=>array());
     }
+
 }
