@@ -38,6 +38,7 @@ class SalesController extends AppController {
         $this->set("revenue", $this->revenue());
         $this->set("total_weekly_visits", $this->total_weekly_visits());
         $this->set("detailers", $this->detailers());
+        $this->set("products", $this->products());
         //$this->set("zinc_stats", $this->zinc_percentage_availability($availability_product));
         //$this->set("zinc_price", $this->average_product_detailer_price($detailer_product));
         //$this->set("ors_price", $this->median_ors_price());
@@ -672,6 +673,21 @@ class SalesController extends AppController {
         return $tasks;
     }
 
+    public function products(){
+        $products = $this->runNeoQuery("MATCH (product:`Product`)-[:`GRP_HAS_PRD`]-(group) RETURN product.name, group.name");
+        $p = array();
+        foreach ($products as $product) {
+            if (!isset($p[$product["group.name"]])) {
+                $p[$product["group.name"]] = array();
+            }
+            $p[$product["group.name"]][] = $product["product.name"];
+        }
+
+        foreach ($p as $key => $value) {
+            $p[$key] = array_unique($value);
+        }
+        return $p;
+    }
     function getSupervisorDetailers(){
         $date_range = $this->getYearRange();
         $users = $this->runNeoQuery("match user-[:`SUPERVISES_TERRITORY`]-(t:`Territory`)

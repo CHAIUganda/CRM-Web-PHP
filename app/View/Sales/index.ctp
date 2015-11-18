@@ -1,4 +1,15 @@
 <?php
+
+// 
+$categories = array_keys($products);
+sort($categories);
+
+$allProducts = array();
+foreach ($products as $key => $value) {
+  $allProducts = array_merge($allProducts,$value);
+}
+sort($allProducts);
+
 function isSelected($type, $val, $chart){
   $data = array();
   $data[1] = array(1 => "sTimePeriod", 2 => "dailyVisitsPeriod");
@@ -169,6 +180,19 @@ function select_detname($detId){
                 Sales
                 <div class="pull-right">
                         <div class="btn-group">
+                            <select name="sCategory" id="sCategory">
+                              <option value="-1" <?php echo isSelected(1, 1, 1);?>>All</option>
+                              <?php foreach ($categories as $category){ ?>
+                                <option value="<?=$category?>" <?php echo isSelected(1, $category, 1);?>><?=$category; ?></option>
+                              <?php } ?>
+                            </select>
+                            <select name="sProduct" id="sProduct">
+                              <option value="-1" <?php echo isSelected(1, 1, 1);?>>All</option>
+                              <?php foreach ($allProducts as $product){ ?>
+                                <option value="<?=$product?>" <?php echo isSelected(1, $product, 1);?>><?=$product?></option>
+                              <?php } ?>
+                            </select>
+
                             <select name="sTimePeriod" id="timePeriod">
                                 <option value="1" <?php echo isSelected(1, 1, 1);?>>Jan '15</option>
                                 <option value="2" <?php echo isSelected(1, 2, 1);?>>Feb '15</option>
@@ -205,7 +229,21 @@ function select_detname($detId){
                 Revenue
                 <div class="pull-right">
                         <div class="btn-group">
-                            <select name="rTimePeriod" id="timePeriod">
+                            <select name="rCategory" id="rCategory">
+                                <option value="-1" <?php echo isSelected(1, 1, 1);?>>All</option>
+                                <?php foreach ($categories as $category){ ?>
+                                  <option value="<?=$category?>" <?php echo isSelected(1, $category, 1);?>><?=$category; ?></option>
+                                <?php } ?>
+                            </select>
+
+                            <select name="rProduct" id="rProduct">
+                              <option value="-1" <?php echo isSelected(1, 1, 1);?>>All</option>
+                              <?php foreach ($allProducts as $product){ ?>
+                                <option value="<?=$product?>" <?php echo isSelected(1, $product, 1);?>><?=$product?></option>
+                              <?php } ?>
+                            </select>
+                            
+                            <select name="rTimePeriod" id="rTimePeriod">
                                 <option value="1" <?php echo isSelected(1, 1, 2);?>>Jan '15</option>
                                 <option value="2" <?php echo isSelected(1, 2, 2);?>>Feb '15</option>
                                 <option value="3" <?php echo isSelected(1, 3, 2);?>>Mar '15</option>
@@ -238,7 +276,7 @@ function select_detname($detId){
   <div class="col-md-6">
       <div class="panel panel-default">
             <div class="panel-heading">
-                Total Weekly Visits
+                Daily Calls
                 <div class="pull-right">
                         <div class="btn-group">
                             <select name="tvwDetailer" id="tvwDetailer">
