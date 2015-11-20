@@ -173,7 +173,6 @@ class SalesController extends AppController {
         return distinct id(sale),sale.uuid, sale.description, cust.outletName, u.username, r.unitPrice, r.quantity, item.name, det.username, sale.completionDate
         ";
 
-        echo "<br>Sales: $q <br>";
         $tasks = $this->runNeoQuery($q);
         
         $res = array();
@@ -285,7 +284,6 @@ class SalesController extends AppController {
         return distinct id(sale), sale.description, cust.outletName, u.username, r.unitPrice, r.quantity, item.name, det.username, sale.completionDate
         ";
 
-        echo "<br>Revenue: $q<br>";
         $tasks = $this->runNeoQuery($q);
         
         $res = array();
