@@ -12,8 +12,8 @@ sort($allProducts);
 
 function isSelected($type, $val, $chart){
   $data = array();
-  $data[1] = array(1 => "sTimePeriod", 2 => "dailyVisitsPeriod");
-  $data[2] = array(1 => "rTimePeriod", 2 => "zincPercent");
+  $data[1] = array(1 => "sTimePeriod", 2 => "sCategory", 3 => "sProduct");
+  $data[2] = array(1 => "rTimePeriod", 2 => "rCategory", 3 => "rProduct");
   $data[3] = array(1 => "tvwDetailer", 2 => "twvMonth", 3=>"twvWeek");
   $fieldName = $data[$chart][$type];
 
@@ -180,16 +180,16 @@ function select_detname($detId){
                 Sales
                 <div class="pull-right">
                         <div class="btn-group">
-                            <select name="sCategory" id="sCategory">
-                              <option value="-1" <?php echo isSelected(1, 1, 1);?>>All</option>
+                            <select name="sCategory" id="sCategory" onchange="updateOptions(event, 'sProduct')">
+                              <option value="-1" <?php echo isSelected(2, 1, 1);?>>All</option>
                               <?php foreach ($categories as $category){ ?>
-                                <option value="<?=$category?>" <?php echo isSelected(1, $category, 1);?>><?=$category; ?></option>
+                                <option value="<?=$category?>" <?php echo isSelected(2, $category, 1);?>><?=$category; ?></option>
                               <?php } ?>
                             </select>
                             <select name="sProduct" id="sProduct">
-                              <option value="-1" <?php echo isSelected(1, 1, 1);?>>All</option>
+                              <option value="-1" <?php echo isSelected(3, 1, 1);?>>All</option>
                               <?php foreach ($allProducts as $product){ ?>
-                                <option value="<?=$product?>" <?php echo isSelected(1, $product, 1);?>><?=$product?></option>
+                                <option value="<?=$product?>" <?php echo isSelected(3, $product, 1);?>><?=$product?></option>
                               <?php } ?>
                             </select>
 
@@ -229,17 +229,17 @@ function select_detname($detId){
                 Revenue
                 <div class="pull-right">
                         <div class="btn-group">
-                            <select name="rCategory" id="rCategory">
-                                <option value="-1" <?php echo isSelected(1, 1, 1);?>>All</option>
+                            <select name="rCategory" id="rCategory" onchange="updateOptions(event, 'rProduct')">
+                                <option value="-1" <?php echo isSelected(2, 1, 2);?>>All</option>
                                 <?php foreach ($categories as $category){ ?>
-                                  <option value="<?=$category?>" <?php echo isSelected(1, $category, 1);?>><?=$category; ?></option>
+                                  <option value="<?=$category?>" <?php echo isSelected(2, $category, 2);?>><?=$category; ?></option>
                                 <?php } ?>
                             </select>
 
                             <select name="rProduct" id="rProduct">
-                              <option value="-1" <?php echo isSelected(1, 1, 1);?>>All</option>
+                              <option value="-1" <?php echo isSelected(3, 1, 2);?>>All</option>
                               <?php foreach ($allProducts as $product){ ?>
-                                <option value="<?=$product?>" <?php echo isSelected(1, $product, 1);?>><?=$product?></option>
+                                <option value="<?=$product?>" <?php echo isSelected(3, $product, 2);?>><?=$product?></option>
                               <?php } ?>
                             </select>
                             
@@ -325,6 +325,28 @@ function select_detname($detId){
 <canvas id="canvas"></canvas>
 
 <script type="text/javascript">
+/* Dropdown adjustment */
+    function updateOptions(event, destSelect){
+        var products = <?=json_encode($products);?>
+
+        var category = event.srcElement.value;
+        var newOptions = products[category];
+        
+        var $el = $("#" + destSelect);
+        $el.empty(); // remove old options
+        var d = new Date();
+
+        $el.append($("<option value = \"-1\" selected=\"selected\">All</option>"));
+        $.each(newOptions, function(value, key) {
+          if ((d.getMonth() + 1) == value) {
+            $el.append($("<option selected=\"selected\"></option>")
+             .attr("value", key).text(key));
+          } else {
+            $el.append($("<option></option>")
+             .attr("value", key).text(key));
+          }
+        });
+    }
   <?php
   printChart($sales, "sales");
   printChart($revenue, "revenue");

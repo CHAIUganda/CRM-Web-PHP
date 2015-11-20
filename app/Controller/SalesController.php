@@ -147,8 +147,23 @@ class SalesController extends AppController {
         @$period = $_GET['sTimePeriod'];
         $date_range = $this->getTimeRange(1, $period);
         
-        $q = "match (sale)-[r:`HAS_PRODUCT`]->(item)
-        match (sale)<-[:`CUST_TASK`]-(cust)
+        @$category = $_GET['sCategory'];
+        @$product = $_GET['sProduct'];
+
+        $productFilter = "";
+        $categoryFilter = "";
+
+        if (!empty($category) && $category != "-1") {
+            $categoryFilter = " where group.name = \"$category\"";
+        } else if (!empty($product) && $product != "-1"){
+            $productFilter = " where item.name = \"$product\"";
+        }
+
+        $q = "match (sale)-[r:`HAS_PRODUCT`]->(item)"
+        . $productFilter . 
+        " match (item)<-[:`GRP_HAS_PRD`]-(group) "
+        . $categoryFilter .
+        " match (sale)<-[:`CUST_TASK`]-(cust)
         match det-[`COMPLETED_TASK`]->sale
         match sc<-[:`CUST_IN_SC`]-(cust)
         match t<-[:`SC_IN_TERRITORY`]-(sc)
@@ -157,6 +172,7 @@ class SalesController extends AppController {
              $date_range[1] . " and det.username <> \"\"
         return distinct id(sale),sale.uuid, sale.description, cust.outletName, u.username, r.unitPrice, r.quantity, item.name, det.username, sale.completionDate
         ";
+
         $tasks = $this->runNeoQuery($q);
         
         $res = array();
@@ -198,8 +214,20 @@ class SalesController extends AppController {
         @$period = $_GET['sTimePeriod'];
         $date_range = $this->getTimeRange(1, $period);
         
-        $q = "match (sale:`Task`)-[r:`HAS_PRODUCT`]->(item)
-        match (sale)<-[:`CUST_TASK`]-(cust)
+        $productFilter = "";
+        $categoryFilter = "";
+
+        if (!empty($category) && $category != "-1") {
+            $categoryFilter = " where group.name = \"$category\"";
+        } else if (!empty($product) && $product != "-1"){
+            $productFilter = " where item.name = \"$product\"";
+        }
+
+        $q = "match (sale:`Task`)-[r:`HAS_PRODUCT`]->(item)"
+        . $productFilter . 
+        " match (item)<-[:`GRP_HAS_PRD`]-(group) "
+        . $categoryFilter .
+        "match (sale)<-[:`CUST_TASK`]-(cust)
         match det-[`COMPLETED_TASK`]->sale
         match sc<-[:`CUST_IN_SC`]-(cust)
         match t<-[:`SC_IN_TERRITORY`]-(sc)
@@ -230,8 +258,23 @@ class SalesController extends AppController {
         @$period = $_GET['rTimePeriod'];
         $date_range = $this->getTimeRange(1, $period);
         
-        $q = "match (sale)-[r:`HAS_PRODUCT`]->(item)
-        match (sale)<-[:`CUST_TASK`]-(cust)
+        @$category = $_GET['rCategory'];
+        @$product = $_GET['rProduct'];
+
+        $productFilter = "";
+        $categoryFilter = "";
+
+        if (!empty($category) && $category != "-1") {
+            $categoryFilter = " where group.name = \"$category\"";
+        } else if (!empty($product) && $product != "-1"){
+            $productFilter = " where item.name = \"$product\"";
+        }
+
+        $q = "match (sale)-[r:`HAS_PRODUCT`]->(item) "
+        . $productFilter . 
+        " match (item)<-[:`GRP_HAS_PRD`]-(group) "
+        . $categoryFilter .
+        " match (sale)<-[:`CUST_TASK`]-(cust)
         match det-[`COMPLETED_TASK`]->sale
         match sc<-[:`CUST_IN_SC`]-(cust)
         match t<-[:`SC_IN_TERRITORY`]-(sc)
@@ -240,6 +283,7 @@ class SalesController extends AppController {
              $date_range[1] . " and det.username <> \"\"
         return distinct id(sale), sale.description, cust.outletName, u.username, r.unitPrice, r.quantity, item.name, det.username, sale.completionDate
         ";
+
         $tasks = $this->runNeoQuery($q);
         
         $res = array();
@@ -255,7 +299,7 @@ class SalesController extends AppController {
                 $res[$task["det.username"]] = array();
             }
 
-            if(empty($res[$task["det.username"]]["Sales"][$task["id(sale)"]])){
+            if(!isset($res[$task["det.username"]]["Sales"][$task["id(sale)"]])){
                 $res[$task["det.username"]]["Sales"][$task["id(sale)"]] = 0;
             }
             $res[$task["det.username"]]["Sales"][$task["id(sale)"]] += $task["r.quantity"] * $task["r.unitPrice"];
@@ -287,8 +331,23 @@ class SalesController extends AppController {
         @$period = $_GET['rTimePeriod'];
         $date_range = $this->getTimeRange(1, $period);
         
-        $q = "match (sale)-[r:`HAS_PRODUCT`]->(item)
-        match (sale)<-[:`CUST_TASK`]-(cust)
+        @$category = $_GET['rCategory'];
+        @$product = $_GET['rProduct'];
+
+        $productFilter = "";
+        $categoryFilter = "";
+
+        if (!empty($category) && $category != "-1") {
+            $categoryFilter = " where group.name = \"$category\"";
+        } else if (!empty($product) && $product != "-1"){
+            $productFilter = " where item.name = \"$product\"";
+        }
+
+        $q = "match (sale)-[r:`HAS_PRODUCT`]->(item)"
+        . $productFilter . 
+        " match (item)<-[:`GRP_HAS_PRD`]-(group) "
+        . $categoryFilter .
+        " match (sale)<-[:`CUST_TASK`]-(cust)
         match det-[`COMPLETED_TASK`]->sale
         match sc<-[:`CUST_IN_SC`]-(cust)
         match t<-[:`SC_IN_TERRITORY`]-(sc)
