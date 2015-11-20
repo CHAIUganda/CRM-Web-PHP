@@ -20,6 +20,11 @@ function isSelected($type, $val, $chart){
   if (empty($_GET[$fieldName]) && $type == 2 && $val == ceil(date("n")/3)) {
     return "selected=\"selected\"";
   }
+
+  if (empty($_GET[$fieldName]) && $type == 1 && $val == date("n")) {
+    return "selected=\"selected\"";
+  }
+
   if (@$_GET[$fieldName] == $val) {
     return "selected=\"selected\"";
   } else {

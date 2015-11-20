@@ -173,6 +173,7 @@ class SalesController extends AppController {
         return distinct id(sale),sale.uuid, sale.description, cust.outletName, u.username, r.unitPrice, r.quantity, item.name, det.username, sale.completionDate
         ";
 
+        echo "<br>Sales: $q <br>";
         $tasks = $this->runNeoQuery($q);
         
         $res = array();
@@ -284,6 +285,7 @@ class SalesController extends AppController {
         return distinct id(sale), sale.description, cust.outletName, u.username, r.unitPrice, r.quantity, item.name, det.username, sale.completionDate
         ";
 
+        echo "<br>Revenue: $q<br>";
         $tasks = $this->runNeoQuery($q);
         
         $res = array();
@@ -1045,6 +1047,10 @@ class SalesController extends AppController {
         if(!in_array($period, array(1,2,3,4,5,6,7,8,9,10,11,12))){
             $month = date("n");
             $period = ceil($month/3);
+
+            if ($classification == 1) {
+                $period = $month;
+            }
         }
 
         $date_range = array();
