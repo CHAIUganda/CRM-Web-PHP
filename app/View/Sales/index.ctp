@@ -14,7 +14,7 @@ function isSelected($type, $val, $chart){
   $data = array();
   $data[1] = array(1 => "sTimePeriod", 2 => "sCategory", 3 => "sProduct");
   $data[2] = array(1 => "rTimePeriod", 2 => "rCategory", 3 => "rProduct");
-  $data[3] = array(1 => "tvwDetailer", 2 => "twvMonth", 3=>"twvWeek");
+  $data[3] = array(1 => "twvMonth", 2 => "tvwDetailer", 3=>"twvWeek");
   $fieldName = $data[$chart][$type];
 
   if (empty($_GET[$fieldName]) && $type == 2 && $val == ceil(date("n")/3)) {
@@ -285,24 +285,24 @@ function select_detname($detId){
                 <div class="pull-right">
                         <div class="btn-group">
                             <select name="tvwDetailer" id="tvwDetailer">
-                                <option value="1" <?php echo isSelected(1, 1, 3);?>>All</option>
+                                <option value="1" <?php echo isSelected(2, 1, 3);?>>All</option>
                               <?php foreach ($detailers as $detailer) { ?>
                                 <option value="<?=$detailer["username"]?>" <?php echo isSelected(1, $detailer["username"], 3);?>><?=$detailer["username"];?></option>
                               <?php } ?>
                             </select>
                             <select name="twvMonth" id="twvMonth">
-                                <option value="1" <?php echo isSelected(2, 1, 3);?>>Jan '15</option>
-                                <option value="2" <?php echo isSelected(2, 2, 3);?>>Feb '15</option>
-                                <option value="3" <?php echo isSelected(2, 3, 3);?>>Mar '15</option>
-                                <option value="4" <?php echo isSelected(2, 4, 3);?>>Apr '15</option>
-                                <option value="5" <?php echo isSelected(2, 5, 3);?>>May '15</option>
-                                <option value="6" <?php echo isSelected(2, 6, 3);?>>Jun '15</option>
-                                <option value="7" <?php echo isSelected(2, 7, 3);?>>Jul '15</option>
-                                <option value="8" <?php echo isSelected(2, 8, 3);?>>Aug '15</option>
-                                <option value="9" <?php echo isSelected(2, 9, 3);?>>Sep '15</option>
-                                <option value="10" <?php echo isSelected(2, 10, 3);?>>Oct '15</option>
-                                <option value="11" <?php echo isSelected(2, 11, 3);?>>Nov '15</option>
-                                <option value="12" <?php echo isSelected(2, 12, 3);?>>Dec '15</option>
+                                <option value="1" <?php echo isSelected(1, 1, 3);?>>Jan '15</option>
+                                <option value="2" <?php echo isSelected(1, 2, 3);?>>Feb '15</option>
+                                <option value="3" <?php echo isSelected(1, 3, 3);?>>Mar '15</option>
+                                <option value="4" <?php echo isSelected(1, 4, 3);?>>Apr '15</option>
+                                <option value="5" <?php echo isSelected(1, 5, 3);?>>May '15</option>
+                                <option value="6" <?php echo isSelected(1, 6, 3);?>>Jun '15</option>
+                                <option value="7" <?php echo isSelected(1, 7, 3);?>>Jul '15</option>
+                                <option value="8" <?php echo isSelected(1, 8, 3);?>>Aug '15</option>
+                                <option value="9" <?php echo isSelected(1, 9, 3);?>>Sep '15</option>
+                                <option value="10" <?php echo isSelected(1, 10, 3);?>>Oct '15</option>
+                                <option value="11" <?php echo isSelected(1, 11, 3);?>>Nov '15</option>
+                                <option value="12" <?php echo isSelected(1, 12, 3);?>>Dec '15</option>
                             </select>
                             <select name="twvWeek" id="twvWeek">
                                 <option value="1" <?php echo isSelected(3, 1, 3);?>>W1</option>
