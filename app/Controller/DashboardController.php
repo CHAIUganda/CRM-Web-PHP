@@ -11,6 +11,13 @@ class DashboardController extends AppController {
 
 	var $client;
     var $timeLog = array();
+
+    function beforeFilter() {
+        parent::beforeFilter();
+        if (in_array("ROLE_SALES_SUPERVISOR", $this->_user["User"]["roles"])) {
+            $this->redirect("/sales");
+        }
+    }
 /**
  * index method
  *
