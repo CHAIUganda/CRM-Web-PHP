@@ -192,9 +192,14 @@ function select_detname($detId){
                             </select>
                             <select name="sProduct" id="sProduct" onchange="updatePacks(event, 'sPackSize', 'sCategory')">
                               <option value="-1" <?php echo isSelected(3, 1, 1);?>>All</option>
-                              <?php foreach ($allProducts as $product){ ?>
-                                <option value="<?=$product?>" <?php echo isSelected(3, $product, 1);?>><?=$product?></option>
-                              <?php } ?>
+                              <?php
+                                if (!empty($_GET['sCategory'])) {
+                                  $sProducts = array_keys($products[$_GET['sCategory']]);
+                                  foreach ($sProducts as $product) { ?>
+                                    <option value="<?=$product?>" <?php echo isSelected(3, $product, 1);?>><?=$product?></option>
+                                  <?php }
+                                }
+                               ?>
                             </select>
                             <select name="sPackSize" id="sPackSize">
                               <option value="-1" <?php echo isSelected(4, -1, 1);?>>All</option>
@@ -252,17 +257,22 @@ function select_detname($detId){
 
                             <select name="rProduct" id="rProduct" onchange="updatePacks(event, 'rPackSize', 'rCategory')">
                               <option value="-1" <?php echo isSelected(3, 1, 2);?>>All</option>
-                              <?php foreach ($allProducts as $product){ ?>
-                                <option value="<?=$product?>" <?php echo isSelected(3, $product, 2);?>><?=$product?></option>
-                              <?php } ?>
+                              <?php
+                                if (!empty($_GET['rCategory'])) {
+                                  $sProducts = array_keys($products[$_GET['rCategory']]);
+                                  foreach ($sProducts as $product) { ?>
+                                    <option value="<?=$product?>" <?php echo isSelected(3, $product, 2);?>><?=$product?></option>
+                                  <?php }
+                                }
+                               ?>
                             </select>
                             <select name="rPackSize" id="rPackSize">
-                              <option value="-1" <?php echo isSelected(4, 1, 1);?>>All</option>
+                              <option value="-1" <?php echo isSelected(4, 1, 2);?>>All</option>
                               <?php
                                 if (!empty($_GET['rProduct']) && !empty($_GET['rCategory'])) {
-                                  $packs = $products[$_GET['sCategory']][$_GET['sProduct']];
+                                  $packs = $products[$_GET['rCategory']][$_GET['rProduct']];
                                   foreach ($packs as $pack) { ?>
-                                    <option value="<?=$pack?>" <?php echo isSelected(4, 1, 1);?>><?=$pack?></option>
+                                    <option value="<?=$pack?>" <?php echo isSelected(4, $pack, 2);?>><?=$pack?></option>
                                   <?php }
                                 }
                                ?>
@@ -375,6 +385,7 @@ function select_detname($detId){
     function updatePacks(event, destSelect, categoryID){
       var products = <?=json_encode($products);?>;
       var category = $("#" + categoryID).val();
+      console.log(category);
       var product = event.srcElement.value;
       var newOptions = products[category][product];
         

@@ -149,14 +149,24 @@ class SalesController extends AppController {
         
         @$category = $_GET['sCategory'];
         @$product = $_GET['sProduct'];
+        @$packSize = $_GET['sPackSize'];
 
         $productFilter = "";
         $categoryFilter = "";
 
         if (!empty($category) && $category != "-1") {
             $categoryFilter = " where group.name = \"$category\"";
-        } else if (!empty($product) && $product != "-1"){
-            $productFilter = " where item.name = \"$product\"";
+        } 
+
+        if (!empty($product) && $product != "-1"){
+            if(!empty($packSize) && $packSize != "-1"){
+                $packList = split("\(", $packSize);
+                $unitOfMeasure = trim($packList[0]);
+                $formulation = str_replace(")", "", trim($packList[1]));
+                $productFilter = " where item.name = \"$product\" and item.unitOfMeasure = \"$unitOfMeasure\" and item.formulation = \"$formulation\" ";
+            } else {
+                $productFilter = " where item.name = \"$product\"";
+            }
         }
 
         $q = "match (sale)-[r:`HAS_PRODUCT`]->(item)"
@@ -214,13 +224,26 @@ class SalesController extends AppController {
         @$period = $_GET['sTimePeriod'];
         $date_range = $this->getTimeRange(1, $period);
         
+        @$category = $_GET['sCategory'];
+        @$product = $_GET['sProduct'];
+        @$packSize = $_GET['sPackSize'];
+
         $productFilter = "";
         $categoryFilter = "";
 
         if (!empty($category) && $category != "-1") {
             $categoryFilter = " where group.name = \"$category\"";
-        } else if (!empty($product) && $product != "-1"){
-            $productFilter = " where item.name = \"$product\"";
+        } 
+
+        if (!empty($product) && $product != "-1"){
+            if(!empty($packSize) && $packSize != "-1"){
+                $packList = split("\(", $packSize);
+                $unitOfMeasure = trim($packList[0]);
+                $formulation = str_replace(")", "", trim($packList[1]));
+                $productFilter = " where item.name = \"$product\" and item.unitOfMeasure = \"$unitOfMeasure\" and item.formulation = \"$formulation\" ";
+            } else {
+                $productFilter = " where item.name = \"$product\"";
+            }
         }
 
         $q = "match (sale:`Task`)-[r:`HAS_PRODUCT`]->(item)"
@@ -234,20 +257,20 @@ class SalesController extends AppController {
         match u-[:`SUPERVISES_TERRITORY`]->(t)
         where u.username = \"". $this->_user['User']['username'] ."\" and sale.completionDate > " . $date_range[0] . " and sale.completionDate < ".
              $date_range[1] . " and det.username <> \"\"
-        return distinct id(sale), sale.uuid, sale.description, cust.outletName, u.username, r.unitPrice, item.name, r.quantity, det.username, sale.completionDate
+        return distinct id(sale), sale.uuid, sale.description, cust.outletName, u.username, r.unitPrice, item.name, item.unitOfMeasure, item.formulation, r.quantity, det.username, sale.completionDate
         ";
         $tasks = $this->runNeoQuery($q);
         
         $exportResults = array();
-        $exportResults[] = array("Date", "UUID", "Customer Name", "Product", "Quantity Sold", "Price", "Sales Rep");
+        $exportResults[] = array("Date", "UUID", "Customer Name", "Product", "Unit of Measure", "Formulation", "Quantity Sold", "Price", "Sales Rep");
 
         foreach ($tasks as $task) {
             $epoch = floor($task["sale.completionDate"]/1000);
             $dt = new DateTime("@$epoch");
             $date = $dt->format("M. j, Y");
 
-            $exportResults[] = array($date, $task["sale.uuid"], $task["cust.outletName"], $task["item.name"], $task["r.quantity"],
-                $task["r.unitPrice"], $task["det.username"]);
+            $exportResults[] = array($date, $task["sale.uuid"], $task["cust.outletName"], $task["item.name"], $task["item.unitOfMeasure"], 
+                $task["item.formulation"], $task["r.quantity"], $task["r.unitPrice"], $task["det.username"]);
         }
 
         return $exportResults;
@@ -260,14 +283,24 @@ class SalesController extends AppController {
         
         @$category = $_GET['rCategory'];
         @$product = $_GET['rProduct'];
+        @$packSize = $_GET['rPackSize'];
 
         $productFilter = "";
         $categoryFilter = "";
 
         if (!empty($category) && $category != "-1") {
             $categoryFilter = " where group.name = \"$category\"";
-        } else if (!empty($product) && $product != "-1"){
-            $productFilter = " where item.name = \"$product\"";
+        } 
+
+        if (!empty($product) && $product != "-1"){
+            if(!empty($packSize) && $packSize != "-1"){
+                $packList = split("\(", $packSize);
+                $unitOfMeasure = trim($packList[0]);
+                $formulation = str_replace(")", "", trim($packList[1]));
+                $productFilter = " where item.name = \"$product\" and item.unitOfMeasure = \"$unitOfMeasure\" and item.formulation = \"$formulation\" ";
+            } else {
+                $productFilter = " where item.name = \"$product\"";
+            }
         }
 
         $q = "match (sale)-[r:`HAS_PRODUCT`]->(item) "
@@ -333,14 +366,24 @@ class SalesController extends AppController {
         
         @$category = $_GET['rCategory'];
         @$product = $_GET['rProduct'];
+        @$packSize = $_GET['rPackSize'];
 
         $productFilter = "";
         $categoryFilter = "";
 
         if (!empty($category) && $category != "-1") {
             $categoryFilter = " where group.name = \"$category\"";
-        } else if (!empty($product) && $product != "-1"){
-            $productFilter = " where item.name = \"$product\"";
+        } 
+
+        if (!empty($product) && $product != "-1"){
+            if(!empty($packSize) && $packSize != "-1"){
+                $packList = split("\(", $packSize);
+                $unitOfMeasure = trim($packList[0]);
+                $formulation = str_replace(")", "", trim($packList[1]));
+                $productFilter = " where item.name = \"$product\" and item.unitOfMeasure = \"$unitOfMeasure\" and item.formulation = \"$formulation\" ";
+            } else {
+                $productFilter = " where item.name = \"$product\"";
+            }
         }
 
         $q = "match (sale)-[r:`HAS_PRODUCT`]->(item)"
