@@ -33,12 +33,12 @@ class SalesController extends AppController {
         if (empty($availability_product)) {
             $availability_product = "ors";
         }
-
+        $this->set("products", $this->products());
         $this->set("sales", $this->sales());
         $this->set("revenue", $this->revenue());
         $this->set("total_weekly_visits", $this->total_weekly_visits());
         $this->set("detailers", $this->detailers());
-        $this->set("products", $this->products());
+        
         //$this->set("zinc_stats", $this->zinc_percentage_availability($availability_product));
         //$this->set("zinc_price", $this->average_product_detailer_price($detailer_product));
         //$this->set("ors_price", $this->median_ors_price());
@@ -733,18 +733,20 @@ class SalesController extends AppController {
     }
 
     public function products(){
-        $products = $this->runNeoQuery("MATCH (product:`Product`)-[:`GRP_HAS_PRD`]-(group) RETURN product.name, group.name");
+        $products = $this->runNeoQuery("MATCH (product:`Product`)-[:`GRP_HAS_PRD`]-(group) RETURN product.name, group.name,
+            product.unitOfMeasure, product.formulation");
         $p = array();
         foreach ($products as $product) {
             if (!isset($p[$product["group.name"]])) {
                 $p[$product["group.name"]] = array();
             }
-            $p[$product["group.name"]][] = $product["product.name"];
+
+            if (!isset($p[$product["group.name"]][$product["product.name"]])) {
+                $p[$product["group.name"]][$product["product.name"]] = array();
+            }
+            $p[$product["group.name"]][$product["product.name"]][] = $product["product.unitOfMeasure"] . "(" . $product["product.formulation"] . ")";
         }
 
-        foreach ($p as $key => $value) {
-            $p[$key] = array_unique($value);
-        }
         return $p;
     }
     function getSupervisorDetailers(){
