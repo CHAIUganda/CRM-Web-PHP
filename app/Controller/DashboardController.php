@@ -14,8 +14,12 @@ class DashboardController extends AppController {
 
     function beforeFilter() {
         parent::beforeFilter();
-        if (in_array("ROLE_SALES_SUPERVISOR", $this->_user["User"]["roles"])) {
-            $this->redirect("/sales");
+        
+        if (isset($this->_user) && is_array($this->_user["User"])) {
+            if (in_array("ROLE_SALES_SUPERVISOR", $this->_user["User"]["roles"]) && !in_array("ROLE_SUPER_ADMIN", $this->_user["User"]["roles"])) {
+                $this->redirect("/sales");
+                exit();
+            }
         }
     }
 /**
