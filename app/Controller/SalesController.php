@@ -151,8 +151,8 @@ class SalesController extends AppController {
         @$product = $_GET['sProduct'];
         @$packSize = $_GET['sPackSize'];
 
-        $productFilter = " where sale.status = \"completed\" ";
-        $categoryFilter = " where sale.status = \"completed\" ";
+        $productFilter = " where sale.status = \"complete\" ";
+        $categoryFilter = " where sale.status = \"complete\" ";
 
         if (!empty($category) && $category != "-1") {
             $categoryFilter = " where group.name = \"$category\"";
@@ -164,9 +164,9 @@ class SalesController extends AppController {
                 $unitOfMeasure = trim($packList[0]);
                 $formulation = str_replace(")", "", trim($packList[1]));
                 $productFilter = " where item.name = \"$product\" and item.unitOfMeasure = \"$unitOfMeasure\" and item.formulation = \"$formulation\" 
-                and sale.status = \"completed\"";
+                and sale.status = \"complete\"";
             } else {
-                $productFilter = " where item.name = \"$product\" and sale.status = \"completed\"";
+                $productFilter = " where item.name = \"$product\" and sale.status = \"complete\"";
             }
         }
 
@@ -230,8 +230,8 @@ class SalesController extends AppController {
         @$product = $_GET['sProduct'];
         @$packSize = $_GET['sPackSize'];
 
-        $productFilter = " where sale.status = \"completed\" ";
-        $categoryFilter = " where sale.status = \"completed\" ";
+        $productFilter = " where sale.status = \"complete\" ";
+        $categoryFilter = " where sale.status = \"complete\" ";
 
         if (!empty($category) && $category != "-1") {
             $categoryFilter = " where group.name = \"$category\"";
@@ -243,9 +243,9 @@ class SalesController extends AppController {
                 $unitOfMeasure = trim($packList[0]);
                 $formulation = str_replace(")", "", trim($packList[1]));
                 $productFilter = " where item.name = \"$product\" and item.unitOfMeasure = \"$unitOfMeasure\" and item.formulation = \"$formulation\" 
-                and sale.status = \"completed\" ";
+                and sale.status = \"complete\" ";
             } else {
-                $productFilter = " where item.name = \"$product\" sale.status = \"completed\" ";
+                $productFilter = " where item.name = \"$product\" sale.status = \"complete\" ";
             }
         }
 
@@ -288,8 +288,8 @@ class SalesController extends AppController {
         @$product = $_GET['rProduct'];
         @$packSize = $_GET['rPackSize'];
 
-        $productFilter = " where sale.status = \"completed\" ";
-        $categoryFilter = " where sale.status = \"completed\" ";
+        $productFilter = " where sale.status = \"complete\" ";
+        $categoryFilter = " where sale.status = \"complete\" ";
 
         if (!empty($category) && $category != "-1") {
             $categoryFilter = " where group.name = \"$category\"";
@@ -301,9 +301,9 @@ class SalesController extends AppController {
                 $unitOfMeasure = trim($packList[0]);
                 $formulation = str_replace(")", "", trim($packList[1]));
                 $productFilter = " where item.name = \"$product\" and item.unitOfMeasure = \"$unitOfMeasure\" and item.formulation = \"$formulation\" 
-                 and sale.status = \"completed\" ";
+                 and sale.status = \"complete\" ";
             } else {
-                $productFilter = " where item.name = \"$product\"  sale.status = \"completed\" ";
+                $productFilter = " where item.name = \"$product\"  sale.status = \"complete\" ";
             }
         }
 
