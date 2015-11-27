@@ -198,7 +198,12 @@ class SalesController extends AppController {
                 $res[$task["det.username"]] = array();
             }
 
-            $res[$task["det.username"]]["Sales"][$task["sale.uuid"]] = $task["r.quantity"];
+            if(!isset($res[$task["det.username"]]["Sales"][$task["id(sale)"]])){
+                $res[$task["det.username"]]["Sales"][$task["id(sale)"]] = 0;
+            }
+            $res[$task["det.username"]]["Sales"][$task["id(sale)"]] += $task["r.quantity"];
+
+            //$res[$task["det.username"]]["Sales"][$task["sale.uuid"]] = $task["r.quantity"];
         }
 
         $stockAvailabilityStats = array();
