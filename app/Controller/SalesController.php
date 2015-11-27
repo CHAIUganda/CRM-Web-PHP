@@ -212,6 +212,18 @@ class SalesController extends AppController {
                 $stockAvailabilityStats[$username] = array();
             }
 
+
+            $total = 0;
+            foreach($monthData as $month => $data){
+                foreach ($data as $id => $cost) {
+                    $total += $cost;
+                }
+            }
+
+            foreach($monthData as $month => $data){
+                $stockAvailabilityStats[$username][$month] = $total;
+            }
+            /*
             $total = 0;
             foreach($monthData as $month => $data){
                 $total += count($res[$username][$month]);
@@ -219,7 +231,7 @@ class SalesController extends AppController {
 
             foreach($monthData as $month => $data){
                 $stockAvailabilityStats[$username][$month] = $total;
-            }
+            }*/
         }
 
         return $stockAvailabilityStats;
