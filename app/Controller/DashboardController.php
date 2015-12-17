@@ -159,7 +159,7 @@ class DashboardController extends AppController {
                 $this->exportCSV($this->average_visits_by_detailers_export("all"));
                 break;
             case 'zinc_availability':
-                $this->formatExport($this->zinc_percentage_availability_export($availability_product));
+                $this->exportCSV($this->zinc_percentage_availability_export($availability_product));
                 break;
             case 'zinc_price':
                 $this->formatExport($this->median_zinc_price_export());
@@ -180,7 +180,7 @@ class DashboardController extends AppController {
                 $this->priceFormat($this->average_regional_product_price_export($regional_product));
                 break;
             case 'dprice':
-                $this->priceFormat($this->average_detailer_product_price_export($detailer_product));
+                $this->exportCSV($this->average_detailer_product_price_export($detailer_product));
                 break;
             case 'dzinc_price':
                 $this->formatExport($this->median_zinc_price_export());
@@ -203,6 +203,30 @@ class DashboardController extends AppController {
             default:
                 break;
         }
+    }
+
+    public function exportDisaggregated($query, $fields){
+        $tasks = $this->runNeoQuery($query);
+        $exportResults = array();
+        $exportResults[] = array_keys($fields);
+
+        foreach ($tasks as $task) {
+            $epoch = floor($task["task.completionDate"]/1000);
+            $dt = new DateTime("@$epoch");
+            $date = $dt->format("M. j, Y");
+
+            $r = array();
+            foreach ($fields as $key => $value) {
+                if ($key == "Date") {
+                    $r[] = $date;
+                } else {
+                    $r[] = $task[$value];
+                }
+            }
+            $exportResults[] = $r;
+        }
+
+        return $exportResults;
     }
 
     public function priceFormat($data){
@@ -623,49 +647,7 @@ class DashboardController extends AppController {
              $date_range[1] . " return task.uuid, task.description, task.completionDate, user.username, seg.name";
         }
 
-        $tasks = $this->runNeoQuery($q);
-        
-        $res = array();
-
-        foreach ($tasks as $task) {
-            $epoch = floor($task["task.completionDate"]/1000);
-            $dt = new DateTime("@$epoch");
-            $task["day"] = $dt->format("M. j, Y");
-
-            if (!isset($res[$task["day"]])) {
-                $res[$task["day"]] = array();
-            }
-            if(empty($res[$task["day"]][$task["seg.name"]])){
-                $res[$task["day"]][$task["seg.name"]] = array();
-            }
-            
-            $res[$task["day"]][$task["seg.name"]][$task["task.uuid"]] = 1;
-        }
-
-        $stockAvailabilityStats = array();
-        foreach ($res as $username => $monthData) {
-            if(!isset($stockAvailabilityStats[$username])){
-                $stockAvailabilityStats[$username] = array("A"=>0,"B"=>0,"C"=>0,"D"=>0);
-            }
-
-            foreach($monthData as $month => $data){
-                $stockAvailabilityStats[$username][$month] = count($res[$username][$month]);
-            }
-        }
-
-        $lines = array();
-        $lines[] = array("Date", "#A", "#B", "#C", "#D");
-
-        foreach ($stockAvailabilityStats as $date => $segments) {
-            $line = array();
-            $line[] = $date;
-            foreach ($segments as $segment => $value) {
-                $line[] = $value;
-            }
-            $lines[] = $line;
-        }
-        
-        return $lines;
+        return $this->exportDisaggregated($q, array("Date", "UUID"=>"task.uuid", "Detailer Name"=>"user.username"));
     }
 
     public function dweekly_visits(){
@@ -1053,7 +1035,8 @@ class DashboardController extends AppController {
             }
         }
 
-        $tasks = $this->runNeoQuery($query);
+        return $this->exportDisaggregated($qs, array("Date", "UUID"=>"task.uuid", "Detailer Name"=>"user.username"));
+        /*$tasks = $this->runNeoQuery($query);
         
         $res = array();
         $detailers = array();
@@ -1096,7 +1079,7 @@ class DashboardController extends AppController {
 
         $time2 = time();
         $this->timeLog["product_availability"] = $time2 - $time1;
-        return $lines;
+        return $lines;*/
     }
 
     function avail_nzinc_ors_avail(){
@@ -1413,7 +1396,9 @@ class DashboardController extends AppController {
             match (rg)-[:`HAS_DISTRICT`]->(ds) return task.uuid, task.description, task.completionDate, user.username, user.name, id(user) as user_id,
             stock.uuid, stock.category, stock.stockLevel, rg.name";
         }
-        $tasks = $this->runNeoQuery($q);
+
+        return $this->exportDisaggregated($q, array("Date", "UUID"=>"task.uuid", "Detailer Name"=>"user.username", "Region"=>"rg.name"));
+        /*$tasks = $this->runNeoQuery($q);
 
         $res = array();
         $detailer_task = array();
@@ -1447,6 +1432,7 @@ class DashboardController extends AppController {
         }
 
         return array("lines"=>$stockAvailabilityStats, "detailer_task"=>$detailer_task, "title"=>"$product Availability");
+        */
     }
 	function zinc_percentage_availability($product){
         $time1 = time();
@@ -1567,7 +1553,6 @@ class DashboardController extends AppController {
             }
         }
 
-
         $query = new Everyman\Neo4j\Cypher\Query($this->client, $qs);
         $results = $query->getResultSet();
 
@@ -1664,7 +1649,7 @@ class DashboardController extends AppController {
                 t-[:`SC_IN_TERRITORY`]-(sc) match (ds)-[:`HAS_SUB_COUNTY`]->(sc) 
                 match (rg)-[:`HAS_DISTRICT`]->(ds) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task)
                  where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
-                 $date_range[1] . "match task-[:`HAS_DETAILER_STOCK`]-(stock:`DetailerStock`)  
+                 $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]-(stock:`DetailerStock`)  
                  return distinct task.uuid, task.description, task.completionDate, id(user) as user_id, user.name, user.username, stock.uuid,
                 stock.category, stock.stockLevel, stock.sellingPrice, t.name, rg.name";
             } else {
@@ -1676,51 +1661,33 @@ class DashboardController extends AppController {
                 user.name, user.username, t.name, rg.name";
             }
         }
-        
-        $tasks = $this->runNeoQuery($qs);
-        //echo count($tasks);
-        //pr($tasks);
-        $res = array();
-        $detailer_task = array();
-        foreach ($tasks as $task) {
-            $epoch = floor($task["task.completionDate"]/1000);
-            $dt = new DateTime("@$epoch");
-            $completionDate = $dt->format("M. j, Y");
-            if (!isset($res[$completionDate])) {
-                $res[$completionDate] = array();
+
+        if ($type == "diarrhoea") {
+            $qs = "start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t:`Territory`) match 
+            t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task:`DetailerTask`) match 
+            (task)-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
+             $date_range[1] . " return distinct task.uuid, task.description, task.completionDate, user.username";
+
+            if ($this->isAdmin()) {
+                $qs = "match user-[:`SUPERVISES_TERRITORY`]-(t:`Territory`) match t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) 
+                match cust-[:`CUST_TASK`]-(task:`DetailerTask`) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
+                 $date_range[1] . " return distinct task.uuid, task.description, task.completionDate, user.username";
             }
+        } else {
+            $qs = "start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t:`Territory`) match 
+            t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
+            task-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
+             $date_range[1] . " return distinct task.uuid, task.description, task.completionDate, user.username";
 
-            if(!isset($res[$completionDate][$task["user.username"]])){
-                $res[$completionDate][$task["user.username"]] = array();
-            }
-            
-            $res[$completionDate][$task["user.username"]][] = $task["task.uuid"];
-            $detailer_task[$task["user.username"]] = $task;
-        }
-
-        $lines = array();
-        $titles = array("Date", "Detailer Name", "Detailer ID",  "Region", "Visits #");
-        $lines[] = $titles;
-
-        foreach ($res as $date => $moredata) {
-            foreach ($moredata as $detailerName => $visits) {
-                $line = array();
-                $task_info = $detailer_task[$detailerName];
-
-                $line[] = $date;
-                if (!empty($task_info["user.name"])) {
-                    $line[] = $task_info["user.name"];
-                } else {
-                    $line[] = $task_info["user.username"];
-                }
-                $line[] = $task_info["user_id"];
-                $line[] = $task_info["rg.name"];
-                $line[] = count($visits);
-                $lines[] = $line;
+            if ($this->isAdmin()) {
+                $qs = "match user-[:`SUPERVISES_TERRITORY`]-(t:`Territory`) match 
+                t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task)
+                 where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
+                 $date_range[1] . " return distinct task.uuid, task.description, task.completionDate, user.username";
             }
         }
 
-        return $lines;
+        return $this->exportDisaggregated($qs, array("Date", "UUID"=>"task.uuid", "Detailer Name"=>"user.username"));
     }
 
     function average_regional_product_price_export($product_name){
@@ -1737,6 +1704,19 @@ class DashboardController extends AppController {
             match (rg)-[:`HAS_DISTRICT`]->(ds) RETURN distinct task.uuid, task.description, task.completionDate, user.username, 
             stock.uuid, stock.category, stock.stockLevel, stock.sellingPrice, t.name, rg.name");
 
+        $exportResults = array();
+        $exportResults[] = array("Date", "UUID", "Detailer Name");
+
+        foreach ($tasks as $task) {
+            $epoch = floor($task["task.completionDate"]/1000);
+            $dt = new DateTime("@$epoch");
+            $date = $dt->format("M. j, Y");
+
+            $exportResults[] = array($date, $task["task.uuid"], $task["user.username"]);
+        }
+
+        return $exportResults;
+        /*
         $res[] = array();
         foreach ($tasks as $task) {
             $epoch = floor($task["task.completionDate"]/1000);
@@ -1768,6 +1748,7 @@ class DashboardController extends AppController {
         unset($stats[0]);
         
         return array("lines"=>$stats, "title"=>"Average $product_name Price") ;
+        */
     }
 
     function average_regional_product_price($product_name){
@@ -1854,41 +1835,9 @@ class DashboardController extends AppController {
             \"$product_name\"  return task.uuid, task.description, task.completionDate, user.username, id(user) as user_id,
              user.name, stock.uuid, stock.category, stock.stockLevel, stock.sellingPrice, rg.name";
         }
-
-        $tasks = $this->runNeoQuery($q);
-        $res[] = array();
-        $detailer_task = array();
-        foreach ($tasks as $task) {
-            $epoch = floor($task["task.completionDate"]/1000);
-            $dt = new DateTime("@$epoch");
-            $task["day"] = $dt->format("M. j, Y");
-
-            if (!isset($res[$task["user.username"]])) {
-                $res[$task["user.username"]] = array();
-            }
-
-            if(!isset($res[$task["user.username"]][$task["day"]])){
-                $res[$task["user.username"]][$task["day"]] = array();
-            }
-            if (!empty($task["stock.sellingPrice"])) {
-                $res[$task["user.username"]][$task["day"]][] = $task["stock.sellingPrice"];
-            }
-            $detailer_task[$task["user.username"]] = $task;
-        }
         
-        $stats = array();
-        foreach ($res as $detName=>$monthData) {
-            if(!isset($stats[$detName])){
-                $stats[$detName] = array();
-            }
-
-            foreach($monthData as $month => $data){
-                $stats[$detName][$month] = $this->calculate_median($res[$detName][$month]);
-            }
-        }
-        unset($stats[0]);
-
-        return array("lines"=>$stats, "detailer_task"=>$detailer_task, "title"=>"Average $product_name Price", "title2"=>"Detailer");
+        return $this->exportDisaggregated($q, array("Date"=>"date", "UUID"=>"task.uuid", "Detailer Name"=>"user.username",
+            "Stock Category"=> "stock.category", "Selling Price"=> "stock.sellingPrice"));
     }
 
     function average_regional_ors_price(){
@@ -1959,6 +1908,20 @@ class DashboardController extends AppController {
              $date_range[1] . " optional match task-[:`HAS_DETAILER_STOCK`]-(stock:`DetailerStock`) where stock.category = 
             \"zinc\"  return task.uuid, task.description, task.completionDate, user.username, id(user) as user_id,
              user.name, stock.uuid, stock.category, stock.stockLevel, stock.sellingPrice, rg.name");
+
+        $exportResults = array();
+        $exportResults[] = array("Date", "UUID", "Detailer Name");
+
+        foreach ($tasks as $task) {
+            $epoch = floor($task["task.completionDate"]/1000);
+            $dt = new DateTime("@$epoch");
+            $date = $dt->format("M. j, Y");
+
+            $exportResults[] = array($date, $task["task.uuid"], $task["user.username"]);
+        }
+
+        return $exportResults;
+        /*
         $res[] = array();
         $detailer_task = array();
         foreach ($tasks as $task) {
@@ -1991,7 +1954,7 @@ class DashboardController extends AppController {
         }
         unset($stats[0]);
 
-        return array("lines"=>$stats, "detailer_task"=>$detailer_task, "title"=>"Average Zinc Price");
+        return array("lines"=>$stats, "detailer_task"=>$detailer_task, "title"=>"Average Zinc Price");*/
     }
 
 	function median_zinc_price(){

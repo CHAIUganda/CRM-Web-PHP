@@ -202,8 +202,6 @@ class SalesController extends AppController {
                 $res[$task["det.username"]]["Sales"][$task["id(sale)"]] = 0;
             }
             $res[$task["det.username"]]["Sales"][$task["id(sale)"]] += $task["r.quantity"];
-
-            //$res[$task["det.username"]]["Sales"][$task["sale.uuid"]] = $task["r.quantity"];
         }
 
         $stockAvailabilityStats = array();
@@ -223,15 +221,6 @@ class SalesController extends AppController {
             foreach($monthData as $month => $data){
                 $stockAvailabilityStats[$username][$month] = $total;
             }
-            /*
-            $total = 0;
-            foreach($monthData as $month => $data){
-                $total += count($res[$username][$month]);
-            }
-
-            foreach($monthData as $month => $data){
-                $stockAvailabilityStats[$username][$month] = $total;
-            }*/
         }
 
         return $stockAvailabilityStats;
