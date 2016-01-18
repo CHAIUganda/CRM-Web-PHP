@@ -206,9 +206,10 @@ class DashboardController extends AppController {
     }
 
     public function exportDisaggregated($query, $fields){
-        $tasks = $this->runNeoQuery($query);
         $exportResults = array();
         $exportResults[] = array_keys($fields);
+
+        $tasks = $this->runNeoQuery($query . " order by task.completionDate asc");
 
         foreach ($tasks as $task) {
             $epoch = floor($task["task.completionDate"]/1000);
@@ -314,16 +315,9 @@ class DashboardController extends AppController {
         return ($date1 > $date2) ? -1 : 1;
     }
     public function exportCSV($lines){
-        $csv = Writer::createFromFileObject(new SplTempFileObject());
-        $csv->insertOne($lines[0]);
-
-        $sorted_lines = array();
-        if (count($lines) > 1) {
-            $sorted_lines = array_slice($lines, 1);
-            usort($sorted_lines, array($this, "date_sorter"));
-        }
+        $csv = Writer::createFromFileObject(new SplTempFileObject(1000000000));
         
-        foreach ($sorted_lines as $line) {
+        foreach ($lines as $line) {
             $csv->insertOne($line);
         }
         
@@ -715,13 +709,15 @@ class DashboardController extends AppController {
         @$period = $_GET['zincPercent'];
 
         $date_range = $this->getTimeRange($classification, $period);
-        $tasks = $this->runNeoQuery("MATCH (task:`Task`) where task.completionDate > ". $date_range[0] .
+        $query = "MATCH (task:`Task`) where task.completionDate > ". $date_range[0] .
             " AND task.completionDate < " . $date_range[1] . " 
             match task<-[:`COMPLETED_TASK`]-(user) match (user)-[:`USER_TERRITORY`]->(t)
             match (t)<-[:`SC_IN_TERRITORY`]-(sc) match (ds)-[:`HAS_SUB_COUNTY`]->(sc) 
-            match (rg)-[:`HAS_DISTRICT`]->(ds) RETURN distinct task.uuid, task.description, task.dateCreated, task.status, user.username, 
-            t.name, rg.name");
+            match (rg)-[:`HAS_DISTRICT`]->(ds) RETURN distinct task.uuid, task.description, task.dateCreated, task.completionDate, task.status, user.username, 
+            t.name, rg.name";
         
+        return $this->exportDisaggregated($query, array("Date"=>"", "UUID"=>"task.uuid", "Detailer Name"=>"user.username", "Region"=>"rg.name"));
+        /*
         $res = array();
         foreach ($tasks as $task) {
             $epoch = floor($task["task.dateCreated"]/1000);
@@ -786,6 +782,7 @@ class DashboardController extends AppController {
         }
 
         return $lines;
+        */
     }
     public function rtask_completion(){
         // Get filters
@@ -1008,12 +1005,14 @@ class DashboardController extends AppController {
         $query = "";
         if (!empty($district && $district != "All")) {
             if ($this->isAdmin()) {
+                echo "1";
                 $query = "MATCH (n:`District`) where n.name = \"$district\" MATCH (n)-[:`HAS_SUB_COUNTY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) 
                 match t-[:`SC_IN_TERRITORY`]-(sc) match user-[:`SUPERVISES_TERRITORY`]-(t) match cust-[:`CUST_TASK`]-(task) 
                 where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
                  $date_range[1] . " $detailerFilter match task-[:`HAS_DETAILER_STOCK`]-(stock:`DetailerStock`) $stockFilter return task.uuid, task.description, task.completionDate, user.username, stock.uuid, stock.category,
                 stock.stockLevel";
             } else {
+                echo "2";
                 $query = "MATCH (n:`District`) where n.name = \"$district\" MATCH (n)-[:`HAS_SUB_COUNTY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
                 task-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
                  $date_range[1] . " $detailerFilter match task-[:`HAS_DETAILER_STOCK`]-(stock:`DetailerStock`) $stockFilter return task.uuid, task.description, task.completionDate, user.username, stock.uuid, stock.category,
@@ -1021,12 +1020,13 @@ class DashboardController extends AppController {
             }
         } else {
             if($this->isAdmin()){
+                echo "3";
                 $query = "match user-[:`SUPERVISES_TERRITORY`]-(t:`Territory`)
                 match t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task)
                  where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
-                 $date_range[1] . " $detailerFilter match task-[:`HAS_DETAILER_STOCK`]-(stock:`DetailerStock`) $stockFilter return task.uuid, task.description, task.completionDate, user.username, stock.uuid, stock.category,
-                stock.stockLevel";
+                 $date_range[1] . " $detailerFilter return task.uuid, task.description, task.completionDate, user.username";
             } else {
+                echo "4";
                 $query = "start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t:`Territory`)
                 match t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
                 task-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
@@ -1035,7 +1035,7 @@ class DashboardController extends AppController {
             }
         }
 
-        return $this->exportDisaggregated($qs, array("Date", "UUID"=>"task.uuid", "Detailer Name"=>"user.username"));
+        return $this->exportDisaggregated($query, array("Date", "UUID"=>"task.uuid", "Detailer Name"=>"user.username"));
         /*$tasks = $this->runNeoQuery($query);
         
         $res = array();
@@ -2284,8 +2284,8 @@ class DashboardController extends AppController {
 
     function getTimesForMonth($month){
         $times  = array();
-        $first_minute = mktime(0, 0, 0, $month, 1);
-        $last_minute = mktime(23, 59, 0, $month, date('t', $first_minute));
+        $first_minute = mktime(0, 0, 0, $month, 1, 2015);
+        $last_minute = mktime(23, 59, 0, $month, date('t', $first_minute), 2015);
         $times = array($first_minute*1000, $last_minute*1000);
 
         return $times;
