@@ -177,7 +177,7 @@ class DashboardController extends AppController {
                 $this->exportCSV($this->task_summary_export());
                 break;
             case 'rprice':
-                $this->priceFormat($this->average_regional_product_price_export($regional_product));
+                $this->exportCSV($this->average_regional_product_price_export($regional_product));
                 break;
             case 'dprice':
                 $this->exportCSV($this->average_detailer_product_price_export($detailer_product));
@@ -843,11 +843,15 @@ class DashboardController extends AppController {
             t<-[:`SC_IN_TERRITORY`]-(sc) match sc<-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]->(task)  where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
              $date_range[1] . " return task.uuid, task.description, task.completionDate, task.status, user.username";
         } else {
-            "start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]->(:`Territory`) match 
+            $q = "start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]->(:`Territory`) match 
             t<-[:`SC_IN_TERRITORY`]-(sc) match sc<-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]->(task) match 
             task<-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
              $date_range[1] . " return task.uuid, task.description, task.completionDate, task.status, user.username";
         }
+
+        return $this->exportDisaggregated($q, array("Date"=>"", "UUID"=>"task.uuid", "Detailer Name"=>"user.username", "Task status"=>"task.status"));
+
+        /*
         $tasks = $this->runNeoQuery($q);
         
         $res = array();
@@ -918,6 +922,7 @@ class DashboardController extends AppController {
         }
 
         return $lines;
+        */
     }
 
     public function dtask_completion(){
@@ -1705,14 +1710,14 @@ class DashboardController extends AppController {
             stock.uuid, stock.category, stock.stockLevel, stock.sellingPrice, t.name, rg.name");
 
         $exportResults = array();
-        $exportResults[] = array("Date", "UUID", "Detailer Name");
+        $exportResults[] = array("Date", "UUID", "Detailer Name", "Product name", "Product price");
 
         foreach ($tasks as $task) {
             $epoch = floor($task["task.completionDate"]/1000);
             $dt = new DateTime("@$epoch");
             $date = $dt->format("M. j, Y");
 
-            $exportResults[] = array($date, $task["task.uuid"], $task["user.username"]);
+            $exportResults[] = array($date, $task["task.uuid"], $task["user.username"], $task["stock.category"], $task["stock.sellingPrice"]);
         }
 
         return $exportResults;
