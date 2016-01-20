@@ -1402,7 +1402,8 @@ class DashboardController extends AppController {
             stock.uuid, stock.category, stock.stockLevel, rg.name";
         }
 
-        return $this->exportDisaggregated($q, array("Date", "UUID"=>"task.uuid", "Detailer Name"=>"user.username", "Region"=>"rg.name"));
+        return $this->exportDisaggregated($q, array("Date", "UUID"=>"task.uuid", "Detailer Name"=>"user.username", "Region"=>"rg.name",
+         "Category"=>"stock.category", "Stock Level"=>"stock.stockLevel"));
         /*$tasks = $this->runNeoQuery($q);
 
         $res = array();
