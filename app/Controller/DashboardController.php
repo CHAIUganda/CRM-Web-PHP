@@ -716,7 +716,8 @@ class DashboardController extends AppController {
             match (rg)-[:`HAS_DISTRICT`]->(ds) RETURN distinct task.uuid, task.description, task.dateCreated, task.completionDate, task.status, user.username, 
             t.name, rg.name";
         
-        return $this->exportDisaggregated($query, array("Date"=>"", "UUID"=>"task.uuid", "Detailer Name"=>"user.username", "Region"=>"rg.name"));
+        return $this->exportDisaggregated($query, array("Date"=>"", "UUID"=>"task.uuid", "Detailer Name"=>"user.username", "Region"=>"rg.name",
+            "Task status"=>"task.status"));
         /*
         $res = array();
         foreach ($tasks as $task) {
