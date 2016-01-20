@@ -641,7 +641,7 @@ class DashboardController extends AppController {
              $date_range[1] . " return task.uuid, task.description, task.completionDate, user.username, seg.name";
         }
 
-        return $this->exportDisaggregated($q, array("Date", "UUID"=>"task.uuid", "Detailer Name"=>"user.username"));
+        return $this->exportDisaggregated($q, array("Date", "UUID"=>"task.uuid", "Detailer Name"=>"user.username", "Segment"=>"seg.name"));
     }
 
     public function dweekly_visits(){
