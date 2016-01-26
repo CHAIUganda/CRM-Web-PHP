@@ -982,6 +982,8 @@ class DashboardController extends AppController {
     }
     function product_avail_export(){
         set_time_limit(0);
+        ini_set('memory_limit','1600M');
+
         $time1 = time();
 
         $detailer = empty($_GET["detailer"]) ? "" : $_GET["detailer"];
@@ -1011,14 +1013,12 @@ class DashboardController extends AppController {
         $query = "";
         if (!empty($district && $district != "All")) {
             if ($this->isAdmin()) {
-                echo "1";
                 $query = "MATCH (n:`District`) where n.name = \"$district\" MATCH (n)-[:`HAS_SUB_COUNTY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) 
                 match t-[:`SC_IN_TERRITORY`]-(sc) match user-[:`SUPERVISES_TERRITORY`]-(t) match cust-[:`CUST_TASK`]-(task) 
                 where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
                  $date_range[1] . " $detailerFilter match task-[:`HAS_DETAILER_STOCK`]-(stock:`DetailerStock`) $stockFilter return task.uuid, task.description, task.completionDate, user.username, stock.uuid, stock.category,
                 stock.stockLevel";
             } else {
-                echo "2";
                 $query = "MATCH (n:`District`) where n.name = \"$district\" MATCH (n)-[:`HAS_SUB_COUNTY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
                 task-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
                  $date_range[1] . " $detailerFilter match task-[:`HAS_DETAILER_STOCK`]-(stock:`DetailerStock`) $stockFilter return task.uuid, task.description, task.completionDate, user.username, stock.uuid, stock.category,
@@ -1026,13 +1026,14 @@ class DashboardController extends AppController {
             }
         } else {
             if($this->isAdmin()){
-                echo "3";
                 $query = "match user-[:`SUPERVISES_TERRITORY`]-(t:`Territory`)
                 match t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task)
                  where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
-                 $date_range[1] . " $detailerFilter return task.uuid, task.description, task.completionDate, user.username";
+                 $date_range[1] . " $detailerFilter match task-[:`HAS_DETAILER_STOCK`]-(stock:`DetailerStock`) return task.uuid, task.description,
+                  task.completionDate, user.username, stock.category";
+
+
             } else {
-                echo "4";
                 $query = "start n = node(". $this->_user['User']['neo_id'] .") match n-[:`SUPERVISES_TERRITORY`]-(t:`Territory`)
                 match t-[:`SC_IN_TERRITORY`]-(sc) match sc-[:`CUST_IN_SC`]-(cust) match cust-[:`CUST_TASK`]-(task) match 
                 task-[:`COMPLETED_TASK`]-(user) where task.completionDate > " . $date_range[0] . " and task.completionDate < ".
@@ -1041,7 +1042,7 @@ class DashboardController extends AppController {
             }
         }
 
-        return $this->exportDisaggregated($query, array("Date", "UUID"=>"task.uuid", "Detailer Name"=>"user.username"));
+        return $this->exportDisaggregated($query, array("Date", "UUID"=>"task.uuid", "Detailer Name"=>"user.username", "Product"=>"stock.category"));
         /*$tasks = $this->runNeoQuery($query);
         
         $res = array();
@@ -1704,13 +1705,16 @@ class DashboardController extends AppController {
         $date_range = $this->getTimeRange($classification, $period);
         
 
-        $tasks = $this->runNeoQuery("MATCH (task:`DetailerTask`) where task.completionDate > ". $date_range[0] .
+        $qs = "MATCH (task:`DetailerTask`) where task.completionDate > ". $date_range[0] .
             " AND task.completionDate < " . $date_range[1] . " match task-[:`HAS_DETAILER_STOCK`]->(stock:`DetailerStock`) 
             match task<-[:`COMPLETED_TASK`]-(user) match (user)-[:`USER_TERRITORY`]->(t:`Territory`)
             where stock.category = \"$product_name\" match (t)<-[:`SC_IN_TERRITORY`]-(sc) match (ds)-[:`HAS_SUB_COUNTY`]->(sc) 
             match (rg)-[:`HAS_DISTRICT`]->(ds) RETURN distinct task.uuid, task.description, task.completionDate, user.username, 
-            stock.uuid, stock.category, stock.stockLevel, stock.sellingPrice, t.name, rg.name");
+            stock.uuid, stock.category, stock.stockLevel, stock.sellingPrice, t.name, rg.name";
 
+        return $this->exportDisaggregated($qs, array("Date", "UUID"=>"task.uuid", "Detailer Name"=>"user.username", "Category"=>"stock.category", "Price"=>"stock.sellingPrice"));
+
+        /*
         $exportResults = array();
         $exportResults[] = array("Date", "UUID", "Detailer Name", "Product name", "Product price");
 
@@ -1723,7 +1727,7 @@ class DashboardController extends AppController {
         }
 
         return $exportResults;
-        /*
+        
         $res[] = array();
         foreach ($tasks as $task) {
             $epoch = floor($task["task.completionDate"]/1000);
